@@ -1,9 +1,26 @@
-from core import db, HTTPEvent, JSONResponse
+from core import HTTPEvent, JSONResponse, ModelService
 from core.aws.errors import HTTPError
 
 
-class Objectives(db.Model):
+def join_key(*args):
+    return '::'.join(args)
+
+
+class ObjectivesService(ModelService):
     __table_name__ = "objectives"
+
+    def create(self, unit: str, stage: str, area: str, line: int, description: str):
+        pass
+
+    @classmethod
+    def get(cls, unit: str, stage: str, area: str, line: int):
+        interface = cls.get_interface()
+        return interface.get(join_key(unit, stage), join_key(area, line))
+
+    @classmethod
+    def query(cls, unit: str, stage: str):
+        interface = cls.get_interface()
+        return interface.query(join_key(unit, stage))
 
 
 VALID_UNITS = ["guides", "scouts"]
@@ -30,23 +47,14 @@ def process_objective(objective: dict):
     objective["line"] = int(line)
 
 
-def join_key(*args):
-    return '::'.join(args)
-
-
 def get_objective(unit: str, stage: str, area: str, line: int):
-    result = Objectives.get({
-        "unit-stage": join_key(unit, stage),
-        "code": join_key(area, str(line))
-    })
+    result = ObjectivesService.get(unit, stage, area, line)
     process_objective(result.item)
     return result
 
 
 def get_objectives(unit: str, stage: str):
-    result = Objectives.query(keys={
-        "unit-stage": join_key(unit, stage)
-    })
+    result = ObjectivesService.query(unit, stage)
     for obj in result.items:
         process_objective(obj)
     return result

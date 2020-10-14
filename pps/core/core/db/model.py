@@ -80,24 +80,64 @@ class AbstractModel(abc.ABC):
         Create an item from the database
         """
         table = cls.get_table()
-        return pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE')
+        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE')
 
     @classmethod
-    def get(cls, key: DynamoDBKey) -> GetResult:
+    def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:
         """
         Delete an item from the database
         """
         table = cls.get_table()
-        result = pass_not_none_arguments(table.get_item, Key=key)
+        if attributes is not None:
+            attributes = ', '.join(attributes)
+
+        result = pass_not_none_arguments(table.get_item, Key=key, ProjectionExpression=attributes)
         return GetResult(result)
 
+    @staticmethod
+    def to_code_name(attribute: str, ignore: List[str] = None):
+        name = ''.join(map(lambda x: x.capitalize(), attribute.split('-')))
+        if ignore is not None:
+            while name in ignore:
+                name += name
+        return name
+
+    @staticmethod
+    def to_string_type(t: type):
+        if t is int or t is float:
+            return 'N'
+        if t is str:
+            return 'S'
+        if t is bin:
+            return 'B'
+        raise ValueError(f"Unrecognized type: {t}")
+
     @classmethod
-    def update(cls, key: DynamoDBKey, item: dict):
+    def update(cls, key: DynamoDBKey, updates: dict):
         """
-        Update an item from the database
+        Update an item from the database changing only the given attributes
         """
         table = cls.get_table()
-        return pass_not_none_arguments(table.update_item, Key=key)
+
+        attribute_values = {}
+
+        value_i = 0
+
+        if len(updates) == 0:
+            raise ValueError("The updates dictionary must not be empty")
+
+        update_expressions = []
+        for item_key, item_value in updates.items():
+            value_name = 'val' + str(value_i)
+            attribute_values[value_name] = item_value
+            update_expressions.append(f"{item_key}=:{value_name}")
+            value_i += 1
+        expression = "SET " + ', '.join(update_expressions)
+
+        return pass_not_none_arguments(table.update_item,
+                                       Key=key,
+                                       UpdateExpression=expression,
+                                       ExpressionAttributeValues=attribute_values)
 
     @classmethod
     def delete(cls, key: DynamoDBKey):
@@ -105,7 +145,7 @@ class AbstractModel(abc.ABC):
         Delete an item from the database
         """
         table = cls.get_table()
-        return pass_not_none_arguments(table.delete_item, Key=key)
+        pass_not_none_arguments(table.delete_item, Key=key)
 
 
 def create_model(db: boto3.session.Session.resource):
