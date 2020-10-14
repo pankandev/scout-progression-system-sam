@@ -200,7 +200,7 @@ Outputs:
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
   PPSCore:
     Description: "Personal Progression System Core Layer"
-    Value: !GetAtt
+    Value: !GetAtt PPSCore.Arn
   DistrictsFunction:
     Description: "Districts Lambda Function ARN"
     Value: !GetAtt DistrictsFunction.Arn
