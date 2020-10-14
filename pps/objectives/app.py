@@ -75,7 +75,7 @@ def get_handler(event: HTTPEvent) -> JSONResponse:
                                            f"Stage '{stage}' not found")
 
     area = event.params.get("area")
-    line = event.params.get("unit")
+    line = event.params.get("line")
     if area is None and line is None:
         # get all objectives from unit and stage
         response = get_objectives(unit, stage)
