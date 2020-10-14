@@ -50,19 +50,27 @@ class AbstractModel(abc.ABC):
     @classmethod
     def query(cls,
               limit: int = None,
-              key_conditions: dict = None,
+              keys: dict = None,
               start_key: DynamoDBKey = None,
-              select: str = None,
+              attributes: List[str] = None,
               index: str = None) -> QueryResult:
         """
         List items from a database
         """
-        if select is not None and select not in _valid_select_options:
-            raise ValueError(f"`select` argument has the unsupported value {select}, it must be in "
-                             + ','.join(_valid_select_options))
+        if attributes is not None:
+            attributes = ', '.join(attributes)
+
+        key_conditions = None
+        if keys is not None:
+            key_conditions = {}
+            for key, value in keys.items():
+                key_conditions[key] = {
+                    "AttributeValueList": [value],
+                    "ComparisonOperator": "EQ"
+                }
 
         table = cls.get_table()
-        result = pass_not_none_arguments(table.query, Limit=limit, Select=select, IndexName=index,
+        result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=attributes, IndexName=index,
                                          ExclusiveStartKey=start_key, KeyConditions=key_conditions)
         return QueryResult(result)
 

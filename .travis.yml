@@ -1,1 +1,25 @@
 language: python
+python:
+  - '3.8'
+branches:
+  only:
+  - master
+  - develop
+install:
+  - pip install awscli
+  - pip install aws-sam-cli
+script:
+  - pytest .
+  - sam validate
+deploy:
+  provider: script
+  script: sam deploy
+  skip_cleanup: true
+  on:
+    branch: master
+notifications:
+  email:
+    on_failure: always
+env:
+  global:
+    - AWS_DEFAULT_REGION=us-west-1

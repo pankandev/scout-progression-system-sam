@@ -17,4 +17,7 @@ class HTTPEvent:
 
     @property
     def url(self) -> str:
-        return "https://" + os.path.join(self.headers['Host'], self.context['stage'])
+        return "https://" + os.path.join(self.headers.get('Host'), self.context.get('stage'))
+
+    def concat_url(self, *args):
+        return os.path.join(self.url, *args)

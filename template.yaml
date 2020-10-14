@@ -39,7 +39,7 @@ Resources:
         WriteCapacityUnits: 5
       TableName: beneficiaries
     Type: AWS::DynamoDB::Table
-  DistrictTable:
+  DistrictsTable:
     Properties:
       AttributeDefinitions:
         - AttributeName: code
@@ -50,9 +50,9 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-      TableName: district
+      TableName: districts
     Type: AWS::DynamoDB::Table
-  GroupTable:
+  GroupsTable:
     Properties:
       AttributeDefinitions:
         - AttributeName: district
@@ -67,26 +67,26 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
-      TableName: group
+      TableName: groups
     Type: AWS::DynamoDB::Table
   ObjectivesTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: area
+        - AttributeName: unit-stage
           AttributeType: S
-        - AttributeName: line
-          AttributeType: N
+        - AttributeName: code # area-line
+          AttributeType: S
       KeySchema:
-        - AttributeName: area
+        - AttributeName: unit-stage
           KeyType: HASH
-        - AttributeName: line
+        - AttributeName: code
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 1
       TableName: objectives
     Type: AWS::DynamoDB::Table
-  ScouterTable:
+  ScoutersTable:
     Properties:
       AttributeDefinitions:
         - AttributeName: group
@@ -101,7 +101,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 3
-      TableName: scouter
+      TableName: scouters
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
@@ -133,7 +133,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref DistrictTable
+              !Ref DistrictsTable
       Events:
         ListDistricts:
           Type: Api
@@ -156,36 +156,44 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref GroupTable
+              !Ref GroupsTable
         - DynamoDBReadPolicy:
             TableName:
-              !Ref DistrictTable
+              !Ref DistrictsTable
       Events:
         ListGroups:
           Type: Api
           Properties:
             Path: /districts/{district}/groups/
             Method: get
-        CreateGroup:
-          Type: Api
-          Properties:
-            Path: /districts/{district}/groups/
-            Method: post
         GetGroup:
           Type: Api
           Properties:
             Path: /districts/{district}/groups/{group}/
             Method: get
-        UpdateGroup:
+  ObjectivesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/objectives/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref ObjectivesTable
+      Events:
+        GetObjective:
           Type: Api
           Properties:
-            Path: /districts/{district}/groups/{group}/
-            Method: patch
-        DeleteGroup:
+            Path: /objectives/{unit}/{stage}/{area}/{line}/
+            Method: get
+        ListObjectives:
           Type: Api
           Properties:
-            Path: /districts/{district}/groups/{group}/
-            Method: delete
+            Path: /objectives/{unit}/{stage}/
+            Method: get
 
 
 Outputs:
@@ -204,3 +212,9 @@ Outputs:
   GroupsFunctionIamRole:
     Description: "Implicit IAM Role created for the groups service"
     Value: !GetAtt GroupsFunctionRole.Arn
+  ObjectivesFunction:
+    Description: "Groups Lambda Function ARN"
+    Value: !GetAtt ObjectivesFunction.Arn
+  ObjectivesFunctionIamRole:
+    Description: "Implicit IAM Role created for the groups service"
+    Value: !GetAtt ObjectivesFunctionRole.Arn
