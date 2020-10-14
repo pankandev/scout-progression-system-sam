@@ -15,7 +15,7 @@ script:
   - sam validate
 deploy:
   provider: script
-  script: sam deploy --confirm-changeset
+  script: sam deploy --no-confirm-changeset
   skip_cleanup: true
   on:
     branch: master
