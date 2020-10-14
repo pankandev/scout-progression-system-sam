@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/pps/core/python" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pps/core-layer/python" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.aws-sam" />
     </content>
     <orderEntry type="inheritedJdk" />

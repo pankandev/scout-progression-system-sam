@@ -8,6 +8,8 @@ def join_key(*args):
 
 class ObjectivesService(ModelService):
     __table_name__ = "objectives"
+    __partition_key__ = "unit-stage"
+    __sort_key__ = "code"
 
     def create(self, unit: str, stage: str, area: str, line: int, description: str):
         pass
