@@ -1,7 +1,6 @@
 import abc
 
 from .capacity import ConsumedCapacity
-from ..exceptions.notfound import NotFoundException
 
 
 class Result(abc.ABC):

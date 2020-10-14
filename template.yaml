@@ -18,9 +18,7 @@ Resources:
       Description: Core of the Personal Progression System
       CompatibleRuntimes:
         - python3.8
-      ContentUri: pps/core/
-    Metadata:
-      BuildMethod: python3.8
+      ContentUri: pps/core-layer/
   # Database
   BeneficiariesTable:
     Properties:
@@ -138,12 +136,12 @@ Resources:
         ListDistricts:
           Type: Api
           Properties:
-            Path: /districts/
+            Path: /api/districts/
             Method: get
         GetDistrict:
           Type: Api
           Properties:
-            Path: /districts/{district}/
+            Path: /api/districts/{district}/
             Method: get
   GroupsFunction:
     Type: AWS::Serverless::Function
@@ -164,12 +162,12 @@ Resources:
         ListGroups:
           Type: Api
           Properties:
-            Path: /districts/{district}/groups/
+            Path: /api/districts/{district}/groups/
             Method: get
         GetGroup:
           Type: Api
           Properties:
-            Path: /districts/{district}/groups/{group}/
+            Path: /api/districts/{district}/groups/{group}/
             Method: get
   ObjectivesFunction:
     Type: AWS::Serverless::Function
@@ -187,12 +185,12 @@ Resources:
         GetObjective:
           Type: Api
           Properties:
-            Path: /objectives/{unit}/{stage}/{area}/{line}/
+            Path: /api/objectives/{unit}/{stage}/{area}/{line}/
             Method: get
         ListObjectives:
           Type: Api
           Properties:
-            Path: /objectives/{unit}/{stage}/
+            Path: /api/objectives/{unit}/{stage}/
             Method: get
 
 
@@ -200,6 +198,9 @@ Outputs:
   AppAPI:
     Description: "API Gateway endpoint URL for Prod stage for PPS API"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
+  PPSCore:
+    Description: "Personal Progression System Core Layer"
+    Value: !GetAtt
   DistrictsFunction:
     Description: "Districts Lambda Function ARN"
     Value: !GetAtt DistrictsFunction.Arn
