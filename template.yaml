@@ -192,6 +192,29 @@ Resources:
           Properties:
             Path: /api/objectives/{unit}/{stage}/
             Method: get
+  ScoutersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/scouters/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref ScoutersTable
+      Events:
+        GetScouter:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/scouters/{code}
+            Method: get
+        ListScouters:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/scouters/
+            Method: get
 
 
 Outputs:
@@ -211,8 +234,14 @@ Outputs:
     Description: "Implicit IAM Role created for the groups service"
     Value: !GetAtt GroupsFunctionRole.Arn
   ObjectivesFunction:
-    Description: "Groups Lambda Function ARN"
+    Description: "Objectives Lambda Function ARN"
     Value: !GetAtt ObjectivesFunction.Arn
   ObjectivesFunctionIamRole:
-    Description: "Implicit IAM Role created for the groups service"
+    Description: "Implicit IAM Role created for the objectives service"
     Value: !GetAtt ObjectivesFunctionRole.Arn
+  ScoutersFunction:
+    Description: "Scouters Lambda Function ARN"
+    Value: !GetAtt ScoutersFunction.Arn
+  ScoutersFunctionIamRole:
+    Description: "Implicit IAM Role created for the scouters service"
+    Value: !GetAtt ScoutersFunctionRole.Arn

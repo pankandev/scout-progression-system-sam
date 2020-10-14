@@ -1,9 +1,6 @@
 from core import HTTPEvent, JSONResponse, ModelService
 from core.aws.errors import HTTPError
-
-
-def join_key(*args):
-    return '::'.join(args)
+from core.utils import join_key
 
 
 class ObjectivesService(ModelService):

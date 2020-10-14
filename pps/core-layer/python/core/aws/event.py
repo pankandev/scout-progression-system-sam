@@ -20,4 +20,4 @@ class HTTPEvent:
         return "https://" + os.path.join(self.headers.get('Host'), self.context.get('stage'))
 
     def concat_url(self, *args):
-        return os.path.join(self.url, *args)
+        return os.path.join(self.url, 'api', *args)
