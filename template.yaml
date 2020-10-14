@@ -198,9 +198,6 @@ Outputs:
   AppAPI:
     Description: "API Gateway endpoint URL for Prod stage for PPS API"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
-  PPSCore:
-    Description: "Personal Progression System Core Layer"
-    Value: !GetAtt PPSCore.Arn
   DistrictsFunction:
     Description: "Districts Lambda Function ARN"
     Value: !GetAtt DistrictsFunction.Arn
