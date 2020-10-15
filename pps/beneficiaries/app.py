@@ -43,7 +43,6 @@ class BeneficiariesService(ModelService):
         del beneficiary['group']
         del beneficiary['unit']
 
-        beneficiary['birth_date'] = date_to_text(beneficiary['birth_date'])
         code = cls.generate_code(datetime.now(), beneficiary['nickname'])
         interface.create(join_key(district, group, unit), beneficiary, code)
 
