@@ -242,7 +242,7 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
-            Method: get
+            Method: post
 
 
 Outputs:
