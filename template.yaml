@@ -218,7 +218,7 @@ Resources:
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: pps/scouters/
+      CodeUri: pps/beneficiaries/
       Handler: app.handler
       Runtime: python3.8
       Layers:
