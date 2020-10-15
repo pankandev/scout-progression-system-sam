@@ -9,7 +9,7 @@ install:
   - pip install awscli
   - pip install aws-sam-cli
   - pip install -r pps/core-layer/requirements.txt
-  - pip install -r pps/core-layer/requirements.txt --target=./pps/core-layer/python
+  - pip install -r pps/core-layer/requirements.txt --target ./pps/core-layer/python --ignore-installed
   - pip install pytest
 script:
   - pytest .
