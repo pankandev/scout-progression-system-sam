@@ -62,7 +62,9 @@ def get_handler(event: HTTPEvent):
     unit = event.params["unit"]
     code = event.params.get("code")
 
-    if code is None:
+    if unit not in ("scouts", "guides"):
+        result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
+    elif code is None:
         if unit == "scouts":
             result = get_scouts(district, group, event)
         elif unit == "guides":
