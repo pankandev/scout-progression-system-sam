@@ -1,9 +1,9 @@
 import pytest
 from botocore.stub import Stubber
 
-from .. import ModelInterface
+from .. import ModelIndex
 
-interface = ModelInterface('items', 'hash', 'range')
+interface = ModelIndex('items', 'hash', 'range')
 
 
 @pytest.fixture(scope="function")

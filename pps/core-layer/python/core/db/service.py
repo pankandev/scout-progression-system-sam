@@ -1,15 +1,18 @@
 from abc import ABC
+from typing import Dict, Tuple
 
 from .db import db
 
 
-class ModelInterface:
-    def __init__(self, table_name: str, partition_key: str, sort_key: str = None):
+class ModelIndex:
+    def __init__(self, table_name: str, partition_key: str, sort_key: str = None, index_name: str = None):
         class TableModel(db.Model):
             __table_name__ = table_name
+
         self._model = TableModel
         self.partition = partition_key
         self.sort = sort_key
+        self.index_name = index_name
 
     def generate_key(self, partition=None, sort=None, full=True):
         keys = dict()
@@ -30,14 +33,13 @@ class ModelInterface:
 
     def create(self, partition_key, item: dict, sort_key=None):
         key = self.generate_key(partition_key, sort_key)
-        print(item, key)
         self._model.add({**item, **key})
 
-    def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None, index=None):
+    def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None):
         no_key = partition_key is None and sort_key is None
         key = None if no_key else self.generate_key(partition_key, sort_key, False)
-        print(key)
-        return self._model.query(keys=key, limit=limit, start_key=start_key, attributes=attributes, index=index)
+        return self._model.query(keys=key, limit=limit, start_key=start_key, attributes=attributes,
+                                 index=self.index_name)
 
     def get(self, partition_key, sort_key=None, attributes=None):
         key = self.generate_key(partition_key, sort_key)
@@ -56,10 +58,15 @@ class ModelService(ABC):
     __table_name__: str
     __partition_key__: str
     __sort_key__: str = None
-    _interface: ModelInterface = None
+    __indices__: Dict[str, Tuple[str, str]] = None
 
     @classmethod
-    def get_interface(cls):
-        if cls._interface is None:
-            cls._interface = ModelInterface(cls.__table_name__, cls.__partition_key__, cls.__sort_key__)
-        return cls._interface
+    def get_interface(cls, index_name=None):
+        index = cls.__indices__.get(index_name)
+        if index is None:
+            partition, sort = cls.__partition_key__, cls.__sort_key__
+        else:
+            partition, sort = index[index_name]
+
+        return ModelIndex(cls.__table_name__, partition_key=partition, sort_key=sort,
+                          index_name=index_name)

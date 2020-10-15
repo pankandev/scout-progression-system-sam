@@ -1,2 +1,2 @@
 from .db import db
-from .service import ModelService, ModelInterface
+from .service import ModelService, ModelIndex

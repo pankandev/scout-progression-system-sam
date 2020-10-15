@@ -23,12 +23,12 @@ Resources:
   BeneficiariesTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: group
+        - AttributeName: unit
           AttributeType: S
         - AttributeName: code
           AttributeType: S
       KeySchema:
-        - AttributeName: group
+        - AttributeName: unit
           KeyType: HASH
         - AttributeName: code
           KeyType: RANGE
@@ -214,6 +214,29 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/scouters/
+            Method: get
+  BeneficiariesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/scouters/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
+      Events:
+        ListBeneficiaries:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
+            Method: get
+        GetBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
             Method: get
 
 
