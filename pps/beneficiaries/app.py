@@ -8,7 +8,7 @@ from core.aws.errors import HTTPError
 from core.utils import join_key
 from core.utils.key import clean_text, text_to_date, date_to_text
 
-schema = Schema([{
+schema = Schema({
     'district': str,
     'group': str,
     'unit': str,
@@ -18,7 +18,7 @@ schema = Schema([{
     'second_last_name': str,
     'nickname': str,
     'birth_date': lambda d: text_to_date(d),
-}])
+})
 
 
 class BeneficiariesService(ModelService):
