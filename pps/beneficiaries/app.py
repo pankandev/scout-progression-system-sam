@@ -63,7 +63,7 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
 
         beneficiary["district"] = event.concat_url('districts', district)
         beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
-        beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, unit)
+        beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)
     except Exception:
         pass
 
