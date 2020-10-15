@@ -95,8 +95,8 @@ def create_beneficiary(district: str, group: str, unit: str, item: dict):
     item["unit"] = unit
     try:
         BeneficiariesService.create(item)
-    except SchemaError:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Body content is invalid")
+    except SchemaError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Body content is invalid: \"{e.code}\"")
     return JSONResponse({"message": "OK"})
 
 
