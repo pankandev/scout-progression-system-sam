@@ -188,11 +188,13 @@ Resources:
           Properties:
             Path: /api/districts/
             Method: get
+            RestApiId: !Ref PPSAPI
         GetDistrict:
           Type: Api
           Properties:
             Path: /api/districts/{district}/
             Method: get
+            RestApiId: !Ref PPSAPI
   GroupsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -214,11 +216,14 @@ Resources:
           Properties:
             Path: /api/districts/{district}/groups/
             Method: get
+            RestApiId: !Ref PPSAPI
+
         GetGroup:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/
             Method: get
+            RestApiId: !Ref PPSAPI
   ObjectivesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -237,11 +242,13 @@ Resources:
           Properties:
             Path: /api/objectives/{unit}/{stage}/{area}/{line}/
             Method: get
+            RestApiId: !Ref PPSAPI
         ListObjectives:
           Type: Api
           Properties:
             Path: /api/objectives/{unit}/{stage}/
             Method: get
+            RestApiId: !Ref PPSAPI
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -260,11 +267,13 @@ Resources:
           Properties:
             Path: /api/districts/{district}/groups/{group}/scouters/{code}
             Method: get
+            RestApiId: !Ref PPSAPI
         ListScouters:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/scouters/
             Method: get
+            RestApiId: !Ref PPSAPI
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -283,16 +292,19 @@ Resources:
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
             Method: get
+            RestApiId: !Ref PPSAPI
         GetBeneficiary:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
             Method: get
+            RestApiId: !Ref PPSAPI
         CreateBeneficiary:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
             Method: post
+            RestApiId: !Ref PPSAPI
 
 
 Outputs:

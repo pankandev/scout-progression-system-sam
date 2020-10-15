@@ -3,8 +3,7 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "pps-api"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1ofg59qbvv35p"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kqn7yarxbt5k"
 s3_prefix = "pps-api"
 region = "us-west-2"
-confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
