@@ -10,6 +10,22 @@ Globals:
     Timeout: 3
 
 Resources:
+  PPSAPI:
+    DependsOn: BeneficiariesPool
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: PPSAPI
+      StageName: !Ref Version
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+      Auth:
+        Authorizers:
+          BeneficiariesAuthorizer:
+            UserPoolArn: !GetAtt BeneficiariesPool.Arn
+          ScoutersAuthorizer:
+            UserPoolArn: !GetAtt ScoutersPool.Arn
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
@@ -19,6 +35,41 @@ Resources:
       CompatibleRuntimes:
         - python3.8
       ContentUri: pps/core-layer/
+  # Cognito
+  BeneficiariesPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BeneficiariesUsers
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+  ScoutersPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: ScoutersUsers
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
   # Database
   BeneficiariesTable:
     Properties:
