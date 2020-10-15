@@ -97,6 +97,7 @@ def create_beneficiary(district: str, group: str, unit: str, item: dict):
         BeneficiariesService.create(item)
     except SchemaError:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Body content is invalid")
+    return JSONResponse({"message": "OK"})
 
 
 """Handlers"""
@@ -149,4 +150,4 @@ def handler(event: dict, _) -> dict:
     else:
         result = JSONResponse.generate_error(HTTPError.NOT_IMPLEMENTED, f"Method {event.method} is not valid")
 
-    return JSONResponse(result.as_dict()).as_dict()
+    return result.as_dict()
