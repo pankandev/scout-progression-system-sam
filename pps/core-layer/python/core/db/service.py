@@ -19,7 +19,6 @@ class ModelIndex:
         if sort is not None and self.sort is None:
             raise ValueError("Sort key was given but model does not have a sort key")
 
-        print(full, self.sort)
         if full:
             if self.partition is not None and partition is None:
                 raise ValueError("Partition key cannot be None")

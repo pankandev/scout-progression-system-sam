@@ -238,6 +238,11 @@ Resources:
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
             Method: get
+        CreateBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
+            Method: get
 
 
 Outputs:
