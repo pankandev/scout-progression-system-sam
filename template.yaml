@@ -277,9 +277,29 @@ Resources:
       Environment:
         Variables:
           COGNITO_CLIENT_ID: !Ref ScoutersClient
+          USER_POOL_ID: !Ref ScoutersPool
       CodeUri: pps/scouters/
       Handler: app.handler
       Runtime: python3.8
+      Models:
+        ScouterSignUp
+          type: object
+          required:
+            - email
+            - password
+            - name
+            - family_name
+          properties:
+            email:
+              type: string
+            password:
+              type: integer
+            name:
+              type: string
+            middle_name:
+              type: string
+            family_name:
+              type: string
       Layers:
         - !Ref PPSCore
       Policies:
@@ -305,6 +325,9 @@ Resources:
             Path: /api/scouters/signup/
             Method: post
             RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: !Ref ScouterSignUp
+              Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:

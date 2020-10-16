@@ -1,6 +1,9 @@
+import os
+
 from schema import Schema
 
 from core import HTTPEvent, JSONResponse, ModelService
+from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.utils import join_key
 from core.utils.key import generate_code
@@ -13,6 +16,10 @@ schema = Schema({
 signup_schema = Schema({
     'nickname': str,
 })
+
+
+class ScoutersCognito(CognitoService):
+    __user_pool_id__ = os.environ.get("USER_POOL_ID")
 
 
 class ScoutersService(ModelService):
@@ -60,8 +67,7 @@ def get_scouters(district: str, group: str, event: HTTPEvent):
 
 
 def signup_scouter(event: HTTPEvent):
-    process_scouter(result.item, event)
-    return result
+    ScoutersCognito.sign_up(event.body)
 
 
 """Handlers"""
