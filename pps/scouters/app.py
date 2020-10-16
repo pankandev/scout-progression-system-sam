@@ -93,7 +93,7 @@ def handler(event: dict, _) -> dict:
     if event.method == "GET":
         result = get_handler(event)
     elif event.method == "POST":
-        if event.resource == "/api/scouters/signup/":
+        if event.resource == "/api/scouters/signup":
             signup_scouter(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
