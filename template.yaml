@@ -310,7 +310,7 @@ Resources:
 Outputs:
   AppAPI:
     Description: "API Gateway endpoint URL for Prod stage for PPS API"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
+    Value: !Sub "https://${PPSAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
   DistrictsFunction:
     Description: "Districts Lambda Function ARN"
     Value: !GetAtt DistrictsFunction.Arn
