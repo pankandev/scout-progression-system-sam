@@ -78,20 +78,20 @@ class CognitoService(ABC):
     @classmethod
     def log_in(cls, username: str, password: str):
         client = cls.get_client()
-        result = client.admin_initiate_auth(
-            UserPoolId=cls.__user_pool_id__,
-            ClientId=cls.get_client_id(),
-            AuthFlow="USER_PASSWORD_AUTH",
-            AuthParameters={
-                "USERNAME": username,
-                "PASSWORD": password
-            }
-        ).get('AuthenticationResult')
-        if result:
+        try:
+            result = client.admin_initiate_auth(
+                UserPoolId=cls.__user_pool_id__,
+                ClientId=cls.get_client_id(),
+                AuthFlow="USER_PASSWORD_AUTH",
+                AuthParameters={
+                    "USERNAME": username,
+                    "PASSWORD": password
+                }
+            ).get('AuthenticationResult')
             return Token(access=result["AccessToken"],
                          expires=result["ExpiresIn"],
                          type_=result["TokenType"],
                          refresh=result["RefreshToken"],
                          id_=result["IdToken"])
-        else:
+        except client.exceptions.AccessDeniedException:
             return None
