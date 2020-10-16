@@ -282,7 +282,7 @@ Resources:
       Handler: app.handler
       Runtime: python3.8
       Models:
-        ScouterSignUp
+        ScouterSignUp:
           type: object
           required:
             - email
