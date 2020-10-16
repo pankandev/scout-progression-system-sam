@@ -72,7 +72,7 @@ def signup_scouter(event: HTTPEvent):
     try:
         ScoutersCognito.sign_up(data['email'], data['password'], {
             'name': data['name'],
-            'middle-name': data['middle_name'],
+            'middle-name': data.get('middle_name'),
             'family-name': data['family_name']
         })
         return JSONResponse({"message": "OK"})
@@ -83,8 +83,10 @@ def signup_scouter(event: HTTPEvent):
 def confirm_scouter(event: HTTPEvent):
     data = json.loads(event.body)
     try:
-        ScoutersCognito.confirm(data['email'], data['code'])
-        return JSONResponse({"message": "OK"})
+        if ScoutersCognito.confirm(data['email'], data['code']):
+            return JSONResponse({"message": "Confirmed account"})
+        else:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Wrong confirmation code")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 

@@ -41,8 +41,13 @@ class CognitoService(ABC):
     @classmethod
     def confirm(cls, username: str, code: str):
         client = cls.get_client()
-        client.confirm_sign_up(
-            ClientId=cls.get_client_id(),
-            Username=username,
-            ConfirmationCode=code
-        )
+
+        try:
+            client.confirm_sign_up(
+                ClientId=cls.get_client_id(),
+                Username=username,
+                ConfirmationCode=code
+            )
+            return True
+        except client.exceptions.CodeMismatchException:
+            return False
