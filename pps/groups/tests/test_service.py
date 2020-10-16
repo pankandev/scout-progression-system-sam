@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 from botocore.stub import Stubber, ANY
 
+from core.utils.key import generate_code
 from ..app import GroupsService, create_group
 
 
@@ -20,7 +21,7 @@ def test_add(ddb_stubber):
         'TableName': 'groups',
         'Item': {
             "district": "district",
-            "code": GroupsService.generate_code(datetime.now(), "Group"),
+            "code": generate_code("Group"),
             "name": "Group",
             "beneficiary_code": ANY
         },
