@@ -65,9 +65,9 @@ Resources:
       Schema:
         - Name: name
           AttributeDataType: String
-        - Name: middle name
+        - Name: middle-name
           AttributeDataType: String
-        - Name: family name
+        - Name: family-name
           AttributeDataType: String
       Policies:
         PasswordPolicy:
