@@ -3,6 +3,9 @@ from abc import ABC
 
 import boto3
 
+from core import JSONResponse
+from core.aws.errors import HTTPError
+
 
 class CognitoService(ABC):
     __user_pool_id__: str
@@ -48,6 +51,8 @@ class CognitoService(ABC):
                 Username=username,
                 ConfirmationCode=code
             )
-            return True
+            return JSONResponse({"message": "Confirmed account"})
         except client.exceptions.CodeMismatchException:
-            return False
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Wrong confirmation code")
+        except client.exceptions.NotAuthorizedException:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Already confirmed")

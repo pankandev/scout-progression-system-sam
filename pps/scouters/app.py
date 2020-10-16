@@ -83,10 +83,7 @@ def signup_scouter(event: HTTPEvent):
 def confirm_scouter(event: HTTPEvent):
     data = json.loads(event.body)
     try:
-        if ScoutersCognito.confirm(data['email'], data['code']):
-            return JSONResponse({"message": "Confirmed account"})
-        else:
-            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Wrong confirmation code")
+        return ScoutersCognito.confirm(data['email'], data['code'])
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 
