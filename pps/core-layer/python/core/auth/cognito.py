@@ -37,3 +37,12 @@ class CognitoService(ABC):
             Password=password,
             UserAttributes=attributes_list
         )
+
+    @classmethod
+    def confirm(cls, username: str, code: str):
+        client = cls.get_client()
+        client.confirm_sign_up(
+            ClientId=cls.get_client_id(),
+            Username=username,
+            ConfirmationCode=code
+        )

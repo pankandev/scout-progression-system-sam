@@ -1,6 +1,7 @@
 import json
 import os
 
+from botocore.exceptions import ParamValidationError
 from schema import Schema
 
 from core import HTTPEvent, JSONResponse, ModelService
@@ -12,7 +13,6 @@ from core.utils.key import generate_code
 schema = Schema({
     'nickname': str,
 })
-
 
 signup_schema = Schema({
     'nickname': str,
@@ -69,11 +69,24 @@ def get_scouters(district: str, group: str, event: HTTPEvent):
 
 def signup_scouter(event: HTTPEvent):
     data = json.loads(event.body)
-    ScoutersCognito.sign_up(data['email'], data['password'], {
-        'name': data['name'],
-        'middle-name': data['middle_name'],
-        'family-name': data['family_name']
-    })
+    try:
+        ScoutersCognito.sign_up(data['email'], data['password'], {
+            'name': data['name'],
+            'middle-name': data['middle_name'],
+            'family-name': data['family_name']
+        })
+        return JSONResponse({"message": "OK"})
+    except ParamValidationError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
+
+
+def confirm_scouter(event: HTTPEvent):
+    data = json.loads(event.body)
+    try:
+        ScoutersCognito.confirm(data['email'], data['code'])
+        return JSONResponse({"message": "OK"})
+    except ParamValidationError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 
 
 """Handlers"""
@@ -100,7 +113,9 @@ def handler(event: dict, _) -> dict:
         result = get_handler(event)
     elif event.method == "POST":
         if event.resource == "/api/scouters/signup":
-            signup_scouter(event)
+            result = signup_scouter(event)
+        elif event.resource == "/api/scouters/confirm":
+            result = confirm_scouter(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
     else:

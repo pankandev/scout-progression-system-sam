@@ -44,6 +44,16 @@ Resources:
               type: string
             family_name:
               type: string
+        ScouterConfirm:
+          type: object
+          required:
+            - email
+            - code
+          properties:
+            email:
+              type: string
+            code:
+              type: string
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
@@ -327,6 +337,15 @@ Resources:
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: ScouterSignUp
+              Required: true
+        ConfirmScouter:
+          Type: Api
+          Properties:
+            Path: /api/scouters/confirm/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: ScouterConfirm
               Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
