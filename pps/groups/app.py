@@ -11,7 +11,6 @@ from core.utils.key import clean_text, date_to_text, join_key
 
 schema = Schema({
     'district': str,
-    'group': str,
     'name': str
 })
 
