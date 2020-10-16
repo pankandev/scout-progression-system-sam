@@ -274,6 +274,9 @@ Resources:
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref ScoutersClient
       CodeUri: pps/scouters/
       Handler: app.handler
       Runtime: python3.8
