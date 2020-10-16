@@ -8,11 +8,11 @@ from schema import Schema, SchemaError
 from core import db, HTTPEvent, ModelService
 from core.aws.errors import HTTPError
 from core.aws.response import JSONResponse
-from core.utils.key import clean_text, date_to_text, join_key
+from core.utils.key import clean_text, date_to_text, join_key, generate_code
 
 schema = Schema({
     'district': str,
-    'name': str
+    'name': str,
 })
 
 
@@ -26,12 +26,6 @@ class GroupsService(ModelService):
     __sort_key__ = "code"
 
     @staticmethod
-    def generate_code(date: datetime, name: str):
-        name = clean_text(name).lower()
-        s_date = date_to_text(date).strip('-')
-        return join_key(s_date, name)
-
-    @staticmethod
     def generate_beneficiary_code(district: str, code: str):
         h = hashlib.sha1(join_key(district, code).encode()).hexdigest()
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
@@ -42,7 +36,7 @@ class GroupsService(ModelService):
         interface = cls.get_interface()
         group = schema.validate(item)
         district = group['district']
-        code = cls.generate_code(datetime.now(), group['name'])
+        code = generate_code(group['name'])
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
 
         del group['district']

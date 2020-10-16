@@ -1,6 +1,18 @@
+from schema import Schema
+
 from core import HTTPEvent, JSONResponse, ModelService
 from core.aws.errors import HTTPError
 from core.utils import join_key
+from core.utils.key import generate_code
+
+schema = Schema({
+    'nickname': str,
+})
+
+
+signup_schema = Schema({
+    'nickname': str,
+})
 
 
 class ScoutersService(ModelService):
@@ -8,8 +20,13 @@ class ScoutersService(ModelService):
     __partition_key__ = "group"
     __sort_key__ = "code"
 
-    def create(self, district: str, group: str, code: str, name: str):
-        pass
+    @classmethod
+    def create(cls, district: str, group: str, item: dict):
+        interface = cls.get_interface()
+        scouter = schema.validate(item)
+        code = generate_code(scouter['nickname'])
+
+        interface.create(district, group, code)
 
     @classmethod
     def get(cls, district: str, group: str, code: str):
@@ -42,6 +59,11 @@ def get_scouters(district: str, group: str, event: HTTPEvent):
     return result
 
 
+def signup_scouter(event: HTTPEvent):
+    process_scouter(result.item, event)
+    return result
+
+
 """Handlers"""
 
 
@@ -64,6 +86,11 @@ def handler(event: dict, _) -> dict:
 
     if event.method == "GET":
         result = get_handler(event)
+    elif event.method == "POST":
+        if event.resource == "/api/scouters/signup/":
+            signup_scouter(event)
+        else:
+            result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
     else:
         result = JSONResponse.generate_error(HTTPError.NOT_IMPLEMENTED, f"Method {event.method} is not valid")
 

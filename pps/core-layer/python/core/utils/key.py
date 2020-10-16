@@ -22,3 +22,8 @@ def date_to_text(date: datetime) -> str:
 def text_to_date(date: str) -> datetime:
     return datetime.strptime(date, "%d-%m-%Y")
 
+
+def generate_code(name: str):
+    name = clean_text(name).lower()
+    s_date = date_to_text(datetime.now()).replace('-', '')
+    return join_key(name, s_date)

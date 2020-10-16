@@ -29,7 +29,7 @@ class BeneficiariesService(ModelService):
     @staticmethod
     def generate_code(date: datetime, nick: str):
         nick = clean_text(nick)
-        s_date = date_to_text(date).strip('-')
+        s_date = date_to_text(date).replace('-', '')
         return join_key(s_date, nick)
 
     @classmethod

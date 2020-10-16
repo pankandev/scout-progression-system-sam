@@ -62,6 +62,13 @@ Resources:
         - email
       AutoVerifiedAttributes:
         - email
+      Schema:
+        - Name: name
+          AttributeDataType: String
+        - Name: middle name
+          AttributeDataType: String
+        - Name: family name
+          AttributeDataType: String
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -69,6 +76,16 @@ Resources:
           RequireNumbers: true
           RequireSymbols: false
           RequireUppercase: true
+  ScoutersClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ScoutersClient
+      UserPoolId: !Ref ScoutersPool
+  BeneficiariesClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ScoutersClient
+      UserPoolId: !Ref BeneficiariesPool
   # Database
   BeneficiariesTable:
     Properties:
@@ -278,6 +295,12 @@ Resources:
           Properties:
             Path: /api/districts/{district}/groups/{group}/scouters/
             Method: get
+            RestApiId: !Ref PPSAPI
+        SignupScouter:
+          Type: Api
+          Properties:
+            Path: /api/scouters/signup/
+            Method: post
             RestApiId: !Ref PPSAPI
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
