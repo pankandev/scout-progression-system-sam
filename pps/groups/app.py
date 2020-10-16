@@ -30,13 +30,19 @@ class GroupsService(ModelService):
         s_date = date_to_text(date).strip('-')
         return join_key(s_date, name)
 
+    @staticmethod
+    def generate_beneficiary_code(district: str, code: str):
+        h = hashlib.sha1(join_key(district, code).encode()).hexdigest()
+        int_hash = int(h, 16) % (10 ** 8)
+        return f'{int_hash:08}'
+
     @classmethod
     def create(cls, item: str):
         interface = cls.get_interface()
         group = schema.validate(item)
         district = group['district']
         code = cls.generate_code(datetime.now(), group['name'])
-        group['beneficiary_code'] = int(hashlib.sha1(join_key(district, code)).hexdigest(), 16) % (10 ** 8)
+        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
 
         del group['district']
 
