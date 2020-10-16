@@ -7,6 +7,24 @@ from core import JSONResponse
 from core.aws.errors import HTTPError
 
 
+class Token:
+    def __init__(self, access: str, expires: int, refresh: str, type_: str, id_: str):
+        self.access = access
+        self.expires = expires
+        self.refresh = refresh
+        self.id = id_
+        self.type = type_
+
+    def as_dict(self):
+        return {
+            "access": self.access,
+            "expires": self.access,
+            "refresh": self.refresh,
+            "id": self.id,
+            "type": self.type
+        }
+
+
 class CognitoService(ABC):
     __user_pool_id__: str
     _client: boto3.client = None
@@ -56,3 +74,24 @@ class CognitoService(ABC):
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Wrong confirmation code")
         except client.exceptions.NotAuthorizedException:
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Already confirmed")
+
+    @classmethod
+    def log_in(cls, username: str, password: str):
+        client = cls.get_client()
+        result = client.admin_initiate_auth(
+            UserPoolId=cls.__user_pool_id__,
+            ClientId=cls.get_client_id(),
+            AuthFlow="USER_PASSWORD_AUTH",
+            AuthParameters={
+                "USERNAME": username,
+                "PASSWORD": password
+            }
+        ).get('AuthenticationResult')
+        if result:
+            return Token(access=result["AccessToken"],
+                         expires=result["ExpiresIn"],
+                         type_=result["TokenType"],
+                         refresh=result["RefreshToken"],
+                         id_=result["IdToken"])
+        else:
+            return None

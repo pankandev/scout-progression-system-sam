@@ -54,6 +54,16 @@ Resources:
               type: string
             code:
               type: string
+        Login:
+          type: object
+          required:
+            - email
+            - password
+          properties:
+            email:
+              type: string
+            password:
+              type: string
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
@@ -346,6 +356,15 @@ Resources:
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: ScouterConfirm
+              Required: true
+        LoginScouter:
+          Type: Api
+          Properties:
+            Path: /api/scouters/login/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: Login
               Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function

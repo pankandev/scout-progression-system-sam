@@ -20,7 +20,7 @@ signup_schema = Schema({
 
 
 class ScoutersCognito(CognitoService):
-    __user_pool_id__ = os.environ.get("USER_POOL_ID")
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 class ScoutersService(ModelService):
@@ -88,6 +88,20 @@ def confirm_scouter(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 
 
+def login_scouter(event: HTTPEvent):
+    data = json.loads(event.body)
+    try:
+        token = ScoutersCognito.log_in(data['email'], data['password'])
+        if token is None:
+            return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Invalid credentials")
+        return JSONResponse({
+            "message": "Log-in successful",
+            "token": token.as_dict()
+        })
+    except ParamValidationError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
+
+
 """Handlers"""
 
 
@@ -113,6 +127,8 @@ def handler(event: dict, _) -> dict:
     elif event.method == "POST":
         if event.resource == "/api/scouters/signup":
             result = signup_scouter(event)
+        elif event.resource == "/api/scouters/login":
+            result = login_scouter(event)
         elif event.resource == "/api/scouters/confirm":
             result = confirm_scouter(event)
         else:
