@@ -25,6 +25,10 @@ Resources:
             UserPoolArn: !GetAtt BeneficiariesPool.Arn
           ScoutersAuthorizer:
             UserPoolArn: !GetAtt ScoutersPool.Arn
+  GroupSecretKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Key to encrypt group secrets
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
