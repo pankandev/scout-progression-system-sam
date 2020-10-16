@@ -326,7 +326,7 @@ Resources:
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:
-              Model: !Ref ScouterSignUp
+              Model: ScouterSignUp
               Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
