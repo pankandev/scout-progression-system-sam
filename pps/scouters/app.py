@@ -1,3 +1,4 @@
+import json
 import os
 
 from schema import Schema
@@ -67,10 +68,11 @@ def get_scouters(district: str, group: str, event: HTTPEvent):
 
 
 def signup_scouter(event: HTTPEvent):
-    ScoutersCognito.sign_up(event.body['email'], event.body['password'], {
-        'name': event.body['name'],
-        'middle-name': event.body['middle_name'],
-        'family-name': event.body['family_name']
+    data = json.loads(event.body)
+    ScoutersCognito.sign_up(data['email'], data['password'], {
+        'name': data['name'],
+        'middle-name': data['middle_name'],
+        'family-name': data['family_name']
     })
 
 
