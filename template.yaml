@@ -25,6 +25,25 @@ Resources:
             UserPoolArn: !GetAtt BeneficiariesPool.Arn
           ScoutersAuthorizer:
             UserPoolArn: !GetAtt ScoutersPool.Arn
+      Models:
+        ScouterSignUp:
+          type: object
+          required:
+            - email
+            - password
+            - name
+            - family_name
+          properties:
+            email:
+              type: string
+            password:
+              type: integer
+            name:
+              type: string
+            middle_name:
+              type: string
+            family_name:
+              type: string
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
@@ -281,25 +300,6 @@ Resources:
       CodeUri: pps/scouters/
       Handler: app.handler
       Runtime: python3.8
-      Models:
-        ScouterSignUp:
-          type: object
-          required:
-            - email
-            - password
-            - name
-            - family_name
-          properties:
-            email:
-              type: string
-            password:
-              type: integer
-            name:
-              type: string
-            middle_name:
-              type: string
-            family_name:
-              type: string
       Layers:
         - !Ref PPSCore
       Policies:
