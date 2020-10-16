@@ -217,12 +217,17 @@ Resources:
             Path: /api/districts/{district}/groups/
             Method: get
             RestApiId: !Ref PPSAPI
-
         GetGroup:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/
             Method: get
+            RestApiId: !Ref PPSAPI
+        CreateGroup:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/
+            Method: post
             RestApiId: !Ref PPSAPI
   ObjectivesFunction:
     Type: AWS::Serverless::Function
