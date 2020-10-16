@@ -37,7 +37,7 @@ Resources:
             email:
               type: string
             password:
-              type: integer
+              type: string
             name:
               type: string
             middle_name:
