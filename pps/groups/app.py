@@ -1,5 +1,6 @@
-import hashlib
 import json
+import random
+import hashlib
 from datetime import datetime
 
 from schema import Schema, SchemaError
@@ -26,18 +27,18 @@ class GroupsService(ModelService):
 
     @staticmethod
     def generate_code(date: datetime, name: str):
-        name = clean_text(name)
+        name = clean_text(name).lower()
         s_date = date_to_text(date).strip('-')
         return join_key(s_date, name)
 
     @staticmethod
     def generate_beneficiary_code(district: str, code: str):
         h = hashlib.sha1(join_key(district, code).encode()).hexdigest()
-        int_hash = int(h, 16) % (10 ** 8)
+        int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
         return f'{int_hash:08}'
 
     @classmethod
-    def create(cls, item: str):
+    def create(cls, item: dict):
         interface = cls.get_interface()
         group = schema.validate(item)
         district = group['district']
@@ -46,7 +47,7 @@ class GroupsService(ModelService):
 
         del group['district']
 
-        interface.create(district, code, group)
+        interface.create(district, group, code)
 
     @classmethod
     def get(cls, district: str, code: str):
