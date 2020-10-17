@@ -122,7 +122,7 @@ Resources:
       UserPoolId: !Ref ScoutersPool
       ExplicitAuthFlows:
         - ALLOW_USER_PASSWORD_AUTH
-        - REFRESH_TOKEN_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
   BeneficiariesClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
