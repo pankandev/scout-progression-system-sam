@@ -20,12 +20,10 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
       Auth:
-        DefaultAuthorizer: ScoutersAuthorizer
+        DefaultAuthorizer: UsersAuthorizer
         Authorizers:
-          BeneficiariesAuthorizer:
-            UserPoolArn: !GetAtt BeneficiariesPool.Arn
-          ScoutersAuthorizer:
-            UserPoolArn: !GetAtt ScoutersPool.Arn
+          UsersAuthorizer:
+            UserPoolArn: !GetAtt UsersPool.Arn
       Models:
         ScouterSignUp:
           type: object
@@ -75,27 +73,10 @@ Resources:
         - python3.8
       ContentUri: pps/core-layer/
   # Cognito
-  BeneficiariesPool:
+  UsersPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: BeneficiariesUsers
-      AdminCreateUserConfig:
-        AllowAdminCreateUserOnly: false
-      UsernameAttributes:
-        - email
-      AutoVerifiedAttributes:
-        - email
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 6
-          RequireLowercase: false
-          RequireNumbers: false
-          RequireSymbols: false
-          RequireUppercase: false
-  ScoutersPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: ScoutersUsers
+      UserPoolName: Users
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
       UsernameAttributes:
@@ -109,6 +90,8 @@ Resources:
           AttributeDataType: String
         - Name: family-name
           AttributeDataType: String
+        - Name: is-scouter
+          AttributeDataType: Boolean
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -116,20 +99,19 @@ Resources:
           RequireNumbers: true
           RequireSymbols: false
           RequireUppercase: true
-  ScoutersClient:
+  UsersClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: ScoutersClient
-      UserPoolId: !Ref ScoutersPool
+      ClientName: UsersClient
+      UserPoolId: !Ref UsersPool
       ExplicitAuthFlows:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
-  BeneficiariesClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: ScoutersClient
-      UserPoolId: !Ref BeneficiariesPool
+      WriteAttributes:
+        - name
+        - middle-name
+        - family-name
   # Database
   BeneficiariesTable:
     Properties:
@@ -168,11 +150,20 @@ Resources:
           AttributeType: S
         - AttributeName: code
           AttributeType: S
+        - AttributeName: beneficiary-code
+          AttributeType: S
       KeySchema:
         - AttributeName: district
           KeyType: HASH
         - AttributeName: code
           KeyType: RANGE
+      LocalSecondaryIndex:
+        IndexName: BeneficiaryCodeIndex
+        KeySchema:
+          - AttributeName: district
+            KeyType: HASH
+          - AttributeName: beneficiary-code
+            KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
@@ -290,6 +281,15 @@ Resources:
             Path: /api/districts/{district}/groups/
             Method: post
             RestApiId: !Ref PPSAPI
+        GetGroupByCode:
+          Type: Api
+          Properties:
+            Path: /api/scouters/confirm/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: ScouterConfirm
+              Required: true
   ObjectivesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -320,8 +320,8 @@ Resources:
     Properties:
       Environment:
         Variables:
-          COGNITO_CLIENT_ID: !Ref ScoutersClient
-          USER_POOL_ID: !Ref ScoutersPool
+          COGNITO_CLIENT_ID: !Ref UsersClient
+          USER_POOL_ID: !Ref UsersPool
       CodeUri: pps/scouters/
       Handler: app.handler
       Runtime: python3.8

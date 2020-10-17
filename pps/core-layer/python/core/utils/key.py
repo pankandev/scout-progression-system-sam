@@ -3,8 +3,11 @@ from datetime import datetime
 SPLITTER = '::'
 
 
-def clean_text(text: str):
-    return ''.join([char for char in text if char.isalnum() or char == ' '])
+def clean_text(text: str, remove_spaces: bool = False):
+    cleaned = ''.join([char for char in text if char.isalnum() or char == ' '])
+    if remove_spaces:
+        cleaned = cleaned.replace(' ', '-')
+    return cleaned
 
 
 def join_key(*args):
@@ -24,6 +27,6 @@ def text_to_date(date: str) -> datetime:
 
 
 def generate_code(name: str):
-    name = clean_text(name).lower()
+    name = clean_text(name, remove_spaces=True).lower()
     s_date = date_to_text(datetime.now()).replace('-', '')
     return join_key(name, s_date)

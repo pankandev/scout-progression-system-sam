@@ -95,3 +95,5 @@ class CognitoService(ABC):
                          id_=result["IdToken"])
         except client.exceptions.InvalidPasswordException:
             return None
+        except client.exceptions.NotAuthorizedException:
+            return None

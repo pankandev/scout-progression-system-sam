@@ -1,14 +1,13 @@
 import json
 import random
 import hashlib
-from datetime import datetime
 
 from schema import Schema, SchemaError
 
 from core import db, HTTPEvent, ModelService
 from core.aws.errors import HTTPError
 from core.aws.response import JSONResponse
-from core.utils.key import clean_text, date_to_text, join_key, generate_code
+from core.utils.key import clean_text, join_key, generate_code
 
 schema = Schema({
     'district': str,
@@ -26,10 +25,14 @@ class GroupsService(ModelService):
     __sort_key__ = "code"
 
     @staticmethod
-    def generate_beneficiary_code(district: str, code: str):
+    def generate_beneficiary_code(district: str, code: str, group: str):
         h = hashlib.sha1(join_key(district, code).encode()).hexdigest()
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
-        return f'{int_hash:08}'
+        return join_key(
+            f'{int_hash:08}',
+            clean_text(district, remove_spaces=True),
+            clean_text(group, remove_spaces=True)
+        )
 
     @classmethod
     def create(cls, item: dict):
@@ -37,7 +40,7 @@ class GroupsService(ModelService):
         group = schema.validate(item)
         district = group['district']
         code = generate_code(group['name'])
-        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
+        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code, group['name'])
 
         del group['district']
 

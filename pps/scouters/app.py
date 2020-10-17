@@ -73,7 +73,8 @@ def signup_scouter(event: HTTPEvent):
         ScoutersCognito.sign_up(data['email'], data['password'], {
             'name': data['name'],
             'middle-name': data.get('middle_name'),
-            'family-name': data['family_name']
+            'family-name': data['family_name'],
+            'is-scouter': True
         })
         return JSONResponse({"message": "OK"})
     except ParamValidationError as e:
