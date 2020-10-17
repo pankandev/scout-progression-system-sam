@@ -325,7 +325,13 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref ScoutersTable
+              !Ref ScoutersTabl
+        - Statement:
+            - Sid: LoginPolicy
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminInitiateAuth
+              Resource: '*'
       Events:
         GetScouter:
           Type: Api

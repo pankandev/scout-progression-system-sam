@@ -93,5 +93,5 @@ class CognitoService(ABC):
                          type_=result["TokenType"],
                          refresh=result["RefreshToken"],
                          id_=result["IdToken"])
-        except client.exceptions.AccessDeniedException:
+        except client.exceptions.InvalidPasswordException:
             return None
