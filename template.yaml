@@ -325,7 +325,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref ScoutersTabl
+              !Ref ScoutersTable
         - Statement:
             - Sid: LoginPolicy
               Effect: Allow
