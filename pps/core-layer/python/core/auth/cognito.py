@@ -18,7 +18,7 @@ class Token:
     def as_dict(self):
         return {
             "access": self.access,
-            "expires": self.access,
+            "expires": self.expires,
             "refresh": self.refresh,
             "id": self.id,
             "type": self.type
