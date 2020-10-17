@@ -82,7 +82,7 @@ class CognitoService(ABC):
             result = client.admin_initiate_auth(
                 UserPoolId=cls.__user_pool_id__,
                 ClientId=cls.get_client_id(),
-                AuthFlow="USER_PASSWORD_AUTH",
+                AuthFlow="ADMIN_NO_SRP_AUTH ",
                 AuthParameters={
                     "USERNAME": username,
                     "PASSWORD": password
