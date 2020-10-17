@@ -101,8 +101,6 @@ Resources:
         - email
       AutoVerifiedAttributes:
         - email
-      ExplicitAuthFlows:
-        - ALLOW_USER_PASSWORD_AUTH
       Schema:
         - Name: name
           AttributeDataType: String
@@ -122,6 +120,8 @@ Resources:
     Properties:
       ClientName: ScoutersClient
       UserPoolId: !Ref ScoutersPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
   BeneficiariesClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
