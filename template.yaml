@@ -101,6 +101,8 @@ Resources:
         - email
       AutoVerifiedAttributes:
         - email
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
       Schema:
         - Name: name
           AttributeDataType: String
