@@ -43,14 +43,11 @@ Resources:
               type: string
             family_name:
               type: string
-        ScouterConfirm:
+        Code:
           type: object
           required:
-            - email
             - code
           properties:
-            email:
-              type: string
             code:
               type: string
         Login:
@@ -284,11 +281,11 @@ Resources:
         GetGroupByCode:
           Type: Api
           Properties:
-            Path: /api/scouters/confirm/
+            Path: /api/groups/validate-code/
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:
-              Model: ScouterConfirm
+              Model: Code
               Required: true
   ObjectivesFunction:
     Type: AWS::Serverless::Function
@@ -368,7 +365,7 @@ Resources:
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:
-              Model: ScouterConfirm
+              Model: Code
               Required: true
         LoginScouter:
           Type: Api

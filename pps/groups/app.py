@@ -7,7 +7,7 @@ from schema import Schema, SchemaError
 from core import db, HTTPEvent, ModelService
 from core.aws.errors import HTTPError
 from core.aws.response import JSONResponse
-from core.utils.key import clean_text, join_key, generate_code
+from core.utils.key import clean_text, join_key, generate_code, split_key
 
 schema = Schema({
     'district': str,
@@ -23,6 +23,9 @@ class GroupsService(ModelService):
     __table_name__ = "groups"
     __partition_key__ = "district"
     __sort_key__ = "code"
+    __indices__ = {
+        "ByBeneficiaryCode": ("district", "beneficiary-code")
+    }
 
     @staticmethod
     def generate_beneficiary_code(district: str, code: str, group: str):
@@ -30,9 +33,18 @@ class GroupsService(ModelService):
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
         return join_key(
             f'{int_hash:08}',
-            clean_text(district, remove_spaces=True, lower=True),
+            district,
             clean_text(group, remove_spaces=True, lower=True)
         )
+
+    @staticmethod
+    def process_beneficiary_code(code: str):
+        num, district, group = split_key(code)
+        return {
+            "district": district,
+            "code": num,
+            "group": group
+        }
 
     @classmethod
     def create(cls, item: dict):
@@ -49,7 +61,15 @@ class GroupsService(ModelService):
     @classmethod
     def get(cls, district: str, code: str):
         interface = cls.get_interface()
-        return interface.get(district, code, attributes=["district-url", "url", "name"])
+        return interface.get(district, code, attributes=["district", "code", "name"])
+
+    @classmethod
+    def get_by_code(cls, code: str):
+        processed = GroupsService.process_beneficiary_code(code)
+        district = processed["district"]
+
+        interface = cls.get_interface("ByBeneficiaryCode")
+        return interface.get(district, code, attributes=["district", "code", "name"])
 
     @classmethod
     def query(cls, district: str):
@@ -95,17 +115,29 @@ def get_handler(event: HTTPEvent):
     return JSONResponse(response.as_dict())
 
 
+def validate_beneficiary_code(event: HTTPEvent):
+    code = json.loads(event.body)["code"]
+    group = GroupsService.get_by_code(code)
+    if group is None:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Invalid code")
+    return JSONResponse({
+        "message": "Code is OK",
+        "group": process_group(group, event)
+    })
+
+
 def post_handler(event: HTTPEvent):
     district_code = event.params["district"]
 
-    if district_code is not None:
+    if event.resource == "/api/groups/validate-code":
+        return validate_beneficiary_code(event)
+    elif district_code is not None:
         # create group
         if District.get({"code": district_code}).item is None:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"District '{district_code}' was not found")
-        result = create_group(district_code, json.loads(event.body))
+        return create_group(district_code, json.loads(event.body))
     else:
         return JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, f"Bad resource")
-    return JSONResponse(result.as_dict())
 
 
 def handler(event, _) -> dict:

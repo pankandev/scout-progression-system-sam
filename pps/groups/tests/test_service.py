@@ -1,10 +1,12 @@
+import json
 from datetime import datetime
 
 import pytest
 from botocore.stub import Stubber, ANY
 
+from core import HTTPEvent
 from core.utils.key import generate_code, split_key
-from ..app import GroupsService, create_group
+from ..app import GroupsService, create_group, validate_beneficiary_code
 
 
 @pytest.fixture(scope="function")
@@ -36,8 +38,38 @@ def test_add(ddb_stubber):
 
 
 def test_generate_beneficiary_code():
-    code = GroupsService.generate_beneficiary_code("District$", "code", "Group")
+    code = GroupsService.generate_beneficiary_code("district", "code", "Group")
     num, district, group = split_key(code)
     assert len(num) == 8
     assert district == "district"
     assert group == "group"
+
+
+def test_validate_code(ddb_stubber):
+    code = "01234567::district::group"
+
+    params = {
+        'TableName': 'groups',
+        'Key': {
+            "district": "district",
+            "beneficiary-code": code
+        },
+        'ProjectionExpression': 'district, code, name'
+    }
+    response = {
+        "Item": {
+            "name": {
+                "S": "Group"
+            }
+        }
+    }
+    ddb_stubber.add_response('get_item', response, params)
+
+    response = validate_beneficiary_code(HTTPEvent({
+        "body": json.dumps({
+            "code": code
+        })
+    })).as_dict()
+    assert json.loads(response["body"])["message"] == "Code is OK"
+
+    ddb_stubber.assert_no_pending_responses()

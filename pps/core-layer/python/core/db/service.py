@@ -42,7 +42,7 @@ class ModelIndex:
 
     def get(self, partition_key, sort_key=None, attributes=None):
         key = self.generate_key(partition_key, sort_key)
-        return self._model.get(key=key)
+        return self._model.get(key=key, attributes=attributes)
 
     def delete(self, partition_key, sort_key=None):
         key = self.generate_key(partition_key, sort_key)
@@ -65,7 +65,7 @@ class ModelService(ABC):
         if index is None:
             partition, sort = cls.__partition_key__, cls.__sort_key__
         else:
-            partition, sort = index[index_name]
+            partition, sort = index
 
         return ModelIndex(cls.__table_name__, partition_key=partition, sort_key=sort,
                           index_name=index_name)
