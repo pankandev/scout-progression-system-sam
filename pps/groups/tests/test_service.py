@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from botocore.stub import Stubber, ANY
 
-from core.utils.key import generate_code
+from core.utils.key import generate_code, split_key
 from ..app import GroupsService, create_group
 
 
@@ -36,6 +36,8 @@ def test_add(ddb_stubber):
 
 
 def test_generate_beneficiary_code():
-    code = GroupsService.generate_beneficiary_code("district", "code")
-    assert type(code) is str
-    assert len(code) == 8
+    code = GroupsService.generate_beneficiary_code("District$", "code", "Group")
+    num, district, group = split_key(code)
+    assert len(num) == 8
+    assert district == "district"
+    assert group == "group"

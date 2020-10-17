@@ -30,8 +30,8 @@ class GroupsService(ModelService):
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
         return join_key(
             f'{int_hash:08}',
-            clean_text(district, remove_spaces=True),
-            clean_text(group, remove_spaces=True)
+            clean_text(district, remove_spaces=True, lower=True),
+            clean_text(group, remove_spaces=True, lower=True)
         )
 
     @classmethod

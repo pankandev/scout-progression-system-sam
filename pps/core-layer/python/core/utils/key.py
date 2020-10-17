@@ -3,10 +3,12 @@ from datetime import datetime
 SPLITTER = '::'
 
 
-def clean_text(text: str, remove_spaces: bool = False):
+def clean_text(text: str, remove_spaces: bool = False, lower: bool = False):
     cleaned = ''.join([char for char in text if char.isalnum() or char == ' '])
     if remove_spaces:
         cleaned = cleaned.replace(' ', '-')
+    if lower:
+        cleaned = cleaned.lower()
     return cleaned
 
 
