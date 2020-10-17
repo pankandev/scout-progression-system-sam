@@ -49,7 +49,7 @@ def test_sign_up(service: CognitoService, ddb_stubber):
 
 def test_log_in(service: CognitoService, ddb_stubber):
     log_in_params = {
-        'AuthFlow': 'USER_PASSWORD_AUTH',
+        'AuthFlow': 'ADMIN_USER_PASSWORD_AUTH',
         'ClientId': 'TEST',
         'UserPoolId': 'users',
         'AuthParameters': {
