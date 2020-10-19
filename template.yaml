@@ -107,8 +107,8 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
       WriteAttributes:
         - custom:name
-        - custom:middle-name
-        - custom:family-name
+        - custom:middle_name
+        - custom:family_name
   # Database
   BeneficiariesTable:
     Properties:
