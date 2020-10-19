@@ -154,13 +154,13 @@ Resources:
           KeyType: HASH
         - AttributeName: code
           KeyType: RANGE
-      LocalSecondaryIndex:
-        IndexName: BeneficiaryCodeIndex
-        KeySchema:
-          - AttributeName: district
-            KeyType: HASH
-          - AttributeName: beneficiary-code
-            KeyType: RANGE
+      LocalSecondaryIndexes:
+        - IndexName: BeneficiaryCodeIndex
+          KeySchema:
+            - AttributeName: district
+              KeyType: HASH
+            - AttributeName: beneficiary-code
+              KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
