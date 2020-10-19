@@ -81,13 +81,13 @@ Resources:
       AutoVerifiedAttributes:
         - email
       Schema:
-        - Name: custom:name
+        - Name: name
           AttributeDataType: String
-        - Name: custom:middle_name
+        - Name: middle_name
           AttributeDataType: String
-        - Name: custom:family_name
+        - Name: family_name
           AttributeDataType: String
-        - Name: custom:is_scouter
+        - Name: is_scouter
           AttributeDataType: Boolean
       Policies:
         PasswordPolicy:
@@ -106,9 +106,9 @@ Resources:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       WriteAttributes:
-        - custom:name
-        - custom:middle_name
-        - custom:family_name
+        - name
+        - middle_name
+        - family_name
   # Database
   BeneficiariesTable:
     Properties:
