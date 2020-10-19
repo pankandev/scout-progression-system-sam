@@ -162,10 +162,6 @@ Resources:
             - AttributeName: beneficiary-code
               KeyType: RANGE
           Projection:
-            NonKeyAttributes:
-              - district
-              - code
-              - name
             ProjectionType: ALL
       ProvisionedThroughput:
         ReadCapacityUnits: 2
