@@ -106,9 +106,9 @@ Resources:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       WriteAttributes:
-        - name
-        - middle-name
-        - family-name
+        - custom:name
+        - custom:middle-name
+        - custom:family-name
   # Database
   BeneficiariesTable:
     Properties:
