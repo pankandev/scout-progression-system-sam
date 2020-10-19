@@ -83,11 +83,11 @@ Resources:
       Schema:
         - Name: custom:name
           AttributeDataType: String
-        - Name: custom:middle-name
+        - Name: custom:middle_name
           AttributeDataType: String
-        - Name: custom:family-name
+        - Name: custom:family_name
           AttributeDataType: String
-        - Name: custom:is-scouter
+        - Name: custom:is_scouter
           AttributeDataType: Boolean
       Policies:
         PasswordPolicy:

@@ -72,8 +72,8 @@ def signup_scouter(event: HTTPEvent):
     try:
         ScoutersCognito.sign_up(data['email'], data['password'], {
             'name': data['name'],
-            'middle-name': data.get('middle_name'),
-            'family-name': data['family_name'],
+            'middle_name': data.get('middle_name'),
+            'family_name': data['family_name'],
             'is-scouter': True
         })
         return JSONResponse({"message": "OK"})
