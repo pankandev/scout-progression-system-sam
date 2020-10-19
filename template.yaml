@@ -166,6 +166,7 @@ Resources:
               - district
               - code
               - name
+            ProjectionType: ALL
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
