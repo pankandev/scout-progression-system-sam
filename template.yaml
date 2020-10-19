@@ -81,13 +81,13 @@ Resources:
       AutoVerifiedAttributes:
         - email
       Schema:
-        - Name: name
+        - Name: custom:name
           AttributeDataType: String
-        - Name: middle-name
+        - Name: custom:middle-name
           AttributeDataType: String
-        - Name: family-name
+        - Name: custom:family-name
           AttributeDataType: String
-        - Name: is-scouter
+        - Name: custom:is-scouter
           AttributeDataType: Boolean
       Policies:
         PasswordPolicy:
