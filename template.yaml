@@ -60,12 +60,13 @@ Resources:
               type: string
             password:
               type: string
-  Type: AWS::ApiGateway::RequestValidator
-  Properties:
-    Name: PPSAPIValidator
-    RestApiId: !Ref PPSAPI
-    ValidateRequestBody: true
-    ValidateRequestParameters: false
+  PPSAPIValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      Name: PPSAPIValidator
+      RestApiId: !Ref PPSAPI
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
   # Core Layer
   PPSCore:
     Type: AWS::Serverless::LayerVersion
