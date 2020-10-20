@@ -25,7 +25,7 @@ Resources:
           UsersAuthorizer:
             UserPoolArn: !GetAtt UsersPool.Arn
       DefinitionBody:
-        swagger: 2.0
+        openapi: "3.0.0"
         x-amazon-apigateway-request-validators:
           basic:
             validateRequestBody: true
