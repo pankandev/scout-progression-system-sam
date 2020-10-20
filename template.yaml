@@ -15,10 +15,6 @@ Resources:
     Properties:
       Name: PPSAPI
       StageName: Prod
-      Cors:
-        AllowMethods: "'*'"
-        AllowHeaders: "'*'"
-        AllowOrigin: "'*'"
       Auth:
         DefaultAuthorizer: UsersAuthorizer
         Authorizers:
