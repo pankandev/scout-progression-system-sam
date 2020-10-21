@@ -62,11 +62,11 @@ Resources:
               type: string
         NewGroup:
           type: object
-            required:
-              - name
-            properties:
-              name:
-                type: string
+          required:
+            - name
+          properties:
+            name:
+              type: string
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
