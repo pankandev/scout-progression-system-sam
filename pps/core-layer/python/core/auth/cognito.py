@@ -75,16 +75,12 @@ class CognitoService(ABC):
                 "Value": attr_value
             })
 
-        try:
-            client.sign_up(
-                ClientId=cls.get_client_id(),
-                Username=username,
-                Password=password,
-                UserAttributes=attributes_list
-            )
-            return True
-        except client.exceptions.UsernameExistsException:
-            return False
+        client.sign_up(
+            ClientId=cls.get_client_id(),
+            Username=username,
+            Password=password,
+            UserAttributes=attributes_list
+        )
 
     @classmethod
     def add_to_group(cls, username: str, group: str):
