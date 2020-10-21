@@ -27,10 +27,10 @@ def test_sign_up(service: CognitoService, ddb_stubber):
         'Username': 'username',
         'Password': 'password',
         'UserAttributes': [{
-            "Name": "custom:key_a",
+            "Name": "key_a",
             "Value": "value_a"
         }, {
-            "Name": "custom:key_b",
+            "Name": "key_b",
             "Value": "value_b"
         }]
     }

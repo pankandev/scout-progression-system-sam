@@ -71,7 +71,7 @@ class CognitoService(ABC):
         attributes_list = list()
         for attr_name, attr_value in attributes.items():
             attributes_list.append({
-                "Name": f"custom:{attr_name}",
+                "Name": attr_name,
                 "Value": attr_value
             })
 
