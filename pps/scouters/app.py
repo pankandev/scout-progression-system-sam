@@ -53,8 +53,7 @@ def signup_scouter(event: HTTPEvent):
         UsersCognito.sign_up(data['email'], data['password'], {
             'name': data['name'],
             'middle_name': data.get('middle_name'),
-            'family_name': data['family_name'],
-            'code': generate_code(data['name'])
+            'family_name': data['family_name']
         })
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
