@@ -287,15 +287,6 @@ Resources:
             Path: /api/districts/{district}/groups/
             Method: post
             RestApiId: !Ref PPSAPI
-        GetGroupByCode:
-          Type: Api
-          Properties:
-            Path: /api/groups/validate-code/
-            Method: post
-            RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: Code
-              Required: true
   ObjectivesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -396,6 +387,15 @@ Resources:
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: Login
+              Required: true
+        GetGroupByCode:
+          Type: Api
+          Properties:
+            Path: /api/auth/validate-beneficiary-code/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: Code
               Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
