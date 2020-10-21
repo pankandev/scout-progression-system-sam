@@ -97,3 +97,5 @@ class CognitoService(ABC):
             return None
         except client.exceptions.NotAuthorizedException:
             return None
+        except client.exceptions.UserNotFoundException:
+            return None
