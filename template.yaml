@@ -15,18 +15,15 @@ Resources:
     Properties:
       Name: PPSAPI
       StageName: Prod
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
       Auth:
         DefaultAuthorizer: UsersAuthorizer
         Authorizers:
           UsersAuthorizer:
             UserPoolArn: !GetAtt UsersPool.Arn
-      DefinitionBody:
-        swagger: "2.0"
-        x-amazon-apigateway-request-validators:
-          basic:
-            validateRequestBody: true
-            validateRequestParameters: true
-        x-amazon-apigateway-request-validator: basic
       Models:
         ScouterSignUp:
           type: object
