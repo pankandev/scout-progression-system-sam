@@ -56,6 +56,10 @@ def signup_scouter(event: HTTPEvent):
         })
     except UsersCognito.get_client().exceptions.UsernameExistsException:
         return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
+    except UsersCognito.get_client().exceptions.InvalidPasswordException:
+        return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "Invalid password. Password must have "
+                                                                           "uppercase, lowercase, numbers and be at "
+                                                                           "least 6 characters long")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
