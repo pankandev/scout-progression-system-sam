@@ -81,28 +81,6 @@ def signup_scouter(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 
 
-def confirm_scouter(event: HTTPEvent):
-    data = json.loads(event.body)
-    try:
-        return ScoutersCognito.confirm(data['email'], data['code'])
-    except ParamValidationError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
-
-
-def login_scouter(event: HTTPEvent):
-    data = json.loads(event.body)
-    try:
-        token = ScoutersCognito.log_in(data['email'], data['password'])
-        if token is None:
-            return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Invalid credentials")
-        return JSONResponse({
-            "message": "Log-in successful",
-            "token": token.as_dict()
-        })
-    except ParamValidationError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
-
-
 """Handlers"""
 
 
@@ -128,10 +106,6 @@ def handler(event: dict, _) -> dict:
     elif event.method == "POST":
         if event.resource == "/api/scouters/signup":
             result = signup_scouter(event)
-        elif event.resource == "/api/scouters/login":
-            result = login_scouter(event)
-        elif event.resource == "/api/scouters/confirm":
-            result = confirm_scouter(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
     else:

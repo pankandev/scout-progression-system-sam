@@ -324,10 +324,6 @@ Resources:
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
       CodeUri: pps/scouters/
       Handler: app.handler
       Runtime: python3.8
@@ -337,12 +333,6 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref ScoutersTable
-        - Statement:
-            - Sid: LoginPolicy
-              Effect: Allow
-              Action:
-                - cognito-idp:AdminInitiateAuth
-              Resource: '*'
       Events:
         GetScouter:
           Type: Api
@@ -367,19 +357,39 @@ Resources:
             RequestModel:
               Model: ScouterSignUp
               Required: true
-        ConfirmScouter:
+  UsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref UsersClient
+          USER_POOL_ID: !Ref UsersPool
+      CodeUri: pps/auth/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - Statement:
+            - Sid: LoginPolicy
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminInitiateAuth
+              Resource: '*'
+      Events:
+        ConfirmUser:
           Type: Api
           Properties:
-            Path: /api/scouters/confirm/
+            Path: /api/auth/confirm/
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: Code
               Required: true
-        LoginScouter:
+        LoginUser:
           Type: Api
           Properties:
-            Path: /api/scouters/login/
+            Path: /api/auth/login/
             Auth:
               Authorizer: NONE
             Method: post
