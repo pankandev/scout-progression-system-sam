@@ -340,7 +340,7 @@ Resources:
         SignupScouter:
           Type: Api
           Properties:
-            Path: /api/scouters/signup/
+            Path: /api/auth/scouters-signup/
             Method: post
             RestApiId: !Ref PPSAPI
             Auth:
