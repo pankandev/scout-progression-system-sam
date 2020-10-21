@@ -77,6 +77,9 @@ def login(event: HTTPEvent):
             "message": "Log-in successful",
             "token": token.as_dict()
         })
+    except UsersCognito.get_client().exceptions.UserNotConfirmedException:
+        return JSONResponse.generate_error(HTTPError.UNCONFIRMED_USER, "User is unconfirmed, check your e-mail for "
+                                                                       "the confirmation code.")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
 
