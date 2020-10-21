@@ -2,20 +2,11 @@ import json
 import os
 
 from botocore.exceptions import ParamValidationError
-from schema import Schema
 
 from core import HTTPEvent, JSONResponse, ModelService
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.utils.key import generate_code
-
-schema = Schema({
-    'nickname': str,
-})
-
-signup_schema = Schema({
-    'nickname': str,
-})
 
 
 class UsersCognito(CognitoService):
