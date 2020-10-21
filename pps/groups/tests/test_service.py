@@ -6,7 +6,7 @@ from botocore.stub import Stubber, ANY
 
 from core import HTTPEvent
 from core.utils.key import generate_code, split_key
-from ..app import GroupsService, create_group, validate_beneficiary_code
+from ..app import GroupsService, create_group, validate_beneficiary_code, UsersCognito
 
 
 @pytest.fixture(scope="function")
@@ -18,23 +18,51 @@ def ddb_stubber():
     ddb_stubber.deactivate()
 
 
-def test_add(ddb_stubber):
+@pytest.fixture(scope="function")
+def cognito_stubber():
+    stubber = Stubber(UsersCognito.get_client())
+    stubber.activate()
+    yield stubber
+    stubber.deactivate()
+
+
+def test_add(ddb_stubber, cognito_stubber):
+    cognito_params = {
+        'AccessToken': 'abc123'
+    }
+    cognito_response = {
+        'Username': 'username',
+        'UserAttributes': [
+            {'Name': 'keyA', 'Value': 'valueA'},
+            {'Name': 'keyB', 'Value': 'valueB'}
+        ]
+    }
     add_item_params = {
         'TableName': 'groups',
         'Item': {
             "district": "district",
             "code": generate_code("Group"),
             "name": "Group",
-            "beneficiary_code": ANY
+            "beneficiary_code": ANY,
+            # "scouters": {},
+            #            "creator": {
+            #                "username": "username",
+            #                "attributes": {
+            #                    "keyA": "valueA",
+            #                    "keyB": "valueB"
+            #                }
+            #            }
         },
         'ReturnValues': 'NONE'
     }
     add_item_response = {}
     ddb_stubber.add_response('put_item', add_item_response, add_item_params)
+    # cognito_stubber.add_response('get_user', cognito_response, cognito_params)
     create_group("district", {
         "name": "Group"
-    })
+    }, "abc123")
     ddb_stubber.assert_no_pending_responses()
+    cognito_stubber.assert_no_pending_responses()
 
 
 def test_generate_beneficiary_code():

@@ -74,3 +74,24 @@ def test_log_in(service: CognitoService, ddb_stubber):
     assert token.expires == 123
     assert token.access == 'access'
     ddb_stubber.assert_no_pending_responses()
+
+
+def test_get_user(service: CognitoService, ddb_stubber):
+    params = {
+        'AccessToken': 'abc123'
+    }
+    response = {
+        'Username': 'username',
+        'UserAttributes': [
+            {'Name': 'keyA', 'Value': 'valueA'},
+            {'Name': 'keyB', 'Value': 'valueB'}
+        ]
+    }
+
+    ddb_stubber.add_response('get_user', response, params)
+    user = service.get_user('abc123')
+    assert user.username == 'username'
+    assert len(user.attributes) == 2
+    assert user.attributes['keyA'] == 'valueA'
+    assert user.attributes['keyB'] == 'valueB'
+    ddb_stubber.assert_no_pending_responses()

@@ -1,5 +1,6 @@
 import os
 from abc import ABC
+from typing import Dict
 
 import boto3
 
@@ -25,6 +26,18 @@ class Token:
         }
 
 
+class User:
+    def __init__(self, username: str, attributes: Dict[str, str]):
+        self.username = username
+        self.attributes = attributes
+
+    def to_dict(self):
+        return {
+            'username': self.username,
+            'attributes': self.attributes
+        }
+
+
 class CognitoService(ABC):
     __user_pool_id__: str
     _client: boto3.client = None
@@ -38,6 +51,16 @@ class CognitoService(ABC):
         if cls._client is None:
             cls._client = boto3.client('cognito-idp', region_name='us-west-2')
         return cls._client
+
+    @classmethod
+    def get_user(cls, access_token: str):
+        client = cls.get_client()
+        user_dict = client.get_user(AccessToken=access_token)
+        username = user_dict["Username"]
+        attributes = dict()
+        for attr in user_dict["UserAttributes"]:
+            attributes[attr["Name"]] = attr["Value"]
+        return User(username, attributes)
 
     @classmethod
     def sign_up(cls, username: str, password: str, attributes: dict = None):
@@ -57,6 +80,15 @@ class CognitoService(ABC):
             Username=username,
             Password=password,
             UserAttributes=attributes_list
+        )
+
+    @classmethod
+    def add_to_group(cls, username: str, group: str):
+        client = cls.get_client()
+        client.admin_add_user_to_group(
+            UserPoolId=cls.__user_pool_id__,
+            Username=username,
+            GroupName=group
         )
 
     @classmethod

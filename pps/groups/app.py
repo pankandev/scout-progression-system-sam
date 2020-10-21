@@ -1,10 +1,12 @@
 import json
+import os
 import random
 import hashlib
 
 from schema import Schema, SchemaError
 
 from core import db, HTTPEvent, ModelService
+from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.aws.response import JSONResponse
 from core.utils.key import clean_text, join_key, generate_code, split_key
@@ -13,6 +15,10 @@ schema = Schema({
     'district': str,
     'name': str,
 })
+
+
+class UsersCognito(CognitoService):
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 class District(db.Model):
@@ -47,12 +53,13 @@ class GroupsService(ModelService):
         }
 
     @classmethod
-    def create(cls, item: dict):
+    def create(cls, item: dict, scouter_access_token: str):
         interface = cls.get_interface()
         group = schema.validate(item)
         district = group['district']
         code = generate_code(group['name'])
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code, group['name'])
+        # group['creator_sub'] = UsersCognito.get_user(scouter_access_token).to_dict()
 
         del group['district']
 
@@ -85,10 +92,10 @@ def process_group(item: dict, event: HTTPEvent):
         pass
 
 
-def create_group(district: str, item: dict):
+def create_group(district: str, item: dict, scouter_access_token: str):
     item["district"] = district
     try:
-        GroupsService.create(item)
+        GroupsService.create(item, scouter_access_token)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Item content is invalid: \"{e.code}\"")
     return JSONResponse({"message": "OK"})
@@ -135,7 +142,8 @@ def post_handler(event: HTTPEvent):
         # create group
         if District.get({"code": district_code}).item is None:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"District '{district_code}' was not found")
-        return create_group(district_code, json.loads(event.body))
+        print(event.context)
+        return create_group(district_code, json.loads(event.body), "")
     else:
         return JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, f"Bad resource")
 

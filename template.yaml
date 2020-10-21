@@ -60,6 +60,13 @@ Resources:
               type: string
             password:
               type: string
+        NewGroup:
+          type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
@@ -88,6 +95,8 @@ Resources:
       AutoVerifiedAttributes:
         - email
       Schema:
+        - Name: code
+          AttributeDataType: String
         - Name: name
           AttributeDataType: String
         - Name: middle_name
@@ -116,7 +125,36 @@ Resources:
         - name
         - middle_name
         - family_name
+  UsersScoutersGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Scouters
+      Description: Scouters group
+      UserPoolId: !Ref UsersPool
+  UsersBeneficiariesGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Beneficiaries
+      Description: Beneficiaries group
+      UserPoolId: !Ref UsersPool
   # Database
+  ScoutersTable:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: group
+          AttributeType: S
+        - AttributeName: code
+          AttributeType: S
+      KeySchema:
+        - AttributeName: group
+          KeyType: HASH
+        - AttributeName: code
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: scouters
+    Type: AWS::DynamoDB::Table
   BeneficiariesTable:
     Properties:
       AttributeDefinitions:
@@ -192,23 +230,6 @@ Resources:
         WriteCapacityUnits: 1
       TableName: objectives
     Type: AWS::DynamoDB::Table
-  ScoutersTable:
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: group
-          AttributeType: S
-        - AttributeName: code
-          AttributeType: S
-      KeySchema:
-        - AttributeName: group
-          KeyType: HASH
-        - AttributeName: code
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 3
-      TableName: scouters
-    Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
       AttributeDefinitions:
@@ -259,6 +280,10 @@ Resources:
       CodeUri: pps/groups/
       Handler: app.handler
       Runtime: python3.8
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref UsersClient
+          USER_POOL_ID: !Ref UsersPool
       Layers:
         - !Ref PPSCore
       Policies:
@@ -287,6 +312,9 @@ Resources:
             Path: /api/districts/{district}/groups/
             Method: post
             RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: NewGroup
+              Required: true
   ObjectivesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -323,7 +351,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref ScoutersTable
+              !Ref GroupsTable
       Events:
         GetScouter:
           Type: Api

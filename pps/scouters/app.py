@@ -7,7 +7,6 @@ from schema import Schema
 from core import HTTPEvent, JSONResponse, ModelService
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
-from core.utils import join_key
 from core.utils.key import generate_code
 
 schema = Schema({
@@ -19,32 +18,22 @@ signup_schema = Schema({
 })
 
 
-class ScoutersCognito(CognitoService):
+class UsersCognito(CognitoService):
     __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
-class ScoutersService(ModelService):
-    __table_name__ = "scouters"
-    __partition_key__ = "group"
+class GroupsService(ModelService):
+    __table_name__ = "groups"
+    __partition_key__ = "district"
     __sort_key__ = "code"
+    __indices__ = {
+        "ByBeneficiaryCode": ("district", "beneficiary-code")
+    }
 
     @classmethod
-    def create(cls, district: str, group: str, item: dict):
+    def get(cls, district: str, group: str):
         interface = cls.get_interface()
-        scouter = schema.validate(item)
-        code = generate_code(scouter['nickname'])
-
-        interface.create(district, group, code)
-
-    @classmethod
-    def get(cls, district: str, group: str, code: str):
-        interface = cls.get_interface()
-        return interface.get(join_key(district, group), code)
-
-    @classmethod
-    def query(cls, district: str, group: str):
-        interface = cls.get_interface()
-        return interface.query(join_key(district, group))
+        return interface.get(district, group, attributes=['scouters'])
 
 
 def process_scouter(scouter: dict, event: HTTPEvent):
@@ -54,14 +43,14 @@ def process_scouter(scouter: dict, event: HTTPEvent):
     scouter["group"] = event.concat_url('districts', district, 'groups', group)
 
 
-def get_scouter(district: str, group: str, code: str, event: HTTPEvent):
-    result = ScoutersService.get(district, group, code)
+def get_scouter(district: str, group: str, index: int, event: HTTPEvent):
+    result = GroupsService.get(district, group)
     process_scouter(result.item, event)
     return result
 
 
 def get_scouters(district: str, group: str, event: HTTPEvent):
-    result = ScoutersService.query(district, group)
+    result = GroupsService.get(district, group)
     for obj in result.items:
         process_scouter(obj, event)
     return result
@@ -70,15 +59,17 @@ def get_scouters(district: str, group: str, event: HTTPEvent):
 def signup_scouter(event: HTTPEvent):
     data = json.loads(event.body)
     try:
-        ScoutersCognito.sign_up(data['email'], data['password'], {
+        UsersCognito.sign_up(data['email'], data['password'], {
             'name': data['name'],
             'middle_name': data.get('middle_name'),
             'family_name': data['family_name'],
-            'is-scouter': True
+            'code': generate_code(data['name'])
         })
-        return JSONResponse({"message": "OK"})
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
+
+    UsersCognito.add_to_group(data['email'], "Scouters")
+    return JSONResponse({"message": "OK"})
 
 
 """Handlers"""
@@ -104,7 +95,7 @@ def handler(event: dict, _) -> dict:
     if event.method == "GET":
         result = get_handler(event)
     elif event.method == "POST":
-        if event.resource == "/api/scouters/signup":
+        if event.resource == "/api/auth/scouters-signup":
             result = signup_scouter(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
