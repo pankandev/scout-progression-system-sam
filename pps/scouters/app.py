@@ -66,7 +66,7 @@ def signup_scouter(event: HTTPEvent):
             'code': generate_code(data['name'])
         })
     except ParamValidationError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
     UsersCognito.add_to_group(data['email'], "Scouters")
     return JSONResponse({"message": "OK"})
