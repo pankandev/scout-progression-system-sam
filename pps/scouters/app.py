@@ -6,7 +6,6 @@ from botocore.exceptions import ParamValidationError
 from core import HTTPEvent, JSONResponse, ModelService
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
-from core.utils.key import generate_code
 
 
 class UsersCognito(CognitoService):

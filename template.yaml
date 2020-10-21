@@ -356,6 +356,12 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref GroupsTable
+        - Statement:
+            - Sid: CognitoIDPAddUserToGroup
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminAddUserToGroup
+              Resource: '*'
       Events:
         GetScouter:
           Type: Api
