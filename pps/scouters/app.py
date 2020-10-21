@@ -54,6 +54,8 @@ def signup_scouter(event: HTTPEvent):
             'middle_name': data.get('middle_name'),
             'family_name': data['family_name']
         })
+    except UsersCognito.get_client().exceptions.UsernameExistsException:
+        return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
