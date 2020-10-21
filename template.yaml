@@ -410,6 +410,8 @@ Resources:
           Type: Api
           Properties:
             Path: /api/auth/confirm/
+            Auth:
+              Authorizer: NONE
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:
