@@ -121,15 +121,19 @@ Resources:
           Required: true
         - Name: middle_name
           AttributeDataType: String
+          Required: false
         - Name: family_name
           AttributeDataType: String
           Required: true
         - Name: gender
           AttributeDataType: String
+          Required: false
         - Name: birthdate
           AttributeDataType: String
+          Required: false
         - Name: nickname
           AttributeDataType: String
+          Required: false
       Policies:
         PasswordPolicy:
           MinimumLength: 6
