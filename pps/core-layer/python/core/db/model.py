@@ -12,7 +12,7 @@ from .types import DynamoDBKey, DynamoDBTypes
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
 
-RESERVED_KEYWORDS = ['name']
+RESERVED_KEYWORDS = ['name', 'unit']
 
 
 def pass_not_none_arguments(fn, **kwargs):
@@ -51,7 +51,7 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @staticmethod
-    def attributes_to_projection_and_expression(attributes: List[str]):
+    def replace_keyword_attributes(attributes: List[str]):
         attr_expression = {}
         for attr_idx in range(len(attributes)):
             exp = attributes[attr_idx]
@@ -60,9 +60,14 @@ class AbstractModel(abc.ABC):
                 attr_expression[model_exp] = exp
                 exp = model_exp
             attributes[attr_idx] = exp
-        attributes = ', '.join(attributes)
         if len(attr_expression) == 0:
             attr_expression = None
+        return attr_expression
+
+    @staticmethod
+    def attributes_to_projection_and_expression(attributes: List[str]):
+        attr_expression = AbstractModel.replace_keyword_attributes(attributes)
+        attributes = ', '.join(attributes)
         return attr_expression, attributes
 
     @classmethod
@@ -96,12 +101,23 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @classmethod
-    def add(cls, item: dict, condition=None):
+    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None):
         """
         Create an item from the database
         """
         table = cls.get_table()
-        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition)
+
+        condition = None
+        exp = None
+        if raise_if_attributes_exist is not None:
+            exp = cls.replace_keyword_attributes(raise_if_attributes_exist)
+            conditions = list()
+            for attr in raise_if_attributes_exist:
+                conditions.append(f'attribute_not_exists({attr})')
+            condition = ' AND '.join(conditions)
+
+        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
+                                ExpressionAttributeNames=exp)
 
     @classmethod
     def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:
