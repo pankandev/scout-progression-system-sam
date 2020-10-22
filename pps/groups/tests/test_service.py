@@ -87,9 +87,10 @@ def test_join(ddb_stubber: Stubber):
             "sub": "user-sub",
             "full-name": "Name Family",
             "nickname": "Nick Name",
-            "tasks": []
+            "tasks": [],
         },
-        'ReturnValues': 'NONE'
+        'ReturnValues': 'NONE',
+        'ConditionExpression': 'attribute_not_exists(unit) AND attribute_not_exists(code)'
     }
     beneficiary_response = {
     }
