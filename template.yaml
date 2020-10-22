@@ -502,7 +502,7 @@ Resources:
         SignupBeneficiary:
           Type: Api
           Properties:
-            Path: /api/auth/beneficiary-signup/
+            Path: /api/auth/beneficiaries-signup/
             Method: post
             RestApiId: !Ref PPSAPI
             Auth:

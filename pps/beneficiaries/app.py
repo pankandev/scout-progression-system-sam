@@ -151,18 +151,11 @@ def get_handler(event: HTTPEvent):
 
 
 def post_handler(event: HTTPEvent):
-    district = event.params["district"]
-    group = event.params["group"]
-    unit = event.params["unit"]
-    code = event.params.get("code")
-
-    if unit not in ("scouts", "guides"):
-        result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
-    elif event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/{unit}/signup":
-        result = create_beneficiary(district, group, unit, json.loads(event.body))
+    if event.resource == "/api/auth/beneficiaries-signup":
+        result = signup_beneficiary(event)
     else:
         result = JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, "Unknown route")
-    return JSONResponse(result.as_dict())
+    return result
 
 
 def handler(event: dict, _) -> dict:
