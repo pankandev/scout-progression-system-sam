@@ -12,6 +12,9 @@ from .types import DynamoDBKey, DynamoDBTypes
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
 
+RESERVED_KEYWORDS = ['name']
+
+
 def pass_not_none_arguments(fn, **kwargs):
     args = {}
     for key in kwargs:
@@ -57,7 +60,18 @@ class AbstractModel(abc.ABC):
         """
         List items from a database
         """
+
+        attr_expression = None
         if attributes is not None:
+            attr_expression = {}
+            for attr_idx in range(len(attributes)):
+                exp = attributes[attr_idx]
+                if exp in RESERVED_KEYWORDS:
+                    model_exp = f"#model_{exp}"
+                    attr_expression[model_exp] = exp
+                    exp = model_exp
+                attributes[attr_idx] = exp
+
             attributes = ', '.join(attributes)
 
         key_conditions = None
@@ -71,7 +85,8 @@ class AbstractModel(abc.ABC):
 
         table = cls.get_table()
         result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=attributes, IndexName=index,
-                                         ExclusiveStartKey=start_key, KeyConditions=key_conditions)
+                                         ExclusiveStartKey=start_key, KeyConditions=key_conditions,
+                                         ExpressionAttributeNames=attr_expression)
         return QueryResult(result)
 
     @classmethod
@@ -88,10 +103,21 @@ class AbstractModel(abc.ABC):
         Delete an item from the database
         """
         table = cls.get_table()
+
+        attr_expression = None
         if attributes is not None:
+            attr_expression = {}
+            for attr_idx in range(len(attributes)):
+                exp = attributes[attr_idx]
+                if exp in RESERVED_KEYWORDS:
+                    model_exp = f"#model_{exp}"
+                    attr_expression[model_exp] = exp
+                    exp = model_exp
+                attributes[attr_idx] = exp
             attributes = ', '.join(attributes)
 
-        result = pass_not_none_arguments(table.get_item, Key=key, ProjectionExpression=attributes)
+        result = pass_not_none_arguments(table.get_item, Key=key, ProjectionExpression=attributes,
+                                         ExpressionAttributeNames=attr_expression)
         return GetResult(result)
 
     @staticmethod

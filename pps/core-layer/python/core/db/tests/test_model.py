@@ -51,7 +51,9 @@ def test_get(ddb_stubber):
     }
     get_item_params = {
         'TableName': 'items',
-        'Key': key
+        'Key': key,
+        'ExpressionAttributeNames': {'#model_name': 'name'},
+        'ProjectionExpression': '#model_name, key'
     }
     get_item_response = {'Item': {
         'hash': {'S': 'value_h'},
@@ -59,7 +61,7 @@ def test_get(ddb_stubber):
     }}
 
     ddb_stubber.add_response('get_item', get_item_response, get_item_params)
-    result = ItemsModel.get(key)
+    result = ItemsModel.get(key, attributes=['name', 'key'])
     assert result.item["hash"] == "value_h"
     assert result.item["range"] == "value_r"
     ddb_stubber.assert_no_pending_responses()
@@ -74,7 +76,9 @@ def test_query(ddb_stubber):
                 'ComparisonOperator': 'EQ'
             }
         },
-        'Limit': 10
+        'Limit': 10,
+        'ProjectionExpression': '#model_name, key',
+        'ExpressionAttributeNames': {'#model_name': 'name'}
     }
     query_response = {'Items': [
         {
@@ -88,7 +92,7 @@ def test_query(ddb_stubber):
     ]}
 
     ddb_stubber.add_response('query', query_response, query_params)
-    result = ItemsModel.query(keys={'hash': 'value_h'}, limit=10)
+    result = ItemsModel.query(keys={'hash': 'value_h'}, limit=10, attributes=['name', 'key'])
     for item in result.items:
         assert item["hash"] == "value_h"
 

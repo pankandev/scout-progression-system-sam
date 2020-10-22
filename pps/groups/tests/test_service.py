@@ -82,7 +82,8 @@ def test_validate_code(ddb_stubber):
             "district": "district",
             "beneficiary-code": code
         },
-        'ProjectionExpression': 'district, code, name'
+        'ProjectionExpression': 'district, code, #model_name',
+        'ExpressionAttributeNames': {'#model_name': 'name'}
     }
     response = {
         "Item": {

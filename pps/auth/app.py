@@ -60,7 +60,6 @@ def validate_beneficiary_code(event: HTTPEvent):
 
 def confirm_user(event: HTTPEvent):
     data = json.loads(event.body)
-    print(event.context)
     try:
         return UsersCognito.confirm(data['email'], data['code'])
     except UsersCognito.get_client().UserNotFoundException:
