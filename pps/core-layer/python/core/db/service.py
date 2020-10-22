@@ -30,9 +30,15 @@ class ModelIndex:
             keys[self.sort] = sort
         return keys
 
-    def create(self, partition_key, item: dict, sort_key=None):
+    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists=False):
         key = self.generate_key(partition_key, sort_key)
-        self._model.add({**item, **key})
+        if not raise_if_exists:
+            condition = None
+        elif self.sort is not None:
+            condition = f'attribute_not_exists({self.partition}) AND attribute_not_exists({self.sort})'
+        else:
+            condition = f'attribute_not_exists({self.partition})'
+        self._model.add({**item, **key}, condition=condition)
 
     def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None):
         no_key = partition_key is None and sort_key is None

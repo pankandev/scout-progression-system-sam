@@ -96,12 +96,12 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @classmethod
-    def add(cls, item: dict):
+    def add(cls, item: dict, condition=None):
         """
         Create an item from the database
         """
         table = cls.get_table()
-        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE')
+        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition)
 
     @classmethod
     def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:
