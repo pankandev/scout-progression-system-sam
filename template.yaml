@@ -222,8 +222,6 @@ Resources:
           AttributeType: S
         - AttributeName: code
           AttributeType: S
-        - AttributeName: beneficiary-code
-          AttributeType: S
       KeySchema:
         - AttributeName: district
           KeyType: HASH
