@@ -99,7 +99,7 @@ class BeneficiariesService(ModelService):
         try:
             interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True)
             return True
-        except interface.client.exceptions.ConditionalCheckFailedException:
+        except interface.client.meta.client.exceptions.ConditionalCheckFailedException:
             return False
 
 
