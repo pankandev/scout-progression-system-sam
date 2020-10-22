@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 from .db import db
 
@@ -34,13 +34,13 @@ class ModelIndex:
             keys[self.sort] = sort
         return keys
 
-    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists=False):
+    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists=False, conditions: List[str] = None):
         key = self.generate_key(partition_key, sort_key)
         must_exist = None
         if raise_if_exists:
             must_exist = list(key.keys())
 
-        self._model.add({**item, **key}, raise_if_attributes_exist=must_exist)
+        self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions)
 
     def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None):
         no_key = partition_key is None and sort_key is None

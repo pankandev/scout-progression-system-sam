@@ -21,11 +21,11 @@ def split_key(key: str):
 
 
 def date_to_text(date: datetime) -> str:
-    return date.strftime("%Y-%m-%d")
+    return date.strftime("%Y-%m-%d-%H-%M-%S")
 
 
 def text_to_date(date: str) -> datetime:
-    return datetime.strptime(date, "%Y-%m-%d")
+    return datetime.strptime(date, "%Y-%m-%d-%H-%M-%S")
 
 
 def generate_code(name: str, split = False):

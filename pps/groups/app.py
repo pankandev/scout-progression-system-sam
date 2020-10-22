@@ -33,7 +33,7 @@ class GroupsService(ModelService):
     __sort_key__ = "code"
 
     @staticmethod
-    def generate_beneficiary_code(district: str, group_code: str, group_name: str):
+    def generate_beneficiary_code(district: str, group_code: str):
         h = hashlib.sha1(join_key(district, group_code).encode()).hexdigest()
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
         return f'{int_hash:08}'
@@ -52,7 +52,7 @@ class GroupsService(ModelService):
         interface = cls.get_interface()
         group = schema.validate(item)
         code = generate_code(group['name'])
-        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code, group['name'])
+        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
         group['creator'] = {
             "sub": creator_sub,
             "name": creator_full_name
@@ -84,13 +84,13 @@ class BeneficiariesService(ModelService):
     def generate_code(date: datetime, nick: str):
         nick = clean_text(nick, remove_spaces=True, lower=True)
         s_date = date_to_text(date).replace('-', '')
-        return join_key(s_date, nick)
+        return join_key(nick, s_date).replace('::', '')
 
     @classmethod
     def create(cls, district: str, group: str, unit: str, authorizer: Authorizer):
         interface = cls.get_interface()
 
-        code = cls.generate_code(datetime.now(), authorizer.name)
+        code = cls.generate_code(datetime.now(), authorizer.full_name)
         beneficiary = {
             "sub": authorizer.sub,
             "full-name": authorizer.full_name,
@@ -98,7 +98,8 @@ class BeneficiariesService(ModelService):
             "tasks": []
         }
         try:
-            interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True)
+            interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True,
+                             conditions=[f'sub="{authorizer.sub}"'])
             return True
         except botocore.exceptions.ClientError:
             return False

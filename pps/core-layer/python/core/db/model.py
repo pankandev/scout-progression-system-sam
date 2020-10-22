@@ -101,21 +101,20 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @classmethod
-    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None):
+    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None, conditions: List[str] = None):
         """
         Create an item from the database
         """
         table = cls.get_table()
 
-        condition = None
         exp = None
         if raise_if_attributes_exist is not None:
             exp = cls.replace_keyword_attributes(raise_if_attributes_exist)
-            conditions = list()
+            conditions = list() if conditions is None else conditions
             for attr in raise_if_attributes_exist:
                 conditions.append(f'attribute_not_exists({attr})')
-            condition = ' AND '.join(conditions)
 
+        condition = ' AND '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
                                 ExpressionAttributeNames=exp)
 

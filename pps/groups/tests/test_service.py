@@ -35,8 +35,8 @@ def test_add(ddb_stubber):
     }
     add_item_response = {}
     ddb_stubber.add_response('put_item', add_item_response, add_item_params)
-    ben_code = GroupsService.generate_beneficiary_code("district", "group", "Group")
-    GroupsService.generate_beneficiary_code = lambda x, y, z: ben_code
+    ben_code = GroupsService.generate_beneficiary_code("district", "group")
+    GroupsService.generate_beneficiary_code = lambda x, y: ben_code
     response = create_group("district", {
         "name": "Group"
     }, Authorizer({
@@ -51,12 +51,12 @@ def test_add(ddb_stubber):
 
 
 def test_generate_beneficiary_code():
-    code = GroupsService.generate_beneficiary_code("district", "code", "Group")
+    code = GroupsService.generate_beneficiary_code("district", "code")
     assert len(code) == 8
 
 
 def test_join(ddb_stubber: Stubber):
-    beneficiary_code = GroupsService.generate_beneficiary_code("district", "group", "Group")
+    beneficiary_code = GroupsService.generate_beneficiary_code("district", "group")
 
     group_params = {
         'TableName': 'groups',
@@ -90,7 +90,7 @@ def test_join(ddb_stubber: Stubber):
             "tasks": [],
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(code)',
+        'ConditionExpression': 'sub="user-sub" AND attribute_not_exists(#model_unit) AND attribute_not_exists(code)',
         'ExpressionAttributeNames': {'#model_unit': 'unit'}
     }
     beneficiary_response = {

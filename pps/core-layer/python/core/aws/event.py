@@ -25,9 +25,14 @@ class Authorizer:
     @property
     def full_name(self):
         if self.middle_name is None:
-            names = [self.name, self.family_name]
+            return self.base_name
         else:
             names = [self.name, self.middle_name, self.family_name]
+        return ' '.join(names)
+
+    @property
+    def base_name(self):
+        names = [self.name, self.family_name]
         return ' '.join(names)
 
 
