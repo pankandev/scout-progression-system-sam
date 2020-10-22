@@ -128,7 +128,7 @@ class AbstractModel(abc.ABC):
                 val_name = ':val_' + exp[attr]
                 val = raise_attribute_equals[exp[attr]]
                 attribute_values[val_name] = {'S': val}
-                conditions.append(f'{attr} != {val_name}')
+                conditions.append(f'NOT {attr} = {val_name}')
 
         condition = ' AND '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
