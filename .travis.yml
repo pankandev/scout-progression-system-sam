@@ -27,4 +27,4 @@ notifications:
     on_failure: always
 env:
   global:
-    - AWS_DEFAULT_REGION=us-west-1
+    - AWS_DEFAULT_REGION=us-west-2
