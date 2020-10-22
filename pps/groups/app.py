@@ -4,6 +4,7 @@ import random
 import hashlib
 from datetime import datetime
 
+import botocore
 from schema import Schema, SchemaError
 
 from core import db, HTTPEvent, ModelService
@@ -99,7 +100,7 @@ class BeneficiariesService(ModelService):
         try:
             interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True)
             return True
-        except interface.client.meta.client.exceptions.ConditionalCheckFailedException:
+        except botocore.exceptions.ClientError:
             return False
 
 
