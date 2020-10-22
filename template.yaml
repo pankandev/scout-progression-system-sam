@@ -121,13 +121,11 @@ Resources:
           Required: true
         - Name: middle_name
           AttributeDataType: String
-          Required: true
         - Name: family_name
           AttributeDataType: String
           Required: true
         - Name: gender
           AttributeDataType: String
-          Required: true
         - Name: birthdate
           AttributeDataType: String
         - Name: nickname
