@@ -96,7 +96,11 @@ class BeneficiariesService(ModelService):
             "nickname": authorizer.nickname,
             "tasks": []
         }
-        interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True)
+        try:
+            interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True)
+            return True
+        except interface.client.exceptions.ConditionalCheckFailedException:
+            return False
 
 
 def process_group(item: dict, event: HTTPEvent):
@@ -119,8 +123,9 @@ def join_group(district: str, group: str, unit: str, code: str, authorizer: Auth
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item["beneficiary_code"] != code:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
-    BeneficiariesService.create(district, group, unit, authorizer)
-    return JSONResponse({"message": "OK"})
+    if BeneficiariesService.create(district, group, unit, authorizer):
+        return JSONResponse({"message": "OK"})
+    return JSONResponse.generate_error(HTTPError.ALREADY_IN_USE, "You have already joined this group")
 
 
 def get_handler(event: HTTPEvent):

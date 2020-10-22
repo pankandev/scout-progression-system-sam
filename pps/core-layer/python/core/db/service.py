@@ -14,6 +14,10 @@ class ModelIndex:
         self.sort = sort_key
         self.index_name = index_name
 
+    @property
+    def client(self):
+        return self._model.get_table().meta.client
+
     def generate_key(self, partition=None, sort=None, full=True):
         keys = dict()
         if sort is not None and self.sort is None:
