@@ -34,13 +34,15 @@ class ModelIndex:
             keys[self.sort] = sort
         return keys
 
-    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists=False, conditions: List[str] = None):
+    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists=False, conditions: List[str] = None,
+               attribute_values: str = None):
         key = self.generate_key(partition_key, sort_key)
         must_exist = None
         if raise_if_exists:
             must_exist = list(key.keys())
 
-        self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions)
+        self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions,
+                        attribute_values=attribute_values)
 
     def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None):
         no_key = partition_key is None and sort_key is None

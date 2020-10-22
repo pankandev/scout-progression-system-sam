@@ -101,7 +101,7 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @classmethod
-    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None, conditions: List[str] = None):
+    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None, conditions: List[str] = None, attribute_values: str = None):
         """
         Create an item from the database
         """
@@ -116,7 +116,7 @@ class AbstractModel(abc.ABC):
 
         condition = ' AND '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
-                                ExpressionAttributeNames=exp)
+                                ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
 
     @classmethod
     def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:
