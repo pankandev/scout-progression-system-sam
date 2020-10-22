@@ -50,6 +50,21 @@ class AbstractModel(abc.ABC):
                                          ExclusiveStartKey=start_key)
         return QueryResult(result)
 
+    @staticmethod
+    def attributes_to_projection_and_expression(attributes: List[str]):
+        attr_expression = {}
+        for attr_idx in range(len(attributes)):
+            exp = attributes[attr_idx]
+            if exp in RESERVED_KEYWORDS:
+                model_exp = f"#model_{exp}"
+                attr_expression[model_exp] = exp
+                exp = model_exp
+            attributes[attr_idx] = exp
+        attributes = ', '.join(attributes)
+        if len(attr_expression) == 0:
+            attr_expression = None
+        return attr_expression, attributes
+
     @classmethod
     def query(cls,
               limit: int = None,
@@ -63,16 +78,7 @@ class AbstractModel(abc.ABC):
 
         attr_expression = None
         if attributes is not None:
-            attr_expression = {}
-            for attr_idx in range(len(attributes)):
-                exp = attributes[attr_idx]
-                if exp in RESERVED_KEYWORDS:
-                    model_exp = f"#model_{exp}"
-                    attr_expression[model_exp] = exp
-                    exp = model_exp
-                attributes[attr_idx] = exp
-
-            attributes = ', '.join(attributes)
+            attr_expression, attributes = cls.attributes_to_projection_and_expression(attributes)
 
         key_conditions = None
         if keys is not None:
@@ -106,15 +112,7 @@ class AbstractModel(abc.ABC):
 
         attr_expression = None
         if attributes is not None:
-            attr_expression = {}
-            for attr_idx in range(len(attributes)):
-                exp = attributes[attr_idx]
-                if exp in RESERVED_KEYWORDS:
-                    model_exp = f"#model_{exp}"
-                    attr_expression[model_exp] = exp
-                    exp = model_exp
-                attributes[attr_idx] = exp
-            attributes = ', '.join(attributes)
+            attr_expression, attributes = cls.attributes_to_projection_and_expression(attributes)
 
         result = pass_not_none_arguments(table.get_item, Key=key, ProjectionExpression=attributes,
                                          ExpressionAttributeNames=attr_expression)

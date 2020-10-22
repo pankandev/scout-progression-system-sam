@@ -64,8 +64,7 @@ def test_join(ddb_stubber: Stubber):
             "district": "district",
             "code": "group"
         },
-        'ProjectionExpression': 'beneficiary_code',
-        'ExpressionAttributeNames': {}
+        'ProjectionExpression': 'beneficiary_code'
     }
     group_response = {
         "Item": {

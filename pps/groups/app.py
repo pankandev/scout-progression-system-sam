@@ -71,7 +71,7 @@ class GroupsService(ModelService):
     @classmethod
     def query(cls, district: str):
         interface = cls.get_interface()
-        return interface.query(district, attributes=["district", "name"])
+        return interface.query(district, attributes=["district", "name", "code"])
 
 
 class BeneficiariesService(ModelService):
