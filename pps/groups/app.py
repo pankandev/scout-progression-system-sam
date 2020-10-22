@@ -101,7 +101,8 @@ class BeneficiariesService(ModelService):
             interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True,
                              conditions=[f'sub="{authorizer.sub}"'])
             return True
-        except botocore.exceptions.ClientError:
+        except botocore.exceptions.ClientError as e:
+            print(e)
             return False
 
 
