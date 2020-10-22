@@ -90,8 +90,9 @@ def test_join(ddb_stubber: Stubber):
             "tasks": [],
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'sub=:val_sub AND attribute_not_exists(#model_unit) AND attribute_not_exists(code)',
-        'ExpressionAttributeNames': {'#model_unit': 'unit'},
+        'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(code) '
+                               'AND #model_sub = :val_sub',
+        'ExpressionAttributeNames': {'#model_unit': 'unit', '#model_sub': 'sub'},
         'ExpressionAttributeValues': {':val_sub': {'S': 'user-sub'}}
     }
     beneficiary_response = {

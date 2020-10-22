@@ -12,7 +12,7 @@ from .types import DynamoDBKey, DynamoDBTypes
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
 
-RESERVED_KEYWORDS = ['name', 'unit']
+RESERVED_KEYWORDS = ['name', 'unit', 'sub']
 
 
 def pass_not_none_arguments(fn, **kwargs):
@@ -101,10 +101,12 @@ class AbstractModel(abc.ABC):
         return QueryResult(result)
 
     @classmethod
-    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None, conditions: List[str] = None, attribute_values: str = None):
+    def add(cls, item: dict, raise_if_attributes_exist: List[str] = None, conditions: List[str] = None,
+            raise_attribute_equals: dict = None):
         """
         Create an item from the database
         """
+        # [f'#model_sub=:val_sub'], attribute_values = {":val_sub": {"S": authorizer.sub}}
         table = cls.get_table()
 
         exp = None
@@ -113,6 +115,20 @@ class AbstractModel(abc.ABC):
             conditions = list() if conditions is None else conditions
             for attr in raise_if_attributes_exist:
                 conditions.append(f'attribute_not_exists({attr})')
+
+        attribute_values = None
+        if raise_attribute_equals is not None:
+            attribute_values = {}
+            if exp is None:
+                exp = {}
+            attrs = list(raise_attribute_equals.keys())
+            exp = {**exp, **cls.replace_keyword_attributes(attrs)}
+            conditions = list() if conditions is None else conditions
+            for attr in attrs:
+                val_name = ':val_' + exp[attr]
+                val = raise_attribute_equals[exp[attr]]
+                attribute_values[val_name] = {'S': val}
+                conditions.append(f'{attr} = {val_name}')
 
         condition = ' AND '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
