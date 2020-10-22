@@ -3,7 +3,7 @@ import os
 
 class Authorizer:
     def __init__(self, authorizer: dict):
-        claims = authorizer["Claims"]
+        claims = authorizer["claims"]
         self.sub: str = claims.get("sub")
         self.groups: str = claims.get("cognito:groups")
         self.email_verified: str = claims.get("email_verified")
@@ -40,6 +40,7 @@ class HTTPEvent:
         self.context: dict = event.get("requestContext", {})
 
         authorizer_data = self.context.get("authorizer")
+        print(authorizer_data)
         self.authorizer = Authorizer(authorizer_data) if authorizer_data else None
 
         params = event.get("pathParameters", {})

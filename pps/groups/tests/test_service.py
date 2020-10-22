@@ -40,7 +40,7 @@ def test_add(ddb_stubber):
     response = create_group("district", {
         "name": "Group"
     }, Authorizer({
-        "Claims": {
+        "claims": {
             "sub": "abc123",
             "name": "Name",
             "family_name": "Family"
@@ -99,7 +99,7 @@ def test_join(ddb_stubber: Stubber):
     ddb_stubber.add_response('put_item', beneficiary_response, beneficiary_params)
 
     response = join_group("district", "group", "scouts", beneficiary_code, Authorizer({
-        "Claims": {
+        "claims": {
             "sub": "user-sub",
             "nickname": "Nick Name",
             "name": "Name",
