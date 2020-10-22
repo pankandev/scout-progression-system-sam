@@ -103,6 +103,7 @@ class BeneficiariesService(ModelService):
             return True
         except botocore.exceptions.ClientError as e:
             print(e)
+            print(str(e))
             return False
 
 
