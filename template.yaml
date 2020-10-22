@@ -314,6 +314,9 @@ Resources:
         - DynamoDBReadPolicy:
             TableName:
               !Ref DistrictsTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
       Events:
         ListGroups:
           Type: Api
