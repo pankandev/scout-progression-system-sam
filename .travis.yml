@@ -19,6 +19,7 @@ script:
 deploy:
   provider: script
   script: sam deploy --no-confirm-changeset
+  skip_cleanup: true
   on:
     branch: master
 notifications:
