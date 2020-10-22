@@ -2,17 +2,18 @@ import json
 import os
 import random
 import hashlib
+from datetime import datetime
 
 from schema import Schema, SchemaError
 
 from core import db, HTTPEvent, ModelService
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
+from core.aws.event import Authorizer
 from core.aws.response import JSONResponse
-from core.utils.key import clean_text, join_key, generate_code, split_key
+from core.utils.key import clean_text, join_key, generate_code, split_key, date_to_text
 
 schema = Schema({
-    'district': str,
     'name': str,
 })
 
@@ -29,19 +30,12 @@ class GroupsService(ModelService):
     __table_name__ = "groups"
     __partition_key__ = "district"
     __sort_key__ = "code"
-    __indices__ = {
-        "ByBeneficiaryCode": ("district", "beneficiary-code")
-    }
 
     @staticmethod
-    def generate_beneficiary_code(district: str, code: str, group: str):
-        h = hashlib.sha1(join_key(district, code).encode()).hexdigest()
+    def generate_beneficiary_code(district: str, group_code: str, group_name: str):
+        h = hashlib.sha1(join_key(district, group_code).encode()).hexdigest()
         int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
-        return join_key(
-            f'{int_hash:08}',
-            district,
-            clean_text(group, remove_spaces=True, lower=True)
-        )
+        return f'{int_hash:08}'
 
     @staticmethod
     def process_beneficiary_code(code: str):
@@ -53,35 +47,56 @@ class GroupsService(ModelService):
         }
 
     @classmethod
-    def create(cls, item: dict, scouter_access_token: str):
+    def create(cls, district: str, item: dict, creator_sub: str, creator_full_name: str):
         interface = cls.get_interface()
         group = schema.validate(item)
-        district = group['district']
         code = generate_code(group['name'])
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code, group['name'])
-        # group['creator_sub'] = UsersCognito.get_user(scouter_access_token).to_dict()
-
-        del group['district']
+        group['creator'] = {
+            "sub": creator_sub,
+            "name": creator_full_name
+        }
+        group['scouters'] = list()
 
         interface.create(district, group, code)
 
     @classmethod
-    def get(cls, district: str, code: str):
+    def get(cls, district: str, code: str, attributes: list = None):
+        if attributes is None:
+            attributes = ["district", "code", "name"]
+
         interface = cls.get_interface()
-        return interface.get(district, code, attributes=["district", "code", "name"])
-
-    @classmethod
-    def get_by_code(cls, code: str):
-        processed = GroupsService.process_beneficiary_code(code)
-        district = processed["district"]
-
-        interface = cls.get_interface("ByBeneficiaryCode")
-        return interface.get(district, code, attributes=["district", "code", "name"])
+        return interface.get(district, code, attributes=attributes)
 
     @classmethod
     def query(cls, district: str):
         interface = cls.get_interface()
         return interface.query(district, attributes=["district", "name"])
+
+
+class BeneficiariesService(ModelService):
+    __table_name__ = "beneficiaries"
+    __partition_key__ = "unit"
+    __sort_key__ = "code"
+
+    @staticmethod
+    def generate_code(date: datetime, nick: str):
+        nick = clean_text(nick, remove_spaces=True, lower=True)
+        s_date = date_to_text(date).replace('-', '')
+        return join_key(s_date, nick)
+
+    @classmethod
+    def create(cls, district: str, group: str, unit: str, authorizer: Authorizer):
+        interface = cls.get_interface()
+
+        code = cls.generate_code(datetime.now(), authorizer.name)
+        beneficiary = {
+            "sub": authorizer.sub,
+            "full-name": authorizer.full_name,
+            "nickname": authorizer.nickname,
+            "tasks": []
+        }
+        interface.create(join_key(district, group, unit), beneficiary, code)
 
 
 def process_group(item: dict, event: HTTPEvent):
@@ -92,12 +107,19 @@ def process_group(item: dict, event: HTTPEvent):
         pass
 
 
-def create_group(district: str, item: dict, scouter_access_token: str):
-    item["district"] = district
+def create_group(district: str, item: dict, authorizer: Authorizer):
     try:
-        GroupsService.create(item, scouter_access_token)
+        GroupsService.create(district, item, authorizer.sub, authorizer.full_name)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Item content is invalid: \"{e.code}\"")
+    return JSONResponse({"message": "OK"})
+
+
+def join_group(district: str, group: str, unit: str, code: str, authorizer: Authorizer):
+    group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
+    if group_item["beneficiary_code"] != code:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
+    BeneficiariesService.create(district, group, unit, authorizer)
     return JSONResponse({"message": "OK"})
 
 
@@ -122,29 +144,21 @@ def get_handler(event: HTTPEvent):
     return JSONResponse(response.as_dict())
 
 
-def validate_beneficiary_code(event: HTTPEvent):
-    code = json.loads(event.body)["code"]
-    group = GroupsService.get_by_code(code)
-    if group is None:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Invalid code")
-    return JSONResponse({
-        "message": "Code is OK",
-        "group": process_group(group, event)
-    })
-
-
 def post_handler(event: HTTPEvent):
     district_code = event.params["district"]
+    code = event.params.get("group")
+    unit = event.params.get("unit")
 
-    if event.resource == "/api/groups/validate-code":
-        return validate_beneficiary_code(event)
+    if event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/{unit}/join":
+        # join group
+        return join_group(district_code, code, unit, json.loads(event.body)["code"], event.authorizer)
     elif district_code is not None:
         # create group
         if District.get({"code": district_code}).item is None:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"District '{district_code}' was not found")
-        print(event.context)
-        return create_group(district_code, json.loads(event.body), "")
+        return create_group(district_code, json.loads(event.body), event.authorizer)
     else:
+        # unknown resource
         return JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, f"Bad resource")
 
 

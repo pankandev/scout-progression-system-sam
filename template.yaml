@@ -43,6 +43,27 @@ Resources:
               type: string
             family_name:
               type: string
+        BeneficiarySignUp:
+          type: object
+          required:
+            - email
+            - password
+            - name
+            - family_name
+            - birthdate
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            name:
+              type: string
+            middle_name:
+              type: string
+            family_name:
+              type: string
+            birth_date:
+              type: string
         Code:
           type: object
           required:
@@ -95,16 +116,22 @@ Resources:
       AutoVerifiedAttributes:
         - email
       Schema:
-        - Name: code
-          AttributeDataType: String
         - Name: name
           AttributeDataType: String
+          Required: true
         - Name: middle_name
           AttributeDataType: String
+          Required: true
         - Name: family_name
           AttributeDataType: String
-        - Name: is_scouter
-          AttributeDataType: Boolean
+          Required: true
+        - Name: gender
+          AttributeDataType: String
+          Required: true
+        - Name: birthdate
+          AttributeDataType: String
+        - Name: nickname
+          AttributeDataType: String
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -125,6 +152,9 @@ Resources:
         - name
         - middle_name
         - family_name
+        - gender
+        - birthdate
+        - nickname
   UsersScoutersGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
@@ -199,15 +229,6 @@ Resources:
           KeyType: HASH
         - AttributeName: code
           KeyType: RANGE
-      LocalSecondaryIndexes:
-        - IndexName: BeneficiaryCodeIndex
-          KeySchema:
-            - AttributeName: district
-              KeyType: HASH
-            - AttributeName: beneficiary-code
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
@@ -314,6 +335,15 @@ Resources:
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: NewGroup
+              Required: true
+        JoinGroup:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/join/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: Code
               Required: true
   ObjectivesFunction:
     Type: AWS::Serverless::Function
@@ -428,19 +458,14 @@ Resources:
             RequestModel:
               Model: Login
               Required: true
-        GetGroupByCode:
-          Type: Api
-          Properties:
-            Path: /api/auth/validate-beneficiary-code/
-            Method: post
-            RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: Code
-              Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: pps/beneficiaries/
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref UsersClient
+          USER_POOL_ID: !Ref UsersPool
       Handler: app.handler
       Runtime: python3.8
       Layers:
@@ -449,6 +474,12 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref BeneficiariesTable
+        - Statement:
+            - Sid: CognitoIDPAddUserToGroup
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminAddUserToGroup
+              Resource: '*'
       Events:
         ListBeneficiaries:
           Type: Api
@@ -468,6 +499,17 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
             Method: post
             RestApiId: !Ref PPSAPI
+        SignupBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/auth/beneficiary-signup/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
+            RequestModel:
+              Model: BeneficiarySignUp
+              Required: true
 
 
 Outputs:

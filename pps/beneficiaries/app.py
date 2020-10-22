@@ -1,24 +1,27 @@
 import json
+import os
 
+from botocore.exceptions import ParamValidationError
 from schema import Schema, SchemaError
 from datetime import datetime
 
 from core import HTTPEvent, JSONResponse, ModelService
+from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.utils import join_key
 from core.utils.key import clean_text, text_to_date, date_to_text
 
 schema = Schema({
-    'district': str,
-    'group': str,
-    'unit': str,
     'first_name': str,
     'middle_name': str,
-    'last_name': str,
-    'second_last_name': str,
+    'family_name': str,
     'nickname': str,
     'birth_date': lambda d: text_to_date(d),
 })
+
+
+class UsersCognito(CognitoService):
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 class BeneficiariesService(ModelService):
@@ -99,6 +102,29 @@ def create_beneficiary(district: str, group: str, unit: str, item: dict):
     return JSONResponse({"message": "OK"})
 
 
+def signup_beneficiary(event: HTTPEvent):
+    data = json.loads(event.body)
+    try:
+        UsersCognito.sign_up(data['email'], data['password'], {
+            'name': data['name'],
+            'middle_name': data.get('middle_name'),
+            'family_name': data['family_name'],
+            'nickname': data.get('nickname'),
+            'birthdate': data.get('birthdate')
+        })
+    except UsersCognito.get_client().exceptions.UsernameExistsException:
+        return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
+    except UsersCognito.get_client().exceptions.InvalidPasswordException:
+        return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "Invalid password. Password must have "
+                                                                           "uppercase, lowercase, numbers and be at "
+                                                                           "least 6 characters long")
+    except ParamValidationError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
+
+    UsersCognito.add_to_group(data['email'], "Beneficiaries")
+    return JSONResponse({"message": "OK"})
+
+
 """Handlers"""
 
 
@@ -132,7 +158,7 @@ def post_handler(event: HTTPEvent):
 
     if unit not in ("scouts", "guides"):
         result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
-    elif code is None:
+    elif event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/{unit}/signup":
         result = create_beneficiary(district, group, unit, json.loads(event.body))
     else:
         result = JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, "Unknown route")

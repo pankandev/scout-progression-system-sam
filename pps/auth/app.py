@@ -96,8 +96,6 @@ def handler(event: dict, _) -> dict:
             result = login(event)
         elif event.resource == "/api/auth/confirm":
             result = confirm_user(event)
-        elif event.resource == "/api/auth/validate-beneficiary-code":
-            result = validate_beneficiary_code(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
     else:
