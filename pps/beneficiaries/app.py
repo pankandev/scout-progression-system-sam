@@ -1,9 +1,9 @@
 import json
 import os
+from datetime import datetime
 
 from botocore.exceptions import ParamValidationError
-from schema import Schema, SchemaError
-from datetime import datetime
+from schema import Schema
 
 from core import HTTPEvent, JSONResponse, ModelService
 from core.auth import CognitoService
@@ -27,7 +27,7 @@ class UsersCognito(CognitoService):
 class BeneficiariesService(ModelService):
     __table_name__ = "beneficiaries"
     __partition_key__ = "unit"
-    __sort_key__ = "code"
+    __sort_key__ = "user-sub"
 
     @staticmethod
     def generate_code(date: datetime, nick: str):
@@ -36,23 +36,9 @@ class BeneficiariesService(ModelService):
         return join_key(s_date, nick)
 
     @classmethod
-    def create(cls, item: str):
+    def get(cls, district: str, group: str, unit: str, sub: str):
         interface = cls.get_interface()
-        beneficiary = schema.validate(item)
-        district = beneficiary['district']
-        group = beneficiary['group']
-        unit = beneficiary['unit']
-        del beneficiary['district']
-        del beneficiary['group']
-        del beneficiary['unit']
-
-        code = cls.generate_code(datetime.now(), beneficiary['nickname'])
-        interface.create(join_key(district, group, unit), beneficiary, code)
-
-    @classmethod
-    def get(cls, district: str, group: str, unit: str, code: str):
-        interface = cls.get_interface()
-        return interface.get(join_key(district, group, unit), code)
+        return interface.get(join_key(district, group, unit), sub)
 
     @classmethod
     def query(cls, district: str, group: str, unit: str):
@@ -71,8 +57,8 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
         pass
 
 
-def get_beneficiary(district: str, group: str, unit: str, code: str, event: HTTPEvent):
-    result = BeneficiariesService.get(district, group, unit, code)
+def get_beneficiary(district: str, group: str, unit: str, sub: str, event: HTTPEvent):
+    result = BeneficiariesService.get(district, group, unit, sub)
     process_beneficiary(result.item, event)
     return result
 
@@ -89,17 +75,6 @@ def get_guides(district: str, group: str, event: HTTPEvent):
     for obj in result.items:
         process_beneficiary(obj, event)
     return result
-
-
-def create_beneficiary(district: str, group: str, unit: str, item: dict):
-    item["district"] = district
-    item["group"] = group
-    item["unit"] = unit
-    try:
-        BeneficiariesService.create(item)
-    except SchemaError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Item content is invalid: \"{e.code}\"")
-    return JSONResponse({"message": "OK"})
 
 
 def signup_beneficiary(event: HTTPEvent):

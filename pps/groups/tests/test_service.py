@@ -84,16 +84,14 @@ def test_join(ddb_stubber: Stubber):
         'Item': {
             "unit": unit_code,
             "code": code,
-            "sub": "user-sub",
+            "user-sub": "u-sub",
             "full-name": "Name Family",
             "nickname": "Nick Name",
             "tasks": [],
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(code) '
-                               'OR NOT #model_sub = :val_sub',
-        'ExpressionAttributeNames': {'#model_unit': 'unit', '#model_sub': 'sub'},
-        'ExpressionAttributeValues': {':val_sub': {'S': 'user-sub'}}
+        'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(user-sub)',
+        'ExpressionAttributeNames': {'#model_unit': 'unit'}
     }
     beneficiary_response = {
     }
@@ -103,7 +101,7 @@ def test_join(ddb_stubber: Stubber):
 
     response = join_group("district", "group", "scouts", beneficiary_code, Authorizer({
         "claims": {
-            "sub": "user-sub",
+            "sub": "u-sub",
             "nickname": "Nick Name",
             "name": "Name",
             "family_name": "Family",

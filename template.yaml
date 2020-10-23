@@ -192,12 +192,12 @@ Resources:
       AttributeDefinitions:
         - AttributeName: unit
           AttributeType: S
-        - AttributeName: code
+        - AttributeName: user-sub
           AttributeType: S
       KeySchema:
         - AttributeName: unit
           KeyType: HASH
-        - AttributeName: code
+        - AttributeName: user-sub
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5

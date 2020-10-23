@@ -78,7 +78,7 @@ class GroupsService(ModelService):
 class BeneficiariesService(ModelService):
     __table_name__ = "beneficiaries"
     __partition_key__ = "unit"
-    __sort_key__ = "code"
+    __sort_key__ = "user-sub"
 
     @staticmethod
     def generate_code(date: datetime, nick: str):
@@ -92,14 +92,13 @@ class BeneficiariesService(ModelService):
 
         code = cls.generate_code(datetime.now(), authorizer.full_name)
         beneficiary = {
-            "sub": authorizer.sub,
+            "code": code,
             "full-name": authorizer.full_name,
             "nickname": authorizer.nickname,
             "tasks": []
         }
         try:
-            interface.create(join_key(district, group, unit), beneficiary, code, raise_if_exists=True,
-                             raise_attribute_equals={"sub": authorizer.sub})
+            interface.create(join_key(district, group, unit), beneficiary, authorizer.sub, raise_if_exists=True)
             return True
         except botocore.exceptions.ClientError as e:
             print(e)

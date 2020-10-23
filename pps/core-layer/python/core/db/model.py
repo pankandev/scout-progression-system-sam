@@ -133,7 +133,7 @@ class AbstractModel(abc.ABC):
             conditions = list() if conditions is None else conditions
             conditions.append(' AND '.join(and_conditions))
 
-        condition = ' OR '.join(conditions) if conditions is not None else None
+        condition = ' AND '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
                                 ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
 
