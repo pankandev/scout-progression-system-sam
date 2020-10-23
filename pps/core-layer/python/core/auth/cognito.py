@@ -120,11 +120,10 @@ class CognitoService(ABC):
                     "REFRESH_TOKEN": token
                 }
             ).get('AuthenticationResult')
-            return Token(access=result["AccessToken"],
-                         expires=result["ExpiresIn"],
-                         type_=result["TokenType"],
-                         refresh=result["RefreshToken"],
-                         id_=result["IdToken"])
+            return Token(access=result.get("AccessToken"),
+                         expires=result.get("ExpiresIn"),
+                         type_=result.get("TokenType"),
+                         id_=result.get("IdToken"))
         except client.exceptions.InvalidPasswordException:
             return None
         except client.exceptions.NotAuthorizedException:
