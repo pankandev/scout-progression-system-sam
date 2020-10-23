@@ -91,7 +91,7 @@ def test_join(ddb_stubber: Stubber):
         },
         'ReturnValues': 'NONE',
         'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(code) '
-                               'AND NOT #model_sub = :val_sub',
+                               'OR NOT #model_sub = :val_sub',
         'ExpressionAttributeNames': {'#model_unit': 'unit', '#model_sub': 'sub'},
         'ExpressionAttributeValues': {':val_sub': {'S': 'user-sub'}}
     }

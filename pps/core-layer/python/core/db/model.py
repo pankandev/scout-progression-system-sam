@@ -115,6 +115,7 @@ class AbstractModel(abc.ABC):
             conditions = list() if conditions is None else conditions
             for attr in raise_if_attributes_exist:
                 conditions.append(f'attribute_not_exists({attr})')
+            conditions = [' AND '.join(conditions)]
 
         attribute_values = None
         if raise_attribute_equals is not None:
@@ -123,14 +124,16 @@ class AbstractModel(abc.ABC):
                 exp = {}
             attrs = list(raise_attribute_equals.keys())
             exp = {**exp, **cls.replace_keyword_attributes(attrs)}
-            conditions = list() if conditions is None else conditions
+            and_conditions = list()
             for attr in attrs:
                 val_name = ':val_' + exp[attr]
                 val = raise_attribute_equals[exp[attr]]
                 attribute_values[val_name] = {'S': val}
-                conditions.append(f'NOT {attr} = {val_name}')
+                and_conditions.append(f'NOT {attr} = {val_name}')
+            conditions = list() if conditions is None else conditions
+            conditions.append(' AND '.join(and_conditions))
 
-        condition = ' AND '.join(conditions) if conditions is not None else None
+        condition = ' OR '.join(conditions) if conditions is not None else None
         pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
                                 ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
 
