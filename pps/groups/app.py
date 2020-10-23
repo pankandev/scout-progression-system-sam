@@ -124,6 +124,8 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
 
 def join_group(district: str, group: str, unit: str, code: str, authorizer: Authorizer):
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
+    if group_item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
     if group_item["beneficiary_code"] != code:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
     if BeneficiariesService.create(district, group, unit, authorizer):
