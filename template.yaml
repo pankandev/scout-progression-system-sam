@@ -81,6 +81,13 @@ Resources:
               type: string
             password:
               type: string
+        RefreshToken:
+          type: object
+          required:
+            - token
+          properties:
+            token:
+              type: string
         NewGroup:
           type: object
           required:
@@ -460,6 +467,17 @@ Resources:
             RestApiId: !Ref PPSAPI
             RequestModel:
               Model: Login
+              Required: true
+        RefreshToken:
+          Type: Api
+          Properties:
+            Path: /api/auth/refresh/
+            Auth:
+              Authorizer: NONE
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: RefreshToken
               Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function

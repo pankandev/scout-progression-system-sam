@@ -108,6 +108,31 @@ class CognitoService(ABC):
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Already confirmed")
 
     @classmethod
+    def refresh(cls, token: str):
+        client = cls.get_client()
+
+        try:
+            result = client.admin_initiate_auth(
+                UserPoolId=cls.__user_pool_id__,
+                ClientId=cls.get_client_id(),
+                AuthFlow="REFRESH_TOKEN_AUTH",
+                AuthParameters={
+                    "REFRESH_TOKEN": token
+                }
+            ).get('AuthenticationResult')
+            return Token(access=result["AccessToken"],
+                         expires=result["ExpiresIn"],
+                         type_=result["TokenType"],
+                         refresh=result["RefreshToken"],
+                         id_=result["IdToken"])
+        except client.exceptions.InvalidPasswordException:
+            return None
+        except client.exceptions.NotAuthorizedException:
+            return None
+        except client.exceptions.UserNotFoundException:
+            return None
+
+    @classmethod
     def log_in(cls, username: str, password: str):
         client = cls.get_client()
         try:

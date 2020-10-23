@@ -68,6 +68,23 @@ def confirm_user(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
 
+def refresh_token(event: HTTPEvent):
+    data = json.loads(event.body)
+    try:
+        token = UsersCognito.refresh(data['token'])
+        if token is None:
+            return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Invalid credentials")
+        return JSONResponse({
+            "message": "Refresh successful",
+            "token": token.as_dict()
+        })
+    except UsersCognito.get_client().UserNotFoundException:
+        return JSONResponse.generate_error(HTTPError.UNKNOWN_USER, "User not found")
+    except ParamValidationError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
+
+
+
 def login(event: HTTPEvent):
     data = json.loads(event.body)
     try:
@@ -96,9 +113,10 @@ def handler(event: dict, _) -> dict:
             result = login(event)
         elif event.resource == "/api/auth/confirm":
             result = confirm_user(event)
+        elif event.resource == "/api/auth/refresh":
+            result = refresh_token(event)
         else:
             result = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Resource {event.resource} unknown")
     else:
         result = JSONResponse.generate_error(HTTPError.NOT_IMPLEMENTED, f"Method {event.method} is not valid")
-
     return result.as_dict()
