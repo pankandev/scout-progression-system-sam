@@ -78,11 +78,10 @@ def refresh_token(event: HTTPEvent):
             "message": "Refresh successful",
             "token": token.as_dict()
         })
-    except UsersCognito.get_client().UserNotFoundException:
+    except UsersCognito.get_client().exceptions.UserNotFoundException:
         return JSONResponse.generate_error(HTTPError.UNKNOWN_USER, "User not found")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
-
 
 
 def login(event: HTTPEvent):
