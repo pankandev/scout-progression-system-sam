@@ -123,6 +123,7 @@ class CognitoService(ABC):
             return Token(access=result.get("AccessToken"),
                          expires=result.get("ExpiresIn"),
                          type_=result.get("TokenType"),
+                         refresh=None,
                          id_=result.get("IdToken"))
         except client.exceptions.InvalidPasswordException:
             return None
