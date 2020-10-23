@@ -98,7 +98,7 @@ class BeneficiariesService(ModelService):
             "tasks": []
         }
         try:
-            interface.create(join_key(district, group, unit), beneficiary, authorizer.sub, raise_if_exists=True)
+            interface.create(join_key(district, group, unit), beneficiary, authorizer.sub, raise_if_exists_sort=True)
             return True
         except botocore.exceptions.ClientError as e:
             print(e)

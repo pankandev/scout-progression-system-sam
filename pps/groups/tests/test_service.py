@@ -90,11 +90,10 @@ def test_join(ddb_stubber: Stubber):
             "tasks": [],
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(#model_unit) AND attribute_not_exists(#model_user_sub)',
-        'ExpressionAttributeNames': {'#model_unit': 'unit', '#model_user_sub': 'user-sub'}
+        'ConditionExpression': 'attribute_not_exists(#model_user_sub)',
+        'ExpressionAttributeNames': {'#model_user_sub': 'user-sub'}
     }
-    beneficiary_response = {
-    }
+    beneficiary_response = {}
 
     ddb_stubber.add_response('get_item', group_response, group_params)
     ddb_stubber.add_response('put_item', beneficiary_response, beneficiary_params)
