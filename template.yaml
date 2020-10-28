@@ -534,12 +534,6 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/
             Method: get
             RestApiId: !Ref PPSAPI
-        CreateBeneficiary:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
-            Method: post
-            RestApiId: !Ref PPSAPI
         SignupBeneficiary:
           Type: Api
           Properties:
@@ -583,9 +577,12 @@ Resources:
         StartTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
             Method: post
             RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: StartObjective
+              Required: true
 
 
 Outputs:
