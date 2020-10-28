@@ -11,7 +11,6 @@ from .types import DynamoDBKey, DynamoDBTypes
 
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
-
 RESERVED_KEYWORDS = ['name', 'unit', 'sub']
 
 
@@ -171,7 +170,8 @@ class AbstractModel(abc.ABC):
         raise ValueError(f"Unrecognized type: {t}")
 
     @classmethod
-    def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None):
+    def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None,
+               condition_equals: Dict[str, Any] = None):
         """
         Update an item from the database changing only the given attributes
         """
@@ -203,10 +203,31 @@ class AbstractModel(abc.ABC):
             value_i += 1
         expression = "SET " + ', '.join(update_expressions)
 
+        conditions = list()
+
+        attribute_names = None
+        if condition_equals is not None:
+            attribute_names = dict()
+            for attr_key, attr_value in condition_equals.items():
+                key_name = '#attr' + str(value_i)
+                attribute_names[key_name] = attr_key
+
+                value_name = 'val' + str(value_i)
+                attribute_values[value_name] = attr_value
+                conditions.append(f"{key_name} = :{value_name}")
+                value_i += 1
+
+        if len(conditions) == 0:
+            condition_exp = None
+        else:
+            condition_exp = ' AND '.join(conditions)
         return pass_not_none_arguments(table.update_item,
                                        Key=key,
                                        UpdateExpression=expression,
-                                       ExpressionAttributeValues=attribute_values)
+                                       ExpressionAttributeNames=attribute_names,
+                                       ExpressionAttributeValues=attribute_values,
+                                       ConditionExpression=condition_exp
+                                       )
 
     @classmethod
     def delete(cls, key: DynamoDBKey):

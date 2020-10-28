@@ -98,6 +98,12 @@ Resources:
           properties:
             name:
               type: string
+        StartObjective:
+          type: object
+          required:
+            - area
+            - line
+            -
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
@@ -213,6 +219,23 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       TableName: beneficiaries
+    Type: AWS::DynamoDB::Table
+  TasksTable:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: user
+          AttributeType: S
+        - AttributeName: objective
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user
+          KeyType: HASH
+        - AttributeName: objective
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: tasks
     Type: AWS::DynamoDB::Table
   DistrictsTable:
     Properties:
@@ -536,19 +559,19 @@ Resources:
         ListTasks:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/tasks/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
             Method: get
             RestApiId: !Ref PPSAPI
-        GetBeneficiary:
+        FinishTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{index}/finish
             Method: get
             RestApiId: !Ref PPSAPI
-        CreateBeneficiary:
+        StartTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks
             Method: post
             RestApiId: !Ref PPSAPI
         SignupBeneficiary:

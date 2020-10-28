@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Any
 
 from .db import db
 
@@ -34,7 +34,8 @@ class ModelIndex:
             keys[self.sort] = sort
         return keys
 
-    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists_partition=False, raise_if_exists_sort=False, conditions: List[str] = None,
+    def create(self, partition_key, item: dict, sort_key=None, raise_if_exists_partition=False,
+               raise_if_exists_sort=False, conditions: List[str] = None,
                raise_attribute_equals: dict = None):
         key = self.generate_key(partition_key, sort_key)
         must_exist = None
@@ -61,9 +62,10 @@ class ModelIndex:
         key = self.generate_key(partition_key, sort_key)
         self._model.delete(key)
 
-    def update(self, partition_key, updates: dict = None, sort_key=None, append_to: dict = None):
+    def update(self, partition_key, updates: dict = None, sort_key=None, append_to: dict = None,
+               condition_equals: Dict[str, Any] = None):
         key = self.generate_key(partition_key, sort_key)
-        self._model.update(key, updates=updates, append_to=append_to)
+        self._model.update(key, updates=updates, append_to=append_to, condition_equals=condition_equals)
 
 
 class ModelService(ABC):

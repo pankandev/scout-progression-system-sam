@@ -126,13 +126,16 @@ def test_update(ddb_stubber):
             'range': 'value_r'
         },
         'UpdateExpression': 'SET key_a=:val0, key_b=:val1',
-        'ExpressionAttributeValues': {'val0': 'value_a', 'val1': 'value_b'},
+        'ExpressionAttributeNames': {'#attr2': 'key_c'},
+        'ExpressionAttributeValues': {'val0': 'value_a', 'val1': 'value_b', 'val2': 'value_c'},
+        'ConditionExpression': '#attr2 = :val2'
     }
     update_response = {}
 
     ddb_stubber.add_response('update_item', update_response, update_params)
     with pytest.raises(ValueError):
         interface.update('value_h', {'key_a': 'value_a', 'key_b': 'value_b'})
-    interface.update('value_h', {'key_a': 'value_a', 'key_b': 'value_b'}, 'value_r')
+    interface.update('value_h', {'key_a': 'value_a', 'key_b': 'value_b'}, 'value_r',
+                     condition_equals={'key_c': 'value_c'})
 
     ddb_stubber.assert_no_pending_responses()

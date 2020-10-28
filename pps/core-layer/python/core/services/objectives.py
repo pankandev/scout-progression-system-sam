@@ -13,7 +13,7 @@ class ObjectivesService(ModelService):
     @classmethod
     def get(cls, unit: str, stage: str, area: str, line: int):
         interface = cls.get_interface()
-        return interface.get(join_key(unit, stage), join_key(area, line))
+        return interface.get(join_key(unit, stage), join_key(area, line), attributes=['description'])
 
     @classmethod
     def query(cls, unit: str, stage: str):

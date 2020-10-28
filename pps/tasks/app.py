@@ -1,4 +1,4 @@
-from core import HTTPEvent, JSONResponse
+from core import JSONResponse
 
 
 def handler(event: dict, _) -> dict:
