@@ -10,25 +10,22 @@ from core.services.beneficiaries import BeneficiariesService
 from core.services.users import UsersCognito
 from core.utils.key import text_to_date
 
-schema = Schema({
-    'first_name': str,
-    'middle_name': str,
-    'family_name': str,
-    'nickname': str,
-    'birth_date': lambda d: text_to_date(d),
-})
-
 
 def process_beneficiary(beneficiary: dict, event: HTTPEvent):
     try:
         district, group, unit = beneficiary["unit"].split("::")
 
         beneficiary["district"] = event.concat_url('districts', district)
+        beneficiary["url"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit,
+                                              beneficiary["user-sub"])
         beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
         beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)
         beneficiary["stage"] = BeneficiariesService.calculate_stage(
             datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
         )
+
+        del beneficiary["user-sub"]
+        del beneficiary["code"]
     except Exception:
         pass
 
@@ -39,15 +36,8 @@ def get_beneficiary(district: str, group: str, unit: str, sub: str, event: HTTPE
     return result
 
 
-def get_scouts(district: str, group: str, event: HTTPEvent):
-    result = BeneficiariesService.query(district, group, "scouts")
-    for obj in result.items:
-        process_beneficiary(obj, event)
-    return result
-
-
-def get_guides(district: str, group: str, event: HTTPEvent):
-    result = BeneficiariesService.query(district, group, "guides")
+def get_unit(district: str, group: str, unit: str, event: HTTPEvent):
+    result = BeneficiariesService.query(district, group, unit)
     for obj in result.items:
         process_beneficiary(obj, event)
     return result
@@ -61,7 +51,8 @@ def signup_beneficiary(event: HTTPEvent):
             'middle_name': data.get('middle_name'),
             'family_name': data['family_name'],
             'nickname': data.get('nickname'),
-            'birthdate': data['birthdate']
+            'birthdate': data['birthdate'],
+            'gender': data['unit'],
         })
     except UsersCognito.get_client().exceptions.UsernameExistsException:
         return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
@@ -88,10 +79,8 @@ def get_handler(event: HTTPEvent):
     if unit not in ("scouts", "guides"):
         result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
     elif code is None:
-        if unit == "scouts":
-            result = get_scouts(district, group, event)
-        elif unit == "guides":
-            result = get_guides(district, group, event)
+        if unit in ["scouts", "guides"]:
+            result = get_unit(district, group, unit, event)
         else:
             result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
     else:

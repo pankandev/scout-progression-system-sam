@@ -51,6 +51,7 @@ Resources:
             - name
             - family_name
             - birthdate
+            - gender
           properties:
             email:
               type: string
@@ -63,6 +64,8 @@ Resources:
             family_name:
               type: string
             birth_date:
+              type: string
+            unit:
               type: string
         Code:
           type: object
