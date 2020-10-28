@@ -101,9 +101,21 @@ Resources:
         StartObjective:
           type: object
           required:
-            - area
-            - line
-            -
+            - stage
+            - tasks
+            - objective
+          properties:
+            stage:
+              type: string
+            tasks:
+              type: list
+            objective:
+              type: object
+              properties:
+                area:
+                  type: string
+                line:
+                  type: integer
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
