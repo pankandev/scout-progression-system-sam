@@ -352,7 +352,7 @@ Resources:
         JoinGroup:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/join/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/join/
             Method: post
             RestApiId: !Ref PPSAPI
             RequestModel:

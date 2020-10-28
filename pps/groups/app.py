@@ -30,13 +30,13 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
     return JSONResponse({"message": "OK"})
 
 
-def join_group(district: str, group: str, unit: str, code: str, authorizer: Authorizer):
+def join_group(district: str, group: str, code: str, authorizer: Authorizer):
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
     if group_item["beneficiary_code"] != code:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
-    if BeneficiariesService.create(district, group, unit, authorizer):
+    if BeneficiariesService.create(district, group, authorizer):
         return JSONResponse({"message": "OK"})
     return JSONResponse.generate_error(HTTPError.ALREADY_IN_USE, "You have already joined this group")
 
@@ -67,9 +67,9 @@ def post_handler(event: HTTPEvent):
     code = event.params.get("group")
     unit = event.params.get("unit")
 
-    if event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/{unit}/join":
+    if event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/join":
         # join group
-        return join_group(district_code, code, unit, json.loads(event.body)["code"], event.authorizer)
+        return join_group(district_code, code, json.loads(event.body)["code"], event.authorizer)
     elif district_code is not None:
         # create group
         if District.get({"code": district_code}).item is None:

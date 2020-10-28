@@ -22,6 +22,7 @@ class Authorizer:
         self.middle_name: str = claims.get("middle_name")
         self.family_name: str = claims.get("family_name")
         self.nickname: str = claims.get("nickname")
+        self.unit: str = claims.get("gender")
 
         birth_date = claims.get("birthdate")
         self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y") if birth_date is not None else None

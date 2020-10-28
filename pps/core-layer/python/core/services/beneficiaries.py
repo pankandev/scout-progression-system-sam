@@ -48,7 +48,7 @@ class BeneficiariesService(ModelService):
         }, sub)
 
     @classmethod
-    def create(cls, district: str, group: str, unit: str, authorizer: Authorizer):
+    def create(cls, district: str, group: str, authorizer: Authorizer):
         interface = cls.get_interface()
 
         beneficiary = {
@@ -64,10 +64,10 @@ class BeneficiariesService(ModelService):
             beneficiary["score"][area] = 0
 
         try:
-            interface.create(join_key(district, group, unit), beneficiary, authorizer.sub, raise_if_exists_sort=True)
+            interface.create(join_key(district, group, authorizer.unit), beneficiary, authorizer.sub,
+                             raise_if_exists_sort=True)
             return True
         except botocore.exceptions.ClientError as e:
             print(e)
             print(str(e))
             return False
-
