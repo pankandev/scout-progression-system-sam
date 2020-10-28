@@ -261,24 +261,6 @@ Resources:
         WriteCapacityUnits: 1
       TableName: objectives
     Type: AWS::DynamoDB::Table
-  TasksTable:
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: beneficiary
-          AttributeType: S
-        - AttributeName: creationdateuuid
-          AttributeType: S
-      KeySchema:
-        - AttributeName: beneficiary
-          KeyType: HASH
-        - AttributeName: creationdateuuid
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TableName: tasks
-    Type: AWS::DynamoDB::Table
-
   # App
   DistrictsFunction:
     Type: AWS::Serverless::Function
@@ -534,6 +516,53 @@ Resources:
             RequestModel:
               Model: BeneficiarySignUp
               Required: true
+  TasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/tasks/
+      Environment:
+        Variables:
+          COGNITO_CLIENT_ID: !Ref UsersClient
+          USER_POOL_ID: !Ref UsersPool
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
+      Events:
+        ListTasks:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/tasks/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        GetBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        CreateBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
+            Method: post
+            RestApiId: !Ref PPSAPI
+        SignupBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/auth/beneficiaries-signup/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
+            RequestModel:
+              Model: BeneficiarySignUp
+              Required: true
+
 
 
 Outputs:

@@ -31,7 +31,7 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
 
 
 def join_group(district: str, group: str, code: str, authorizer: Authorizer):
-    if authorizer.is_beneficiary:
+    if not authorizer.is_beneficiary:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Must be a beneficiary")
 
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
@@ -68,7 +68,6 @@ def get_handler(event: HTTPEvent):
 def post_handler(event: HTTPEvent):
     district_code = event.params["district"]
     code = event.params.get("group")
-    unit = event.params.get("unit")
 
     if event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/join":
         # join group

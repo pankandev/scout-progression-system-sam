@@ -117,7 +117,8 @@ def test_join(ddb_stubber: Stubber):
             "name": "Name",
             "family_name": "Family",
             "birthdate": birthdate,
-            "gender": "scouts"
+            "gender": "scouts",
+            "cognito:groups": ["Beneficiaries"]
         }
     }))
     assert response.body["message"] == "OK"

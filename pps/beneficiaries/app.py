@@ -2,13 +2,11 @@ import json
 from datetime import datetime
 
 from botocore.exceptions import ParamValidationError
-from schema import Schema
 
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.services.beneficiaries import BeneficiariesService
 from core.services.users import UsersCognito
-from core.utils.key import text_to_date
 
 
 def process_beneficiary(beneficiary: dict, event: HTTPEvent):
