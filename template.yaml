@@ -282,14 +282,14 @@ Resources:
   ObjectivesTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: unit-stage
+        - AttributeName: area
           AttributeType: S
-        - AttributeName: code # area-line
+        - AttributeName: subline
           AttributeType: S
       KeySchema:
-        - AttributeName: unit-stage
+        - AttributeName: area
           KeyType: HASH
-        - AttributeName: code
+        - AttributeName: subline
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
@@ -531,7 +531,7 @@ Resources:
         GetBeneficiary:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{code}/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/
             Method: get
             RestApiId: !Ref PPSAPI
         CreateBeneficiary:
