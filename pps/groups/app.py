@@ -1,109 +1,17 @@
 import json
-import os
-import random
-import hashlib
-from datetime import datetime
 
-import botocore
-from schema import Schema, SchemaError
+from schema import SchemaError
 
-from core import db, HTTPEvent, ModelService
-from core.auth import CognitoService
+from core import db, HTTPEvent
 from core.aws.errors import HTTPError
 from core.aws.event import Authorizer
 from core.aws.response import JSONResponse
-from core.utils.key import clean_text, join_key, generate_code, split_key, date_to_text
-
-schema = Schema({
-    'name': str,
-})
-
-
-class UsersCognito(CognitoService):
-    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
+from core.services.beneficiaries import BeneficiariesService
+from core.services.groups import GroupsService
 
 
 class District(db.Model):
     __table_name__ = "districts"
-
-
-class GroupsService(ModelService):
-    __table_name__ = "groups"
-    __partition_key__ = "district"
-    __sort_key__ = "code"
-
-    @staticmethod
-    def generate_beneficiary_code(district: str, group_code: str):
-        h = hashlib.sha1(join_key(district, group_code).encode()).hexdigest()
-        int_hash = (int(h, 16) + random.randint(0, 1024)) % (10 ** 8)
-        return f'{int_hash:08}'
-
-    @staticmethod
-    def process_beneficiary_code(code: str):
-        num, district, group = split_key(code)
-        return {
-            "district": district,
-            "code": num,
-            "group": group
-        }
-
-    @classmethod
-    def create(cls, district: str, item: dict, creator_sub: str, creator_full_name: str):
-        interface = cls.get_interface()
-        group = schema.validate(item)
-        code = generate_code(group['name'])
-        group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
-        group['creator'] = {
-            "sub": creator_sub,
-            "name": creator_full_name
-        }
-        group['scouters'] = list()
-
-        interface.create(district, group, code)
-
-    @classmethod
-    def get(cls, district: str, code: str, attributes: list = None):
-        if attributes is None:
-            attributes = ["district", "code", "name"]
-
-        interface = cls.get_interface()
-        return interface.get(district, code, attributes=attributes)
-
-    @classmethod
-    def query(cls, district: str):
-        interface = cls.get_interface()
-        return interface.query(district, attributes=["district", "name", "code"])
-
-
-class BeneficiariesService(ModelService):
-    __table_name__ = "beneficiaries"
-    __partition_key__ = "unit"
-    __sort_key__ = "user-sub"
-
-    @staticmethod
-    def generate_code(date: datetime, nick: str):
-        nick = clean_text(nick, remove_spaces=True, lower=True)
-        s_date = date_to_text(date).replace('-', '')
-        return join_key(nick, s_date).replace('::', '')
-
-    @classmethod
-    def create(cls, district: str, group: str, unit: str, authorizer: Authorizer):
-        interface = cls.get_interface()
-
-        code = cls.generate_code(datetime.now(), authorizer.full_name)
-        beneficiary = {
-            "code": code,
-            "full-name": authorizer.full_name,
-            "nickname": authorizer.nickname,
-            "tasks": []
-        }
-        try:
-            interface.create(join_key(district, group, unit), beneficiary, authorizer.sub, raise_if_exists_sort=True)
-            return True
-        except botocore.exceptions.ClientError as e:
-            print(e)
-            print(str(e))
-            return False
 
 
 def process_group(item: dict, event: HTTPEvent):

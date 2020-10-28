@@ -61,9 +61,9 @@ class ModelIndex:
         key = self.generate_key(partition_key, sort_key)
         self._model.delete(key)
 
-    def update(self, partition_key, updates: dict, sort_key=None):
+    def update(self, partition_key, updates: dict = None, sort_key=None, append_to: dict = None):
         key = self.generate_key(partition_key, sort_key)
-        self._model.update(key, updates)
+        self._model.update(key, updates=updates, append_to=append_to)
 
 
 class ModelService(ABC):

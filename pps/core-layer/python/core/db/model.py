@@ -1,5 +1,5 @@
 import abc
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from boto3 import dynamodb
 from boto3.dynamodb.table import TableResource
@@ -171,7 +171,7 @@ class AbstractModel(abc.ABC):
         raise ValueError(f"Unrecognized type: {t}")
 
     @classmethod
-    def update(cls, key: DynamoDBKey, updates: dict):
+    def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None):
         """
         Update an item from the database changing only the given attributes
         """
@@ -181,14 +181,25 @@ class AbstractModel(abc.ABC):
 
         value_i = 0
 
-        if len(updates) == 0:
-            raise ValueError("The updates dictionary must not be empty")
+        if updates is None:
+            updates = {}
+
+        if append_to is None:
+            append_to = {}
+
+        if len(updates) == 0 and len(append_to) == 0:
+            raise ValueError("The updates or append_to dictionary must not be empty")
 
         update_expressions = []
         for item_key, item_value in updates.items():
             value_name = 'val' + str(value_i)
             attribute_values[value_name] = item_value
             update_expressions.append(f"{item_key}=:{value_name}")
+            value_i += 1
+        for item_key, item_value in append_to.items():
+            value_name = 'val' + str(value_i)
+            attribute_values[value_name] = item_value
+            update_expressions.append(f"{item_key}=list_append({item_key}, :{value_name})")
             value_i += 1
         expression = "SET " + ', '.join(update_expressions)
 

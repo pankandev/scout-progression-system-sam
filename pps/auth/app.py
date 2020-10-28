@@ -1,42 +1,11 @@
 import json
-import os
 
 from botocore.exceptions import ParamValidationError
 
-from core import HTTPEvent, JSONResponse, ModelService
-from core.auth import CognitoService
+from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
-from core.utils.key import split_key
-
-
-class UsersCognito(CognitoService):
-    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
-
-
-class GroupsService(ModelService):
-    __table_name__ = "groups"
-    __partition_key__ = "district"
-    __sort_key__ = "code"
-    __indices__ = {
-        "ByBeneficiaryCode": ("district", "beneficiary-code")
-    }
-
-    @staticmethod
-    def process_beneficiary_code(code: str):
-        num, district, group = split_key(code)
-        return {
-            "district": district,
-            "code": num,
-            "group": group
-        }
-
-    @classmethod
-    def get_by_code(cls, code: str):
-        processed = GroupsService.process_beneficiary_code(code)
-        district = processed["district"]
-
-        interface = cls.get_interface("ByBeneficiaryCode")
-        return interface.get(district, code, attributes=["district", "code", "name"])
+from core.services.groups import GroupsService
+from core.services.users import UsersCognito
 
 
 def process_group(item: dict, event: HTTPEvent):

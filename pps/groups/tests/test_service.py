@@ -2,10 +2,11 @@ from datetime import datetime
 
 import pytest
 from botocore.stub import Stubber, ANY
+from dateutil.relativedelta import relativedelta
 
 from core.aws.event import Authorizer
 from core.utils.key import generate_code, join_key
-from ..app import GroupsService, create_group, UsersCognito, BeneficiariesService, join_group
+from ..app import GroupsService, create_group, BeneficiariesService, join_group
 
 
 @pytest.fixture(scope="function")
@@ -79,15 +80,26 @@ def test_join(ddb_stubber: Stubber):
     code = BeneficiariesService.generate_code(datetime.now(), "Nick Name")
     BeneficiariesService.generate_code = lambda x, y: code
 
+    birthdate = (datetime.now() - relativedelta(years=12, day=1)).strftime("%d-%m-%Y")
     beneficiary_params = {
         'TableName': 'beneficiaries',
         'Item': {
             "unit": unit_code,
-            "code": code,
+            "birthdate": birthdate,
             "user-sub": "u-sub",
             "full-name": "Name Family",
             "nickname": "Nick Name",
-            "tasks": [],
+            "target": None,
+            "objectives": None,
+            "score": {
+                "corporality": 0,
+                "creativity": 0,
+                "character": 0,
+                "affectivity": 0,
+                "sociability": 0,
+                "spirituality": 0
+            },
+            "world": None
         },
         'ReturnValues': 'NONE',
         'ConditionExpression': 'attribute_not_exists(#model_user_sub)',
@@ -104,6 +116,7 @@ def test_join(ddb_stubber: Stubber):
             "nickname": "Nick Name",
             "name": "Name",
             "family_name": "Family",
+            "birthdate": birthdate
         }
     }))
     assert response.body["message"] == "OK"

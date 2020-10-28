@@ -1,37 +1,7 @@
-from core import HTTPEvent, JSONResponse, ModelService
+from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
-from core.utils import join_key
-
-
-class ObjectivesService(ModelService):
-    __table_name__ = "objectives"
-    __partition_key__ = "unit-stage"
-    __sort_key__ = "code"
-
-    def create(self, unit: str, stage: str, area: str, line: int, description: str):
-        pass
-
-    @classmethod
-    def get(cls, unit: str, stage: str, area: str, line: int):
-        interface = cls.get_interface()
-        return interface.get(join_key(unit, stage), join_key(area, line))
-
-    @classmethod
-    def query(cls, unit: str, stage: str):
-        interface = cls.get_interface()
-        return interface.query(join_key(unit, stage))
-
-
-VALID_UNITS = ["guides", "scouts"]
-VALID_STAGES = ["prepuberty", "puberty"]
-VALID_AREAS = [
-    "corporality",
-    "creativity",
-    "character",
-    "affectivity",
-    "sociability",
-    "spirituality"
-]
+from core.services.objectives import ObjectivesService
+from core.utils.consts import VALID_UNITS, VALID_STAGES, VALID_AREAS
 
 
 def process_objective(objective: dict):
@@ -60,7 +30,6 @@ def get_objectives(unit: str, stage: str):
 
 
 def get_handler(event: HTTPEvent) -> JSONResponse:
-
     # validate unit
     unit = event.params.get("unit").lower()
     if unit not in VALID_UNITS:

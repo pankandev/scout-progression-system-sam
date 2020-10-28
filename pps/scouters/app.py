@@ -6,24 +6,11 @@ from botocore.exceptions import ParamValidationError
 from core import HTTPEvent, JSONResponse, ModelService
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
+from core.services.groups import GroupsService
 
 
 class UsersCognito(CognitoService):
     __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
-
-
-class GroupsService(ModelService):
-    __table_name__ = "groups"
-    __partition_key__ = "district"
-    __sort_key__ = "code"
-    __indices__ = {
-        "ByBeneficiaryCode": ("district", "beneficiary-code")
-    }
-
-    @classmethod
-    def get(cls, district: str, group: str):
-        interface = cls.get_interface()
-        return interface.get(district, group, attributes=['scouters'])
 
 
 def process_scouter(scouter: dict, event: HTTPEvent):
@@ -34,13 +21,13 @@ def process_scouter(scouter: dict, event: HTTPEvent):
 
 
 def get_scouter(district: str, group: str, index: int, event: HTTPEvent):
-    result = GroupsService.get(district, group)
+    result = GroupsService.get(district, group, attributes=['scouters'])
     process_scouter(result.item, event)
     return result
 
 
 def get_scouters(district: str, group: str, event: HTTPEvent):
-    result = GroupsService.get(district, group)
+    result = GroupsService.get(district, group, attributes=['scouters'])
     for obj in result.items:
         process_scouter(obj, event)
     return result

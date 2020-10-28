@@ -1,15 +1,14 @@
 import json
-import os
 from datetime import datetime
 
 from botocore.exceptions import ParamValidationError
 from schema import Schema
 
-from core import HTTPEvent, JSONResponse, ModelService
-from core.auth import CognitoService
+from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
-from core.utils import join_key
-from core.utils.key import clean_text, text_to_date, date_to_text
+from core.services.beneficiaries import BeneficiariesService
+from core.services.users import UsersCognito
+from core.utils.key import text_to_date
 
 schema = Schema({
     'first_name': str,
@@ -20,32 +19,6 @@ schema = Schema({
 })
 
 
-class UsersCognito(CognitoService):
-    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
-
-
-class BeneficiariesService(ModelService):
-    __table_name__ = "beneficiaries"
-    __partition_key__ = "unit"
-    __sort_key__ = "user-sub"
-
-    @staticmethod
-    def generate_code(date: datetime, nick: str):
-        nick = clean_text(nick)
-        s_date = date_to_text(date).replace('-', '')
-        return join_key(s_date, nick)
-
-    @classmethod
-    def get(cls, district: str, group: str, unit: str, sub: str):
-        interface = cls.get_interface()
-        return interface.get(join_key(district, group, unit), sub)
-
-    @classmethod
-    def query(cls, district: str, group: str, unit: str):
-        interface = cls.get_interface()
-        return interface.query(join_key(district, group, unit))
-
-
 def process_beneficiary(beneficiary: dict, event: HTTPEvent):
     try:
         district, group, unit = beneficiary["unit"].split("::")
@@ -53,6 +26,9 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
         beneficiary["district"] = event.concat_url('districts', district)
         beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
         beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)
+        beneficiary["stage"] = BeneficiariesService.calculate_stage(
+            datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
+        )
     except Exception:
         pass
 
@@ -85,7 +61,7 @@ def signup_beneficiary(event: HTTPEvent):
             'middle_name': data.get('middle_name'),
             'family_name': data['family_name'],
             'nickname': data.get('nickname'),
-            'birthdate': data.get('birthdate')
+            'birthdate': data['birthdate']
         })
     except UsersCognito.get_client().exceptions.UsernameExistsException:
         return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
