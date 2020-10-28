@@ -110,13 +110,14 @@ def test_join(ddb_stubber: Stubber):
     ddb_stubber.add_response('get_item', group_response, group_params)
     ddb_stubber.add_response('put_item', beneficiary_response, beneficiary_params)
 
-    response = join_group("district", "group", "scouts", beneficiary_code, Authorizer({
+    response = join_group("district", "group", beneficiary_code, Authorizer({
         "claims": {
             "sub": "u-sub",
             "nickname": "Nick Name",
             "name": "Name",
             "family_name": "Family",
-            "birthdate": birthdate
+            "birthdate": birthdate,
+            "gender": "scouts"
         }
     }))
     assert response.body["message"] == "OK"
