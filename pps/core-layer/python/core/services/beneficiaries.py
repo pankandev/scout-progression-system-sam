@@ -43,7 +43,7 @@ class BeneficiariesService(ModelService):
         interface = cls.get_interface()
         interface.update(join_key(district, group, unit), {
             "target": {
-                "objective"
+                "objective": {}
             }
         }, sub)
 
