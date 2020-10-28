@@ -68,6 +68,5 @@ class BeneficiariesService(ModelService):
                              raise_if_exists_sort=True)
             return True
         except botocore.exceptions.ClientError as e:
-            print(e)
             print(str(e))
             return False
