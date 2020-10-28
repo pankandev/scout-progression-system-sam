@@ -586,18 +586,6 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks
             Method: post
             RestApiId: !Ref PPSAPI
-        SignupBeneficiary:
-          Type: Api
-          Properties:
-            Path: /api/auth/beneficiaries-signup/
-            Method: post
-            RestApiId: !Ref PPSAPI
-            Auth:
-              Authorizer: NONE
-            RequestModel:
-              Model: BeneficiarySignUp
-              Required: true
-
 
 
 Outputs:
