@@ -80,14 +80,14 @@ def get_handler(event: HTTPEvent):
         result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
     elif code is None:
         if unit in ["scouts", "guides"]:
-            result = get_unit(district, group, unit, event)
+            result = JSONResponse(get_unit(district, group, unit, event).as_dict())
         else:
             result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
     else:
         result = get_beneficiary(district, group, unit, code, event)
         if result.item is None:
             result = JSONResponse.generate_error(HTTPError.NOT_FOUND, "Beneficiary not found")
-    return JSONResponse(result.as_dict())
+    return result
 
 
 def post_handler(event: HTTPEvent):
