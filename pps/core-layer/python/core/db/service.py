@@ -63,9 +63,9 @@ class ModelIndex:
         self._model.delete(key)
 
     def update(self, partition_key, updates: dict = None, sort_key=None, append_to: dict = None,
-               condition_equals: Dict[str, Any] = None):
+               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None):
         key = self.generate_key(partition_key, sort_key)
-        self._model.update(key, updates=updates, append_to=append_to, condition_equals=condition_equals)
+        self._model.update(key, updates=updates, append_to=append_to, condition_equals=condition_equals, add_to=add_to)
 
 
 class ModelService(ABC):

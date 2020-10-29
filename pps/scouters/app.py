@@ -3,7 +3,7 @@ import os
 
 from botocore.exceptions import ParamValidationError
 
-from core import HTTPEvent, JSONResponse, ModelService
+from core import HTTPEvent, JSONResponse
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.services.groups import GroupsService
@@ -20,17 +20,18 @@ def process_scouter(scouter: dict, event: HTTPEvent):
     scouter["group"] = event.concat_url('districts', district, 'groups', group)
 
 
-def get_scouter(district: str, group: str, index: int, event: HTTPEvent):
-    result = GroupsService.get(district, group, attributes=['scouters'])
-    process_scouter(result.item, event)
-    return result
+def get_scouter(district: str, group: str, sub: int, event: HTTPEvent):
+    scouters = GroupsService.get(district, group, attributes=['scouters']).item['scouters']
+    scouter = scouters[sub]
+    process_scouter(scouter, event)
+    return scouter
 
 
 def get_scouters(district: str, group: str, event: HTTPEvent):
     result = GroupsService.get(district, group, attributes=['scouters'])
     for obj in result.items:
         process_scouter(obj, event)
-    return result
+    return result.items
 
 
 def signup_scouter(event: HTTPEvent):
@@ -66,9 +67,9 @@ def get_handler(event: HTTPEvent):
         result = get_scouters(district, group, event)
     else:
         result = get_scouter(district, group, code, event)
-        if result.item is None:
-            result = JSONResponse.generate_error(HTTPError.NOT_FOUND, "Scouter not found")
-    return JSONResponse(result.as_dict())
+        if result is None:
+            return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Scouter not found")
+    return JSONResponse(result)
 
 
 def handler(event: dict, _) -> dict:

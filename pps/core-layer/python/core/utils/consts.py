@@ -12,3 +12,5 @@ VALID_AREAS = [
     "sociability",
     "spirituality"
 ]
+
+BASE_TARGET_COMPLETE_SCORE = 100

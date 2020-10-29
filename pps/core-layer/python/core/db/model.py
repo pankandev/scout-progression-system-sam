@@ -171,7 +171,7 @@ class AbstractModel(abc.ABC):
 
     @classmethod
     def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None,
-               condition_equals: Dict[str, Any] = None):
+               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None):
         """
         Update an item from the database changing only the given attributes
         """
@@ -187,6 +187,9 @@ class AbstractModel(abc.ABC):
         if append_to is None:
             append_to = {}
 
+        if add_to is None:
+            add_to = {}
+
         if len(updates) == 0 and len(append_to) == 0:
             raise ValueError("The updates or append_to dictionary must not be empty")
 
@@ -201,7 +204,19 @@ class AbstractModel(abc.ABC):
             attribute_values[value_name] = item_value
             update_expressions.append(f"{item_key}=list_append({item_key}, :{value_name})")
             value_i += 1
-        expression = "SET " + ', '.join(update_expressions)
+        if len(update_expressions) > 0:
+            expression = "SET " + ', '.join(update_expressions)
+        else:
+            expression = None
+
+        add_expressions = []
+        for item_key, amount in add_to.items():
+            value_name = 'val' + str(value_i)
+            attribute_values[value_name] = item_value
+            add_expressions.append(f"{item_key}=list_append({item_key}, :{value_name})")
+            value_i += 1
+        if len(add_expressions) > 0:
+            expression = ("" if expression is None else expression + " ") + "ADD " + ', '.join(add_expressions)
 
         conditions = list()
 

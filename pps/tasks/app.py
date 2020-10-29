@@ -17,7 +17,8 @@ def post_handler(event: HTTPEvent):
         sub = event.params['sub']
         if event.authorizer.sub != sub:
             return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-        return TasksService.query(event.authorizer)
+        tasks = TasksService.query(event.authorizer)
+
     return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
 
 

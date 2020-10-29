@@ -4,6 +4,7 @@ from schema import Schema
 
 from core import ModelService
 from core.aws.event import Authorizer
+from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
 
@@ -20,7 +21,7 @@ schema = Schema({
 class TasksService(ModelService):
     __table_name__ = "objectives"
     __partition_key__ = "user"
-    __sort_key__ = "objective"
+    __sort_key__ = "objective-timestamp"
 
     @classmethod
     def create(cls, stage: str, area: str, line: int, tasks: List[str], description: str, authorizer: Authorizer):

@@ -4,14 +4,15 @@ import botocore
 
 from core import ModelService
 from core.aws.event import Authorizer
-from core.utils.consts import VALID_STAGES, VALID_AREAS
+from core.exceptions.forbidden import ForbiddenException
+from core.utils.consts import VALID_STAGES, VALID_AREAS, BASE_TARGET_COMPLETE_SCORE
 from core.utils.key import clean_text, date_to_text, join_key
 
 
 class BeneficiariesService(ModelService):
     __table_name__ = "beneficiaries"
-    __partition_key__ = "unit"
-    __sort_key__ = "user-sub"
+    __partition_key__ = "user-sub"
+    __sort_key__ = "unit"
 
     @staticmethod
     def generate_code(date: datetime, nick: str):
@@ -39,15 +40,6 @@ class BeneficiariesService(ModelService):
         return interface.query(join_key(district, group, unit))
 
     @classmethod
-    def set_target(cls, district: str, group: str, unit: str, sub: str, objective_stage: str, objective_code: str):
-        interface = cls.get_interface()
-        interface.update(join_key(district, group, unit), {
-            "target": {
-                "objective": {}
-            }
-        }, sub)
-
-    @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):
         interface = cls.get_interface()
 
@@ -56,17 +48,62 @@ class BeneficiariesService(ModelService):
             "nickname": authorizer.nickname,
             "birthdate": authorizer.birth_date.strftime("%d-%m-%Y"),
             "target": None,
-            "objectives": None,
-            "world": None,
-            "score": {}
+            "completed": None,
+            "score": {area: 0 for area in VALID_AREAS},
+            "bought_items": {}
         }
-        for area in VALID_AREAS:
-            beneficiary["score"][area] = 0
 
         try:
-            interface.create(join_key(district, group, authorizer.unit), beneficiary, authorizer.sub,
+            interface.create(authorizer.sub, beneficiary, join_key(district, group, authorizer.unit),
                              raise_if_exists_sort=True)
             return True
         except botocore.exceptions.ClientError as e:
             print(str(e))
             return False
+
+    @classmethod
+    def set_target_objective(cls, district: str, group: str, authorizer: Authorizer, area: str, line: int,
+                             subline: int, task: str):
+        interface = cls.get_interface()
+
+        beneficiary = {
+            "target": {
+                "area": area,
+                "line": line,
+                "subline": subline,
+                "task": task
+            }
+        }
+
+        try:
+            interface.update(join_key(district, group, authorizer.unit), beneficiary, authorizer.sub,
+                             raise_if_exists_sort=True)
+            return True
+        except botocore.exceptions.ClientError as e:
+            print(str(e))
+            return False
+
+    @classmethod
+    def complete_target(cls, district: str, group: str, authorizer: Authorizer):
+        interface = cls.get_interface()
+        beneficiary = interface.get(join_key(district, group, authorizer.unit), authorizer.sub, ['target'])
+        if beneficiary['target'] is None:
+            raise ForbiddenException("No target has been selected")
+        area = beneficiary['target']['area']
+        interface.update(join_key(district, group, authorizer.unit),
+                         {"target": None},
+                         authorizer.sub,
+                         append_to={f'completed-objectives': beneficiary['target_objective']},
+                         add_to={f"score.{area}": BASE_TARGET_COMPLETE_SCORE})
+        return True
+
+    @classmethod
+    def buy_item(cls, district: str, group: str, area: str, authorizer: Authorizer, item_code: str, amount: int = 1):
+        interface = cls.get_interface()
+        interface.update(join_key(district, group, authorizer.unit),
+                         None,
+                         authorizer.sub,
+                         add_to={
+                             f'bought_items.{item_code}': amount,
+                             f'score.{area}': -amount
+                         })

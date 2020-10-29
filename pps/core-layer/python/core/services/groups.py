@@ -1,11 +1,12 @@
 import hashlib
 import random
+import time
 
 from schema import Schema
 
 from core import ModelService
 from core.utils import join_key
-from core.utils.key import split_key, generate_code
+from core.utils.key import split_key, epoch
 
 schema = Schema({
     'name': str,
@@ -14,10 +15,10 @@ schema = Schema({
 
 class GroupsService(ModelService):
     __table_name__ = "groups"
-    __partition_key__ = "district"
-    __sort_key__ = "code"
+    __partition_key__ = "code"
+    __sort_key__ = "district"
     __indices__ = {
-        "ByBeneficiaryCode": ("district", "beneficiary-code")
+        "ByBeneficiaryCode": ("code", "beneficiary-code")
     }
 
     @staticmethod
@@ -36,10 +37,9 @@ class GroupsService(ModelService):
         }
 
     @classmethod
-    def create(cls, district: str, item: dict, creator_sub: str, creator_full_name: str):
+    def create(cls, code: str, district: str, item: dict, creator_sub: str, creator_full_name: str):
         interface = cls.get_interface()
         group = schema.validate(item)
-        code = generate_code(group['name'])
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
         group['creator'] = {
             "sub": creator_sub,
@@ -47,7 +47,7 @@ class GroupsService(ModelService):
         }
         group['scouters'] = list()
 
-        interface.create(district, group, code)
+        interface.create(code, group, district, raise_if_exists_partition=True, raise_if_exists_sort=True)
 
     @classmethod
     def get(cls, district: str, code: str, attributes: list = None):

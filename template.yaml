@@ -11,7 +11,10 @@ Globals:
     Environment:
       Variables:
         WEB_APP_DOMAIN: !GetAtt CloudfrontDistribution.DomainName
-        WEB_APP_BUCKET: !Ref S3Bucket
+        WEB_APP_BUCKET: !Ref S3BucketWebApp
+        GALLERY_BUCKET: !Ref S3BucketGallery
+        COGNITO_CLIENT_ID: !Ref UsersClient
+        USER_POOL_ID: !Ref UsersPool
 
 Resources:
   PPSAPI:
@@ -202,51 +205,51 @@ Resources:
       Description: Beneficiaries group
       UserPoolId: !Ref UsersPool
   # Database
-  ScoutersTable:
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: group
-          AttributeType: S
-        - AttributeName: code
-          AttributeType: S
-      KeySchema:
-        - AttributeName: group
-          KeyType: HASH
-        - AttributeName: code
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      TableName: scouters
-    Type: AWS::DynamoDB::Table
   BeneficiariesTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: unit
-          AttributeType: S
         - AttributeName: user-sub
+          AttributeType: S
+        - AttributeName: unit
           AttributeType: S
       KeySchema:
-        - AttributeName: unit
-          KeyType: HASH
         - AttributeName: user-sub
+          KeyType: HASH
+        - AttributeName: unit
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       TableName: beneficiaries
     Type: AWS::DynamoDB::Table
+  ShopItemsTable:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: category-release
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: category-release
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 2
+      TableName: items
+    Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
       AttributeDefinitions:
         - AttributeName: user
           AttributeType: S
-        - AttributeName: objective
+        - AttributeName: objective-timestamp
           AttributeType: S
       KeySchema:
         - AttributeName: user
           KeyType: HASH
-        - AttributeName: objective
+        - AttributeName: objective-timestamp
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
@@ -269,14 +272,14 @@ Resources:
   GroupsTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: district
-          AttributeType: S
         - AttributeName: code
+          AttributeType: S
+        - AttributeName: district-timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: district
-          KeyType: HASH
         - AttributeName: code
+          KeyType: HASH
+        - AttributeName: district-timestamp
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 2
@@ -315,10 +318,6 @@ Resources:
       CodeUri: pps/groups/
       Handler: app.handler
       Runtime: python3.8
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
       Layers:
         - !Ref PPSCore
       Policies:
@@ -332,6 +331,15 @@ Resources:
             TableName:
               !Ref BeneficiariesTable
       Events:
+        CreateGroup:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/
+            Method: post
+            RestApiId: !Ref PPSAPI
+            RequestModel:
+              Model: NewGroup
+              Required: true
         ListGroups:
           Type: Api
           Properties:
@@ -344,15 +352,6 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/
             Method: get
             RestApiId: !Ref PPSAPI
-        CreateGroup:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/
-            Method: post
-            RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: NewGroup
-              Required: true
         JoinGroup:
           Type: Api
           Properties:
@@ -370,10 +369,6 @@ Resources:
       Runtime: python3.8
       Layers:
         - !Ref PPSCore
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
       Policies:
         - DynamoDBCrudPolicy:
             TableName:
@@ -411,10 +406,6 @@ Resources:
   UsersFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
       CodeUri: pps/auth/
       Handler: app.handler
       Runtime: python3.8
@@ -465,10 +456,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: pps/beneficiaries/
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
       Handler: app.handler
       Runtime: python3.8
       Layers:
@@ -507,14 +494,53 @@ Resources:
             RequestModel:
               Model: BeneficiarySignUp
               Required: true
-  TasksFunction:
+  GalleryFunction:
+    Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: pps/gallery/
+        Handler: app.handler
+        Runtime: python3.8
+        Layers:
+          - !Ref PPSCore
+        Policies:
+          S3CrudPolicy:
+            BucketName:
+              !Ref S3BucketGallery
+        Events:
+          GetGalleryPictures:
+            Type: Api
+            Properties:
+              Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/
+              Method: get
+              RestApiId: !Ref PPSAPI
+          AddPictureToGallery:
+            Type: Api
+            Properties:
+              Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/{index}/
+              Method: post
+              RestApiId: !Ref PPSAPI
+          ReplaceGalleryPicture:
+            Type: Api
+            Properties:
+              Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/{index}/
+              Method: put
+              RestApiId: !Ref PPSAPI
+          GetAvatar:
+            Type: Api
+            Properties:
+              Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/avatar/
+              Method: get
+              RestApiId: !Ref PPSAPI
+          UpdateAvatar:
+            Type: Api
+            Properties:
+              Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/avatar/
+              Method: put
+              RestApiId: !Ref PPSAPI
+  ShopFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: pps/tasks/
-      Environment:
-        Variables:
-          COGNITO_CLIENT_ID: !Ref UsersClient
-          USER_POOL_ID: !Ref UsersPool
+      CodeUri: pps/beneficiaries/
       Handler: app.handler
       Runtime: python3.8
       Layers:
@@ -523,6 +549,37 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref ShopItemsTable
+      Events:
+        ListShopCategoryItems:
+          Type: Api
+          Properties:
+            Path: /api/shop/{category}/{release}/items/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        GetShopItem:
+          Type: Api
+          Properties:
+            Path: /api/shop/{category}/{release}/items/{id}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+  TasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/tasks/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref TasksTable
       Events:
         ListTasks:
           Type: Api
@@ -550,7 +607,6 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: 'Serverless website OA'
-
   CloudfrontDistribution:
     Type: "AWS::CloudFront::Distribution"
     Properties:
@@ -562,7 +618,7 @@ Resources:
         # List of origins that Cloudfront will connect to
         Origins:
           - Id: s3-website
-            DomainName: !GetAtt S3Bucket.DomainName
+            DomainName: !GetAtt S3BucketWebApp.DomainName
             S3OriginConfig:
               # Restricting Bucket access through an origin access identity
               OriginAccessIdentity:
@@ -579,22 +635,25 @@ Resources:
             QueryString: false
           TargetOriginId: s3-website
           ViewerProtocolPolicy: redirect-to-https
-  S3Bucket:
+  S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
-      # Change bucket name to reflect your website
       BucketName: pps-webpage
-  S3BucketPolicy:
+  S3BucketGallery:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: pps-gallery
+  S3BucketWebAppPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref S3Bucket
+      Bucket: !Ref S3BucketWebApp
       PolicyDocument:
         # Restricting access to cloudfront only.
         Statement:
           - Effect: Allow
             Action: 's3:GetObject'
             Resource:
-              - !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
 

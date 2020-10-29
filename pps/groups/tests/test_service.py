@@ -1,11 +1,12 @@
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
 
 from core.aws.event import Authorizer
-from core.utils.key import generate_code, join_key
+from core.utils.key import join_key, epoch
 from ..app import GroupsService, create_group, BeneficiariesService, join_group
 
 
@@ -19,34 +20,38 @@ def ddb_stubber():
 
 
 def test_add(ddb_stubber):
-    add_item_params = {
-        'TableName': 'groups',
-        'Item': {
-            "district": "district",
-            "code": generate_code("Group"),
-            "name": "Group",
-            "beneficiary_code": ANY,
-            "scouters": [],
-            "creator": {
-                "name": "Name Family",
-                "sub": "abc123"
-            }
-        },
-        'ReturnValues': 'NONE'
-    }
-    add_item_response = {}
-    ddb_stubber.add_response('put_item', add_item_response, add_item_params)
-    ben_code = GroupsService.generate_beneficiary_code("district", "group")
-    GroupsService.generate_beneficiary_code = lambda x, y: ben_code
-    response = create_group("district", {
-        "name": "Group"
-    }, Authorizer({
-        "claims": {
-            "sub": "abc123",
-            "name": "Name",
-            "family_name": "Family"
+    timestamp = epoch()
+    with patch('core.utils.key.epoch', lambda: timestamp):
+        add_item_params = {
+            'TableName': 'groups',
+            'Item': {
+                "district": "district",
+                "code": "group",
+                "name": "Group",
+                "beneficiary_code": ANY,
+                "scouters": [],
+                "creator": {
+                    "name": "Name Family",
+                    "sub": "abc123"
+                }
+            },
+            'ConditionExpression': 'attribute_not_exists(code) AND attribute_not_exists(district)',
+            'ReturnValues': 'NONE'
         }
-    }))
+        add_item_response = {}
+        ddb_stubber.add_response('put_item', add_item_response, add_item_params)
+        ben_code = GroupsService.generate_beneficiary_code("district", "group")
+        GroupsService.generate_beneficiary_code = lambda x, y: ben_code
+        response = create_group("district", {
+            "name": "Group",
+            "code": "group"
+        }, Authorizer({
+            "claims": {
+                "sub": "abc123",
+                "name": "Name",
+                "family_name": "Family"
+            }
+        }))
     assert response.body["message"] == "OK"
     ddb_stubber.assert_no_pending_responses()
 
@@ -90,7 +95,8 @@ def test_join(ddb_stubber: Stubber):
             "full-name": "Name Family",
             "nickname": "Nick Name",
             "target": None,
-            "objectives": None,
+            "bought_items": {},
+            "completed": None,
             "score": {
                 "corporality": 0,
                 "creativity": 0,
@@ -99,11 +105,10 @@ def test_join(ddb_stubber: Stubber):
                 "sociability": 0,
                 "spirituality": 0
             },
-            "world": None
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(#model_user_sub)',
-        'ExpressionAttributeNames': {'#model_user_sub': 'user-sub'}
+        'ConditionExpression': 'attribute_not_exists(#model_unit)',
+        'ExpressionAttributeNames': {'#model_unit': 'unit'}
     }
     beneficiary_response = {}
 

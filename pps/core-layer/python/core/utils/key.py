@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 SPLITTER = '::'
@@ -13,11 +14,15 @@ def clean_text(text: str, remove_spaces: bool = False, lower: bool = False):
 
 
 def join_key(*args):
-    return SPLITTER.join(args)
+    return SPLITTER.join(map(str, args))
 
 
 def split_key(key: str):
     return key.split(SPLITTER)
+
+
+def epoch():
+    return int(time.time())
 
 
 def date_to_text(date: datetime) -> str:
@@ -28,10 +33,9 @@ def text_to_date(date: str) -> datetime:
     return datetime.strptime(date, "%Y-%m-%d-%H-%M-%S")
 
 
-def generate_code(name: str, split = False):
+def generate_code(name: str, split=False):
     name = clean_text(name, remove_spaces=True).lower()
     s_date = date_to_text(datetime.now()).replace('-', '')
     if split:
         return join_key(name, s_date)
     return ''.join([name, s_date])
-
