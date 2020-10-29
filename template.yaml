@@ -397,7 +397,7 @@ Resources:
         ListObjectives:
           Type: Api
           Properties:
-            Path: /api/objectives/{unit}/{stage}/
+            Path: /api/objectives/{stage}/
             Method: get
             RestApiId: !Ref PPSAPI
   ScoutersFunction:
