@@ -16,14 +16,14 @@ def process_objective(objective: dict):
     objective["line"] = int(line)
 
 
-def get_objective(unit: str, stage: str, area: str, line: int):
-    result = ObjectivesService.get(unit, stage, area, line)
+def get_objective(stage: str, area: str, line: int, sub_line: int):
+    result = ObjectivesService.get(stage, area, line, sub_line)
     process_objective(result.item)
     return result
 
 
-def get_objectives(unit: str, stage: str):
-    result = ObjectivesService.query(unit, stage)
+def get_objectives(stage: str):
+    result = ObjectivesService.query(stage)
     for obj in result.items:
         process_objective(obj)
     return result
@@ -46,7 +46,7 @@ def get_handler(event: HTTPEvent) -> JSONResponse:
     line = event.params.get("line")
     if area is None and line is None:
         # get all objectives from unit and stage
-        response = get_objectives(unit, stage)
+        response = get_objectives(stage)
     else:
         # get one objective
         area = area.lower()
