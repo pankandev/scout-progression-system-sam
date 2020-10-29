@@ -13,14 +13,12 @@ install:
   - pip install -r pps/core-layer/requirements.txt
   - pip install -r pps/core-layer/requirements.txt --target ./pps/core-layer/python
   - pip install pytest
-  - cd web && npm install && npm run build
-  - cd ..
 script:
   - pytest .
   - sam validate
 deploy:
   provider: script
-  script: ./deploy.sh
+  script: sam deploy --no-confirm-changeset
   skip_cleanup: true
   on:
     branch: master
