@@ -1,0 +1,3 @@
+[submodule "pps/core-layer/python/core/common"]
+	path = pps/core-layer/python/core/common
+	url = https://github.com/paths-ankan/pps-resources.git

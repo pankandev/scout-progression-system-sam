@@ -40,6 +40,11 @@ class Authorizer:
                     (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
 
     @property
+    def stage(self):
+        from core.services.beneficiaries import BeneficiariesService
+        return BeneficiariesService.calculate_stage(self.birth_date)
+
+    @property
     def full_name(self):
         if self.middle_name is None:
             return self.base_name
@@ -62,7 +67,6 @@ class HTTPEvent:
         self.context: dict = event.get("requestContext", {})
 
         authorizer_data = self.context.get("authorizer")
-        print(authorizer_data)
         self.authorizer = Authorizer(authorizer_data) if authorizer_data else None
 
         params = event.get("pathParameters", {})

@@ -8,6 +8,10 @@ Description: >
 Globals:
   Function:
     Timeout: 3
+    Environment:
+      Variables:
+        WEB_APP_DOMAIN: !GetAtt CloudfrontDistribution.DomainName
+        WEB_APP_BUCKET: !Ref S3Bucket
 
 Resources:
   PPSAPI:
@@ -279,23 +283,6 @@ Resources:
         WriteCapacityUnits: 2
       TableName: groups
     Type: AWS::DynamoDB::Table
-  ObjectivesTable:
-    Properties:
-      AttributeDefinitions:
-        - AttributeName: area
-          AttributeType: S
-        - AttributeName: subline
-          AttributeType: S
-      KeySchema:
-        - AttributeName: area
-          KeyType: HASH
-        - AttributeName: subline
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 1
-      TableName: objectives
-    Type: AWS::DynamoDB::Table
   # App
   DistrictsFunction:
     Type: AWS::Serverless::Function
@@ -375,31 +362,6 @@ Resources:
             RequestModel:
               Model: Code
               Required: true
-  ObjectivesFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: pps/objectives/
-      Handler: app.handler
-      Runtime: python3.8
-      Layers:
-        - !Ref PPSCore
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref ObjectivesTable
-      Events:
-        GetObjective:
-          Type: Api
-          Properties:
-            Path: /api/objectives/{stage}/{area}/{subline}
-            Method: get
-            RestApiId: !Ref PPSAPI
-        ListObjectives:
-          Type: Api
-          Properties:
-            Path: /api/objectives/{stage}/
-            Method: get
-            RestApiId: !Ref PPSAPI
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -426,7 +388,7 @@ Resources:
         GetScouter:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/scouters/{code}
+            Path: /api/districts/{district}/groups/{group}/scouters/{sub}
             Method: get
             RestApiId: !Ref PPSAPI
         ListScouters:
@@ -572,7 +534,7 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{index}/finish
-            Method: get
+            Method: post
             RestApiId: !Ref PPSAPI
         StartTask:
           Type: Api
@@ -641,6 +603,9 @@ Outputs:
   AppAPI:
     Description: "API Gateway endpoint URL for Prod stage for PPS API"
     Value: !Sub "https://${PPSAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/"
+  CloudFront:
+    Description: "CloudFront PPS web app domain"
+    Value: !GetAtt CloudfrontDistribution.DomainName
   DistrictsFunction:
     Description: "Districts Lambda Function ARN"
     Value: !GetAtt DistrictsFunction.Arn
