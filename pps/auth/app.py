@@ -31,7 +31,7 @@ def confirm_user(event: HTTPEvent):
     data = json.loads(event.body)
     try:
         return UsersCognito.confirm(data['email'], data['code'])
-    except UsersCognito.get_client().UserNotFoundException:
+    except UsersCognito.get_client().exceptions.UserNotFoundException:
         return JSONResponse.generate_error(HTTPError.UNKNOWN_USER, "User not found")
     except ParamValidationError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
