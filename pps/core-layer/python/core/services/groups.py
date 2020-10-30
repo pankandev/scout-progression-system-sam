@@ -55,12 +55,12 @@ class GroupsService(ModelService):
             attributes = ["district", "code", "name"]
 
         interface = cls.get_interface()
-        return interface.get(district, code, attributes=attributes)
+        return interface.get(code, district, attributes=attributes)
 
     @classmethod
     def query(cls, district: str):
         interface = cls.get_interface()
-        return interface.query(district, attributes=["district", "name", "code"])
+        return interface.query(sort_key=district, attributes=["district", "name", "code"])
 
     @classmethod
     def get_by_code(cls, code: str):

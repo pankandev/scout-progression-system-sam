@@ -38,7 +38,7 @@ def join_group(district: str, group: str, code: str, authorizer: Authorizer):
     if not authorizer.is_beneficiary:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Must be a beneficiary")
 
-    group_item = GroupsService.get(group, district, ["beneficiary_code"]).item
+    group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
     if group_item["beneficiary_code"] != code:

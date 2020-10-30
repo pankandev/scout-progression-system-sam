@@ -230,6 +230,23 @@ Resources:
         WriteCapacityUnits: 2
       TableName: items
     Type: AWS::DynamoDB::Table
+  TasksTable:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: user
+          AttributeType: S
+        - AttributeName: objective
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user
+          KeyType: HASH
+        - AttributeName: objective
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: tasks
+    Type: AWS::DynamoDB::Table
   LogsTable:
     Properties:
       AttributeDefinitions:
@@ -561,6 +578,58 @@ Resources:
           Properties:
             Path: /api/shop/{category}/{release}/items/{id}/
             Method: get
+            RestApiId: !Ref PPSAPI
+  TasksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pps/tasks/
+      Handler: app.handler
+      Runtime: python3.8
+      Layers:
+        - !Ref PPSCore
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref TasksTable
+      Events:
+        ListUserTasks:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        ListUserAreaTasks:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        GetTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        DeleteTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Method: delete
+            RestApiId: !Ref PPSAPI
+        UpdateTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Method: put
+            RestApiId: !Ref PPSAPI
+        CreateTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Method: post
             RestApiId: !Ref PPSAPI
   LogsFunction:
     Type: AWS::Serverless::Function
