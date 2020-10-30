@@ -677,12 +677,6 @@ Outputs:
   GroupsFunctionIamRole:
     Description: "Implicit IAM Role created for the groups service"
     Value: !GetAtt GroupsFunctionRole.Arn
-  ObjectivesFunction:
-    Description: "Objectives Lambda Function ARN"
-    Value: !GetAtt ObjectivesFunction.Arn
-  ObjectivesFunctionIamRole:
-    Description: "Implicit IAM Role created for the objectives service"
-    Value: !GetAtt ObjectivesFunctionRole.Arn
   ScoutersFunction:
     Description: "Scouters Lambda Function ARN"
     Value: !GetAtt ScoutersFunction.Arn
