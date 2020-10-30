@@ -21,8 +21,8 @@ def test_query_district(ddb_stubber: Stubber):
             '#attr_district': 'district',
             '#attr_code': 'code',
         },
-        'ExpressionAttributeValues': {':val_district': {'S': 'district'}},
-        'KeyConditionExpression': Key('#attr_district').eq(':val_district'),
+        # 'ExpressionAttributeValues': {':val_district': {'S': 'district'}},
+        'KeyConditionExpression': Key('#attr_district').eq('district'),
         'ProjectionExpression': '#attr_district, #attr_name, #attr_code',
         'TableName': 'groups'
     }

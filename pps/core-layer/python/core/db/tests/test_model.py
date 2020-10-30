@@ -71,10 +71,9 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditionExpression': Key('#attr_hash').eq(':val_hash'),
+        'KeyConditionExpression': Key('#attr_hash').eq('value_h'),
         'Limit': 10,
         'ProjectionExpression': '#attr_name, #attr_key',
-        'ExpressionAttributeValues': {':val_hash': {'S': 'value_h'}},
         'ExpressionAttributeNames': {
             '#attr_name': 'name',
             '#attr_key': 'key',
