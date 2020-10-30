@@ -238,9 +238,9 @@ Resources:
         - AttributeName: timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: id
-          KeyType: HASH
         - AttributeName: tag
+          KeyType: HASH
+        - AttributeName: timestamp
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
