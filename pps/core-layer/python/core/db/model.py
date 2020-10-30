@@ -38,6 +38,7 @@ class Operator(enum.Enum):
             exp = exp.begins_with(value)
         else:
             raise ValueError(f"Unknown operator {str(op)}")
+        print(exp.get_expression())
         return exp
 
 
