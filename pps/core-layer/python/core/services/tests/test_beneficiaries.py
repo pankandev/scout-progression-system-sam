@@ -16,10 +16,12 @@ def ddb_stubber():
 
 
 def test_query_group(ddb_stubber: Stubber):
-    params = {'ExpressionAttributeValues': {':val_0': {'S': 'district::group'}},
-              'IndexName': 'ByGroup',
-              'KeyConditionExpression': 'group = :val_0',
-              'TableName': 'beneficiaries'}
+    params = {
+        'ExpressionAttributeNames': {'#model_group': 'group'},
+        'ExpressionAttributeValues': {':val_0': {'S': 'district::group'}},
+        'IndexName': 'ByGroup',
+        'KeyConditionExpression': '#model_group = :val_0',
+        'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
     BeneficiariesService.query_group('district', 'group')
@@ -29,14 +31,15 @@ def test_query_group(ddb_stubber: Stubber):
 def test_query_unit(ddb_stubber: Stubber):
     params = {
         'ExpressionAttributeNames': {
-            '#model_unit_user': 'unit-user'
+            '#model_unit_user': 'unit-user',
+            '#model_group': 'group'
         },
         'ExpressionAttributeValues': {
             ':val_0': {'S': 'district::group'},
             ':val_1': {'S': 'scouts'}
         },
         'IndexName': 'ByGroup',
-        'KeyConditionExpression': 'group = :val_0 AND begins_with(#model_unit_user, :val_1)',
+        'KeyConditionExpression': '#model_group = :val_0 AND begins_with(#model_unit_user, :val_1)',
         'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
