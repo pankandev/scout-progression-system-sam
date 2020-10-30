@@ -1,7 +1,9 @@
 import abc
-from typing import List, Dict, Any
+import enum
+from typing import List, Dict, Any, Tuple
 
 from boto3 import dynamodb
+from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.table import TableResource
 
 import boto3
@@ -20,6 +22,22 @@ def pass_not_none_arguments(fn, **kwargs):
         if kwargs[key] is not None:
             args[key] = kwargs[key]
     return fn(**args)
+
+
+class Operator(enum.Enum):
+    EQ = 0
+    BEGINS_WITH = 1
+
+    @staticmethod
+    def to_expression(key_name, op, value):
+        exp = Key(key_name)
+        if op == Operator.EQ:
+            exp = exp.eq(value)
+        elif op == Operator.BEGINS_WITH:
+            exp = exp.begins_with(value)
+        else:
+            raise ValueError(f"Unknown operator {str(op)}")
+        return exp
 
 
 class AbstractModel(abc.ABC):
@@ -69,57 +87,54 @@ class AbstractModel(abc.ABC):
         attributes = ', '.join(attributes)
         return attr_expression, attributes
 
+    @staticmethod
+    def add_to_attribute_names(attribute: str, attribute_names: dict) -> str:
+        name_exp = f"#attr_{attribute}".replace('-', '_')
+        attribute_names[name_exp] = attribute
+        return name_exp
+
+    @staticmethod
+    def add_to_attribute_values(value: Any, attribute_values: dict, attribute: str) -> str:
+        name_exp = f":val_{attribute}".replace('-', '_')
+        attribute_values[name_exp] = {'S': value}
+        return name_exp
+
     @classmethod
     def query(cls,
+              partition_key: Tuple[str, Any],
+              sort_key: Tuple[str, Operator, Any] = None,
               limit: int = None,
-              keys: dict = None,
               start_key: DynamoDBKey = None,
               attributes: List[str] = None,
               index: str = None,
-              begins_with: dict = None
               ) -> QueryResult:
         """
         List items from a database
         """
 
-        attr_expression = {}
-        if attributes is not None:
-            attr_expression, attributes = cls.attributes_to_projection_and_expression(attributes)
-
+        attr_names = {}
         attr_values = {}
 
-        val_i = 0
-        and_conditions = list()
-        keys_exp = {}
-        if keys is not None:
-            keys_ = list(keys.keys())
-            xp = AbstractModel.replace_keyword_attributes(keys_)
-            keys_exp = {**({} if xp is None else xp), **keys_exp}
-            for key in keys_:
-                value = keys[keys_exp.get(key, key)]
-                val_name = ':val_' + str(val_i)
-                attr_values[val_name] = {'S': value}
-                and_conditions.append(f'{key} = {val_name}')
-                val_i += 1
-        if begins_with is not None:
-            keys_ = list(begins_with.keys())
-            xp = AbstractModel.replace_keyword_attributes(keys_)
-            keys_exp = {**({} if xp is None else xp), **keys_exp}
-            for key in keys_:
-                value = begins_with[keys_exp.get(key, key)]
-                val_name = ':val_' + str(val_i)
-                attr_values[val_name] = {'S': value}
-                and_conditions.append(f'begins_with({key}, {val_name})')
-                val_i += 1
-        name_expressions = {**attr_expression, **keys_exp}
-        if len(name_expressions) == 0:
-            name_expressions = None
+        projection = None
+        if attributes is not None:
+            projection = ', '.join([cls.add_to_attribute_names(attr, attr_names) for attr in attributes])
 
-        key_conditions = ' AND '.join(and_conditions) if and_conditions is not None else None
+        hash_name = cls.add_to_attribute_names(partition_key[0], attr_names)
+        hash_value = cls.add_to_attribute_values(partition_key[1], attr_values, partition_key[0])
+        key_conditions = Operator.to_expression(hash_name, Operator.EQ, hash_value)
+
+        if sort_key:
+            sort_name = cls.add_to_attribute_names(sort_key[0], attr_names)
+            sort_value = cls.add_to_attribute_values(sort_key[2], attr_values, sort_key[0])
+            key_conditions = key_conditions & Operator.to_expression(sort_name, sort_key[1], sort_value)
+
+        if len(attr_names) == 0:
+            attr_names = None
+
         table = cls.get_table()
-        result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=attributes, IndexName=index,
+        result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=projection, IndexName=index,
                                          ExclusiveStartKey=start_key, KeyConditionExpression=key_conditions,
-                                         ExpressionAttributeNames=name_expressions,
+                                         ExpressionAttributeNames=attr_names,
                                          ExpressionAttributeValues=attr_values)
         return QueryResult(result)
 

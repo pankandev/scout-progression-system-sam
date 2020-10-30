@@ -1,7 +1,9 @@
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from .. import ModelIndex
+from ..model import Operator
 
 interface = ModelIndex('items', 'hash', 'range')
 
@@ -87,10 +89,14 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditionExpression': 'hash = :val_0 AND begins_with(range, :val_1)',
+        'KeyConditionExpression': Key('#attr_hash').eq(':val_hash') & Key('#attr_range').begins_with(':val_range'),
+        'ExpressionAttributeNames': {
+            '#attr_hash': 'hash',
+            '#attr_range': 'range'
+        },
         'ExpressionAttributeValues': {
-            ':val_0': {'S': 'value_h'},
-            ':val_1': {'S': 'val'}
+            ':val_hash': {'S': 'value_h'},
+            ':val_range': {'S': 'val'}
         },
         'Limit': 10
     }
@@ -106,7 +112,7 @@ def test_query(ddb_stubber):
     ]}
 
     ddb_stubber.add_response('query', query_response, query_params)
-    result = interface.query(partition_key='value_h', limit=10, begins_with='val')
+    result = interface.query(partition_key='value_h', sort_key=(Operator.BEGINS_WITH, 'val'), limit=10)
 
     for item in result.items:
         assert item["range"] == "value_r"

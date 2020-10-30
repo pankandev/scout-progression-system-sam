@@ -1,4 +1,5 @@
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from .. import ModelIndex
@@ -82,8 +83,9 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditionExpression': 'hash = :val_0',
-        'ExpressionAttributeValues': {':val_0': {'S': 'value_h'}},
+        'ExpressionAttributeNames': {'#attr_hash': 'hash'},
+        'KeyConditionExpression': Key('#attr_hash').eq(':val_hash'),
+        'ExpressionAttributeValues': {':val_hash': {'S': 'value_h'}},
         'Limit': 10
     }
     query_response = {'Items': [

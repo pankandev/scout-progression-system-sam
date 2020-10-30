@@ -1,4 +1,5 @@
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from core.services.groups import GroupsService
@@ -15,10 +16,14 @@ def ddb_stubber():
 
 def test_query_district(ddb_stubber: Stubber):
     params = {
-        'ExpressionAttributeNames': {'#model_name': 'name'},
-        'ExpressionAttributeValues': {':val_0': {'S': 'district'}},
-        'KeyConditionExpression': 'district = :val_0',
-        'ProjectionExpression': 'district, #model_name, code',
+        'ExpressionAttributeNames': {
+            '#attr_name': 'name',
+            '#attr_district': 'district',
+            '#attr_code': 'code',
+        },
+        'ExpressionAttributeValues': {':val_district': {'S': 'district'}},
+        'KeyConditionExpression': Key('#attr_district').eq(':val_district'),
+        'ProjectionExpression': '#attr_district, #attr_name, #attr_code',
         'TableName': 'groups'
     }
     response = {}

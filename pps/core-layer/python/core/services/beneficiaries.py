@@ -4,6 +4,7 @@ import botocore
 
 from core import ModelService
 from core.aws.event import Authorizer
+from core.db.model import Operator
 from core.exceptions.forbidden import ForbiddenException
 from core.utils.consts import VALID_STAGES, VALID_AREAS, BASE_TARGET_COMPLETE_SCORE
 from core.utils.key import clean_text, date_to_text, join_key
@@ -35,9 +36,9 @@ class BeneficiariesService(ModelService):
             return VALID_STAGES[1]
 
     @classmethod
-    def query(cls, district: str, group: str, unit: str):
+    def query_unit(cls, district: str, group: str, unit: str):
         interface = cls.get_interface("ByGroup")
-        return interface.query(join_key(district, group), begins_with=unit)
+        return interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')))
 
     @classmethod
     def query_group(cls, district: str, group: str):

@@ -1,4 +1,5 @@
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from ..db import db
@@ -70,11 +71,15 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditionExpression': 'hash = :val_0',
+        'KeyConditionExpression': Key('#attr_hash').eq(':val_hash'),
         'Limit': 10,
-        'ProjectionExpression': '#model_name, key',
-        'ExpressionAttributeValues': {':val_0': {'S': 'value_h'}},
-        'ExpressionAttributeNames': {'#model_name': 'name'}
+        'ProjectionExpression': '#attr_name, #attr_key',
+        'ExpressionAttributeValues': {':val_hash': {'S': 'value_h'}},
+        'ExpressionAttributeNames': {
+            '#attr_name': 'name',
+            '#attr_key': 'key',
+            '#attr_hash': 'hash'
+        }
     }
     query_response = {'Items': [
         {
@@ -88,7 +93,7 @@ def test_query(ddb_stubber):
     ]}
 
     ddb_stubber.add_response('query', query_response, query_params)
-    result = ItemsModel.query(keys={'hash': 'value_h'}, limit=10, attributes=['name', 'key'])
+    result = ItemsModel.query(('hash', 'value_h'), limit=10, attributes=['name', 'key'])
     for item in result.items:
         assert item["hash"] == "value_h"
 

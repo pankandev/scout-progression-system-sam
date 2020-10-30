@@ -1,4 +1,5 @@
 import pytest
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from core.services.beneficiaries import BeneficiariesService
@@ -17,10 +18,10 @@ def ddb_stubber():
 
 def test_query_group(ddb_stubber: Stubber):
     params = {
-        'ExpressionAttributeNames': {'#model_group': 'group'},
-        'ExpressionAttributeValues': {':val_0': {'S': 'district::group'}},
+        'ExpressionAttributeNames': {'#attr_group': 'group'},
+        'ExpressionAttributeValues': {':val_group': {'S': 'district::group'}},
         'IndexName': 'ByGroup',
-        'KeyConditionExpression': '#model_group = :val_0',
+        'KeyConditionExpression': Key('#attr_group').eq(':val_group'),
         'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
@@ -31,17 +32,17 @@ def test_query_group(ddb_stubber: Stubber):
 def test_query_unit(ddb_stubber: Stubber):
     params = {
         'ExpressionAttributeNames': {
-            '#model_unit_user': 'unit-user',
-            '#model_group': 'group'
+            '#attr_unit_user': 'unit-user',
+            '#attr_group': 'group'
         },
         'ExpressionAttributeValues': {
-            ':val_0': {'S': 'district::group'},
-            ':val_1': {'S': 'scouts'}
+            ':val_group': {'S': 'district::group'},
+            ':val_unit_user': {'S': 'scouts::'}
         },
         'IndexName': 'ByGroup',
-        'KeyConditionExpression': '#model_group = :val_0 AND begins_with(#model_unit_user, :val_1)',
+        'KeyConditionExpression': Key('#attr_group').eq(':val_group') & Key('#attr_unit_user').begins_with(':val_unit_user'),
         'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
-    BeneficiariesService.query('district', 'group', 'scouts')
+    BeneficiariesService.query_unit('district', 'group', 'scouts')
     ddb_stubber.assert_no_pending_responses()
