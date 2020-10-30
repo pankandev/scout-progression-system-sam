@@ -106,7 +106,8 @@ def test_join(ddb_stubber: Stubber):
             },
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(user)'
+        'ExpressionAttributeNames': {'#model_user': 'user'},
+        'ConditionExpression': 'attribute_not_exists(#model_user)'
     }
     beneficiary_response = {}
 

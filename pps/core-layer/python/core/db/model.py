@@ -11,7 +11,7 @@ from .types import DynamoDBKey, DynamoDBTypes
 
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
-RESERVED_KEYWORDS = ['name', 'unit', 'sub']
+RESERVED_KEYWORDS = ['name', 'unit', 'sub', 'user']
 
 
 def pass_not_none_arguments(fn, **kwargs):

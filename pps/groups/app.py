@@ -35,6 +35,7 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
 
 
 def join_group(district: str, group: str, code: str, authorizer: Authorizer):
+
     if not authorizer.is_beneficiary:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Must be a beneficiary")
 
