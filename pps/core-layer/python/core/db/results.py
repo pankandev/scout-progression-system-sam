@@ -1,4 +1,5 @@
 import abc
+from decimal import Decimal
 
 from .capacity import ConsumedCapacity
 
@@ -9,10 +10,25 @@ class Result(abc.ABC):
         pass
 
 
+def clean_value(value):
+    if type(value) is Decimal:
+        return float(value)
+    return value
+
+
+def clean_item(item: dict):
+    if item is None:
+        return None
+    return {
+        key: clean_item(value) if type(value) is dict else clean_value(value) for key, value in item.items()
+    }
+
+
 class QueryResult(Result):
 
     def __init__(self, result: dict):
-        self.items = result.get('Items')
+        uncleaned_items = result.get('Items')
+        self.items = [clean_item(item) for item in uncleaned_items] if uncleaned_items is not None else None
         self.count = result.get('Count'),
         self.scanned_count = result.get('ScannedCount')
         self.last_evaluated_key = result.get('LastEvaluatedKey')
@@ -29,7 +45,7 @@ class QueryResult(Result):
 
 class GetResult(Result):
     def __init__(self, result: dict):
-        self.item = result.get("Item")
+        self.item = clean_item(result.get("Item"))
         self.metadata = result.get("ResponseMetadata")
 
     def as_dict(self):
