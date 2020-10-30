@@ -16,17 +16,15 @@ def ddb_stubber():
 
 def test_query_district(ddb_stubber: Stubber):
     params = {
-        'ExpressionAttributeNames': {
-            '#attr_name': 'name',
-            '#attr_district': 'district',
-            '#attr_code': 'code',
-        },
-        # 'ExpressionAttributeValues': {':val_district': {'S': 'district'}},
-        'KeyConditionExpression': Key('#attr_district').eq('district'),
+        'KeyConditionExpression': Key('district').eq('district'),
+        'ExpressionAttributeNames': {'#attr_code': 'code',
+                                     '#attr_district': 'district',
+                                     '#attr_name': 'name'},
         'ProjectionExpression': '#attr_district, #attr_name, #attr_code',
         'TableName': 'groups'
     }
     response = {}
+
     ddb_stubber.add_response('query', response, params)
     GroupsService.query("district")
     ddb_stubber.assert_no_pending_responses()

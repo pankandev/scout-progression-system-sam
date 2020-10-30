@@ -89,11 +89,7 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditionExpression': Key('#attr_hash').eq('value_h') & Key('#attr_range').begins_with('val'),
-        'ExpressionAttributeNames': {
-            '#attr_hash': 'hash',
-            '#attr_range': 'range'
-        },
+        'KeyConditionExpression': Key('hash').eq('value_h') & Key('range').begins_with('val'),
         'Limit': 10
     }
     query_response = {'Items': [

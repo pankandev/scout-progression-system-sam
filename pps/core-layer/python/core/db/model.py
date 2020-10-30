@@ -115,22 +115,17 @@ class AbstractModel(abc.ABC):
         """
 
         attr_names = {}
-        # attr_values = {}
 
         projection = None
         if attributes is not None:
             projection = ', '.join([cls.add_to_attribute_names(attr, attr_names) for attr in attributes])
 
-        hash_name = cls.add_to_attribute_names(partition_key[0], attr_names)
-        # hash_value = cls.add_to_attribute_values(partition_key[1], attr_values, partition_key[0])
-        hash_value = partition_key[1]
+        hash_name, hash_value = partition_key
         key_conditions = Operator.to_expression(hash_name, Operator.EQ, hash_value)
 
         if sort_key:
-            sort_name = cls.add_to_attribute_names(sort_key[0], attr_names)
-            # sort_value = cls.add_to_attribute_values(sort_key[2], attr_values, sort_key[0])
-            sort_value = sort_key[2]
-            key_conditions = key_conditions & Operator.to_expression(sort_name, sort_key[1], sort_value)
+            sort_name, sort_op, sort_value = sort_key
+            key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value)
 
         if len(attr_names) == 0:
             attr_names = None

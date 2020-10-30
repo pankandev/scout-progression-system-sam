@@ -18,10 +18,8 @@ def ddb_stubber():
 
 def test_query_group(ddb_stubber: Stubber):
     params = {
-        'ExpressionAttributeNames': {'#attr_group': 'group'},
-        # 'ExpressionAttributeValues': {':val_group': {'S': 'district::group'}},
         'IndexName': 'ByGroup',
-        'KeyConditionExpression': Key('#attr_group').eq('district::group'),
+        'KeyConditionExpression': Key('group').eq('district::group'),
         'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
@@ -31,13 +29,8 @@ def test_query_group(ddb_stubber: Stubber):
 
 def test_query_unit(ddb_stubber: Stubber):
     params = {
-        'ExpressionAttributeNames': {
-            '#attr_unit_user': 'unit-user',
-            '#attr_group': 'group'
-        },
         'IndexName': 'ByGroup',
-        'KeyConditionExpression': Key('#attr_group').eq('district::group') & Key('#attr_unit_user').begins_with(
-            'scouts::'),
+        'KeyConditionExpression': Key('group').eq('district::group') & Key('unit-user').begins_with('scouts::'),
         'TableName': 'beneficiaries'}
     response = {}
     ddb_stubber.add_response('query', response, params)
