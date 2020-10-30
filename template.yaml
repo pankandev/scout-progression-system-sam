@@ -274,12 +274,12 @@ Resources:
       AttributeDefinitions:
         - AttributeName: code
           AttributeType: S
-        - AttributeName: district-timestamp
+        - AttributeName: district
           AttributeType: S
       KeySchema:
         - AttributeName: code
           KeyType: HASH
-        - AttributeName: district-timestamp
+        - AttributeName: district
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 2
