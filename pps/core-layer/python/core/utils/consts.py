@@ -1,6 +1,6 @@
 
 
-VALID_UNITS = ["guides", "scouts"]
+VALID_UNITS = ("guides", "scouts")
 
 VALID_STAGES = ["prepuberty", "puberty"]
 

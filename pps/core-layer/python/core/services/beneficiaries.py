@@ -37,7 +37,12 @@ class BeneficiariesService(ModelService):
     @classmethod
     def query(cls, district: str, group: str, unit: str):
         interface = cls.get_interface()
-        return interface.query(join_key(district, group, unit))
+        return interface.query(sort_key=join_key(district, group, unit))
+
+    @classmethod
+    def query_group(cls, district: str, group: str):
+        interface = cls.get_interface()
+        return interface.query(begins_with=join_key(district, group))
 
     @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):

@@ -471,10 +471,16 @@ Resources:
                 - cognito-idp:AdminAddUserToGroup
               Resource: '*'
       Events:
-        ListBeneficiaries:
+        ListBeneficiariesInUnit:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        ListBeneficiariesInGroup:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/
             Method: get
             RestApiId: !Ref PPSAPI
         GetBeneficiary:

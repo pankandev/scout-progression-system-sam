@@ -79,16 +79,11 @@ def test_get(ddb_stubber):
     ddb_stubber.assert_no_pending_responses()
 
 
-
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditions': {
-            'hash': {
-                'AttributeValueList': ['value_h'],
-                'ComparisonOperator': 'EQ'
-            }
-        },
+        'KeyConditionExpression': 'hash = :val_0',
+        'ExpressionAttributeValues': {':val_0': {'S': 'value_h'}},
         'Limit': 10
     }
     query_response = {'Items': [

@@ -87,11 +87,10 @@ def test_get(ddb_stubber):
 def test_query(ddb_stubber):
     query_params = {
         'TableName': 'items',
-        'KeyConditions': {
-            'range': {
-                'AttributeValueList': ['value_r'],
-                'ComparisonOperator': 'EQ'
-            }
+        'KeyConditionExpression': 'hash = :val_0 AND begins_with(range, :val_1)',
+        'ExpressionAttributeValues': {
+            ':val_0': {'S': 'value_h'},
+            ':val_1': {'S': 'val'}
         },
         'Limit': 10
     }
@@ -107,7 +106,7 @@ def test_query(ddb_stubber):
     ]}
 
     ddb_stubber.add_response('query', query_response, query_params)
-    result = interface.query(sort_key='value_r', limit=10)
+    result = interface.query(partition_key='value_h', limit=10, begins_with='val')
 
     for item in result.items:
         assert item["range"] == "value_r"

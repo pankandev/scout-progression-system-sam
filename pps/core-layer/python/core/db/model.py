@@ -75,7 +75,9 @@ class AbstractModel(abc.ABC):
               keys: dict = None,
               start_key: DynamoDBKey = None,
               attributes: List[str] = None,
-              index: str = None) -> QueryResult:
+              index: str = None,
+              begins_with: dict = None
+              ) -> QueryResult:
         """
         List items from a database
         """
@@ -84,19 +86,29 @@ class AbstractModel(abc.ABC):
         if attributes is not None:
             attr_expression, attributes = cls.attributes_to_projection_and_expression(attributes)
 
-        key_conditions = None
-        if keys is not None:
-            key_conditions = {}
-            for key, value in keys.items():
-                key_conditions[key] = {
-                    "AttributeValueList": [value],
-                    "ComparisonOperator": "EQ"
-                }
+        attr_values = {}
 
+        val_i = 0
+        and_conditions = list()
+        if keys is not None:
+            for key, value in keys.items():
+                val_name = ':val_' + str(val_i)
+                attr_values[val_name] = {'S': value}
+                and_conditions.append(f'{key} = {val_name}')
+                val_i += 1
+        if begins_with is not None:
+            for key, value in begins_with.items():
+                val_name = ':val_' + str(val_i)
+                attr_values[val_name] = {'S': value}
+                and_conditions.append(f'begins_with({key}, {val_name})')
+                val_i += 1
+
+        key_conditions = ' AND '.join(and_conditions) if and_conditions is not None else None
         table = cls.get_table()
         result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=attributes, IndexName=index,
-                                         ExclusiveStartKey=start_key, KeyConditions=key_conditions,
-                                         ExpressionAttributeNames=attr_expression)
+                                         ExclusiveStartKey=start_key, KeyConditionExpression=key_conditions,
+                                         ExpressionAttributeNames=attr_expression,
+                                         ExpressionAttributeValues=attr_values)
         return QueryResult(result)
 
     @classmethod

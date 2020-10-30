@@ -7,6 +7,7 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.services.beneficiaries import BeneficiariesService
 from core.services.users import UsersCognito
+from core.utils.consts import VALID_UNITS
 
 
 def process_beneficiary(beneficiary: dict, event: HTTPEvent):
@@ -31,6 +32,13 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
 def get_beneficiary(district: str, group: str, unit: str, sub: str, event: HTTPEvent):
     result = BeneficiariesService.get(district, group, unit, sub)
     process_beneficiary(result.item, event)
+    return result
+
+
+def get_group(district: str, group: str, event: HTTPEvent):
+    result = BeneficiariesService.query_group(district, group)
+    for obj in result.items:
+        process_beneficiary(obj, event)
     return result
 
 
@@ -71,20 +79,26 @@ def signup_beneficiary(event: HTTPEvent):
 def get_handler(event: HTTPEvent):
     district = event.params["district"]
     group = event.params["group"]
-    unit = event.params["unit"]
+    unit = event.params.get("unit")
     code = event.params.get("code")
 
-    if unit not in ("scouts", "guides"):
-        result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
-    elif code is None:
-        if unit in ["scouts", "guides"]:
-            result = JSONResponse(get_unit(district, group, unit, event).as_dict())
-        else:
-            result = JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
-    else:
-        result = get_beneficiary(district, group, unit, code, event)
-        if result.item is None:
-            result = JSONResponse.generate_error(HTTPError.NOT_FOUND, "Beneficiary not found")
+    if unit is None:
+        # get all beneficiaries from group
+        return JSONResponse(get_group(district, group, event).as_dict())
+
+    if unit not in VALID_UNITS:
+        # unknown unit
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
+
+    if code is None:
+        # get all beneficiaries from a unit in a group
+        return JSONResponse(get_unit(district, group, unit, event).as_dict())
+
+    # get one beneficiary
+    result = get_beneficiary(district, group, unit, code, event)
+    if result.item is None:
+        # beneficiary not found
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Beneficiary not found")
     return result
 
 

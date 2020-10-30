@@ -54,9 +54,6 @@ def get_handler(event: HTTPEvent):
 
     if code is None:
         # get all groups from district
-        if District.get({"code": district_code}).item is None:
-            return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"District '{district_code}' was not found")
-
         response = GroupsService.query(district_code)
         for item in response.items:
             process_group(item, event)
