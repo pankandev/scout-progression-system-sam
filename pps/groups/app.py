@@ -24,7 +24,9 @@ def process_group(item: dict, event: HTTPEvent):
 
 def create_group(district: str, item: dict, authorizer: Authorizer):
     try:
-        code = item['code']
+        code = item.get('code')
+        if code is None:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "No code given for new group")
         del item['code']
         GroupsService.create(code, district, item, authorizer.sub, authorizer.full_name)
     except SchemaError as e:
