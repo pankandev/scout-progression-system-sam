@@ -19,6 +19,7 @@ class QueryResult(Result):
         self.consumed_capacity = ConsumedCapacity.from_dict(result.get('ConsumedCapacity'))
 
     def as_dict(self):
+        print(self.count, self.items, self.last_evaluated_key)
         return {
             "items": self.items,
             "count": self.count,
