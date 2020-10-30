@@ -11,8 +11,8 @@ from core.utils.key import clean_text, date_to_text, join_key
 
 class BeneficiariesService(ModelService):
     __table_name__ = "beneficiaries"
-    __partition_key__ = "user-sub"
-    __sort_key__ = "unit"
+    __partition_key__ = "user"
+    __indices__ = {"ByGroup": ("group", "unit-user")}
 
     @staticmethod
     def generate_code(date: datetime, nick: str):
@@ -37,18 +37,20 @@ class BeneficiariesService(ModelService):
     @classmethod
     def query(cls, district: str, group: str, unit: str):
         interface = cls.get_interface()
-        return interface.query(sort_key=join_key(district, group, unit))
+        return interface.query(join_key(district, group), begins_with=unit)
 
     @classmethod
     def query_group(cls, district: str, group: str):
-        interface = cls.get_interface()
-        return interface.query(begins_with=join_key(district, group))
+        interface = cls.get_interface("ByGroup")
+        return interface.query(join_key(district, group))
 
     @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):
         interface = cls.get_interface()
 
         beneficiary = {
+            "group": join_key(district, group),
+            "unit-user": join_key(authorizer.unit, authorizer.sub),
             "full-name": authorizer.full_name,
             "nickname": authorizer.nickname,
             "birthdate": authorizer.birth_date.strftime("%d-%m-%Y"),
@@ -59,8 +61,8 @@ class BeneficiariesService(ModelService):
         }
 
         try:
-            interface.create(authorizer.sub, beneficiary, join_key(district, group, authorizer.unit),
-                             raise_if_exists_sort=True)
+            interface.create(authorizer.sub, beneficiary,
+                             raise_if_exists_partition=True)
             return True
         except botocore.exceptions.ClientError as e:
             print(str(e))

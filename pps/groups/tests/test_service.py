@@ -80,8 +80,6 @@ def test_join(ddb_stubber: Stubber):
         }
     }
 
-    unit_code = join_key("district", "group", "scouts")
-
     code = BeneficiariesService.generate_code(datetime.now(), "Nick Name")
     BeneficiariesService.generate_code = lambda x, y: code
 
@@ -89,9 +87,10 @@ def test_join(ddb_stubber: Stubber):
     beneficiary_params = {
         'TableName': 'beneficiaries',
         'Item': {
-            "unit": unit_code,
             "birthdate": birthdate,
-            "user-sub": "u-sub",
+            "user": "u-sub",
+            "group": "district::group",
+            "unit-user": "scouts::u-sub",
             "full-name": "Name Family",
             "nickname": "Nick Name",
             "target": None,
@@ -107,8 +106,7 @@ def test_join(ddb_stubber: Stubber):
             },
         },
         'ReturnValues': 'NONE',
-        'ConditionExpression': 'attribute_not_exists(#model_unit)',
-        'ExpressionAttributeNames': {'#model_unit': 'unit'}
+        'ConditionExpression': 'attribute_not_exists(user)'
     }
     beneficiary_response = {}
 

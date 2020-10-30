@@ -218,7 +218,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      TableName: beneficiaries-tmp
+      TableName: beneficiaries
     Type: AWS::DynamoDB::Table
   ShopItemsTable:
     Properties:
@@ -235,7 +235,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items-tmp
+      TableName: items
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
