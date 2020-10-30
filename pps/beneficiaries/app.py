@@ -43,7 +43,7 @@ def get_group(district: str, group: str, event: HTTPEvent):
 
 
 def get_unit(district: str, group: str, unit: str, event: HTTPEvent):
-    result = BeneficiariesService.query(district, group, unit)
+    result = BeneficiariesService.query_unit(district, group, unit)
     for obj in result.items:
         process_beneficiary(obj, event)
     return result
