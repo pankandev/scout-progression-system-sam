@@ -21,6 +21,7 @@ def pass_not_none_arguments(fn, **kwargs):
     for key in kwargs:
         if kwargs[key] is not None:
             args[key] = kwargs[key]
+    print(args)
     return fn(**args)
 
 
