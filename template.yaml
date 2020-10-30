@@ -280,19 +280,19 @@ Resources:
   GroupsTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: code
-          AttributeType: S
         - AttributeName: district
+          AttributeType: S
+        - AttributeName: code
           AttributeType: S
       KeySchema:
-        - AttributeName: code
-          KeyType: HASH
         - AttributeName: district
+          KeyType: HASH
+        - AttributeName: code
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
-      TableName: groups
+      TableName: groups-tmp
     Type: AWS::DynamoDB::Table
   # App
   DistrictsFunction:
