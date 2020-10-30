@@ -224,9 +224,12 @@ Resources:
               - completed
               - score
               - full-name
+          ProvisionedThroughput:
+            ReadCapacityUnits: 4
+            WriteCapacityUnits: 3
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+        ReadCapacityUnits: 3
+        WriteCapacityUnits: 4
       TableName: beneficiaries-tmp
     Type: AWS::DynamoDB::Table
   ShopItemsTable:
