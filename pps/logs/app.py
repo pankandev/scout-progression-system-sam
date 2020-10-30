@@ -5,6 +5,7 @@ from core.services.tasks import TasksService
 
 def get_handler(event: HTTPEvent):
     if event.resource.split('/')[-1] == 'tasks':
+        # get beneficiary tasks
         sub = event.params['sub']
         if event.authorizer.sub != sub:
             return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
@@ -14,6 +15,7 @@ def get_handler(event: HTTPEvent):
 
 def post_handler(event: HTTPEvent):
     if event.resource.split('/')[-1] == 'tasks':
+        # create new task
         sub = event.params['sub']
         if event.authorizer.sub != sub:
             return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")

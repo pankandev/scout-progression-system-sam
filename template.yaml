@@ -108,21 +108,12 @@ Resources:
         StartObjective:
           type: object
           required:
-            - stage
             - tasks
-            - objective
           properties:
             stage:
               type: string
             tasks:
               type: list
-            objective:
-              type: object
-              properties:
-                area:
-                  type: string
-                line:
-                  type: integer
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
@@ -239,22 +230,22 @@ Resources:
         WriteCapacityUnits: 2
       TableName: items
     Type: AWS::DynamoDB::Table
-  TasksTable:
+  LogsTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: user
+        - AttributeName: tag
           AttributeType: S
-        - AttributeName: objective-timestamp
+        - AttributeName: timestamp
           AttributeType: S
       KeySchema:
-        - AttributeName: user
+        - AttributeName: id
           KeyType: HASH
-        - AttributeName: objective-timestamp
+        - AttributeName: tag
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      TableName: tasks
+      TableName: logs
     Type: AWS::DynamoDB::Table
   DistrictsTable:
     Properties:
@@ -571,10 +562,10 @@ Resources:
             Path: /api/shop/{category}/{release}/items/{id}/
             Method: get
             RestApiId: !Ref PPSAPI
-  TasksFunction:
+  LogsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: pps/tasks/
+      CodeUri: pps/logs/
       Handler: app.handler
       Runtime: python3.8
       Layers:
@@ -585,29 +576,20 @@ Resources:
               !Ref BeneficiariesTable
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref TasksTable
+              !Ref LogsTable
       Events:
-        ListTasks:
+        ListUserLogs:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/logs/
             Method: get
             RestApiId: !Ref PPSAPI
-        FinishTask:
+        ListUserLogsWithTag:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{index}/finish
-            Method: post
+            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/logs/{tag}/
+            Method: get
             RestApiId: !Ref PPSAPI
-        StartTask:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
-            Method: post
-            RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: StartObjective
-              Required: true
   CloudFrontOriginAccessIdentity:
     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
     Properties:
