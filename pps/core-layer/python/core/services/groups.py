@@ -28,6 +28,10 @@ class GroupsService(ModelService):
         return f'{int_hash:08}'
 
     @staticmethod
+    def generate_scouters_code(district: str, group_code: str):
+        return hashlib.sha1(join_key(district, group_code).encode()).hexdigest()
+
+    @staticmethod
     def process_beneficiary_code(code: str):
         num, district, group = split_key(code)
         return {
@@ -41,11 +45,12 @@ class GroupsService(ModelService):
         interface = cls.get_interface()
         group = schema.validate(item)
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
+        group['scouters_code'] = cls.generate_scouters_code(district, code)
         group['creator'] = {
             "sub": creator_sub,
             "name": creator_full_name
         }
-        group['scouters'] = list()
+        group['scouters'] = [creator_sub]
 
         interface.create(code, group, district, raise_if_exists_partition=True, raise_if_exists_sort=True)
 

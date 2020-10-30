@@ -35,7 +35,6 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
 
 
 def join_group(district: str, group: str, code: str, authorizer: Authorizer):
-
     if not authorizer.is_beneficiary:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Must be a beneficiary")
 
@@ -60,9 +59,18 @@ def get_handler(event: HTTPEvent):
             process_group(item, event)
     else:
         # get one group
-        response = GroupsService.get(district_code, code)
+        response = GroupsService.get(district_code, code,
+                                     attributes=["district", "code", "name", "beneficiary_code", "scouters_code",
+                                                 "scouters"])
         if response.item is None:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
+        scouter = next(
+            (scouter for scouter in response.item['scouters'] if scouter['sub'] == event.authorizer.sub), None
+        )
+        if scouter is None:
+            del response.item['scouters']
+            del response.item['beneficiary_code']
+            del response.item['scouters_code']
         process_group(response.item, event)
     return JSONResponse(response.as_dict())
 
