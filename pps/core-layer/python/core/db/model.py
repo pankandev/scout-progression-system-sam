@@ -82,7 +82,7 @@ class AbstractModel(abc.ABC):
         List items from a database
         """
 
-        attr_expression = None
+        attr_expression = {}
         if attributes is not None:
             attr_expression, attributes = cls.attributes_to_projection_and_expression(attributes)
 
@@ -90,24 +90,36 @@ class AbstractModel(abc.ABC):
 
         val_i = 0
         and_conditions = list()
+        keys_exp = {}
         if keys is not None:
-            for key, value in keys.items():
+            keys_ = list(keys.keys())
+            xp = AbstractModel.replace_keyword_attributes(keys_)
+            keys_exp = {**({} if xp is None else xp), **keys_exp}
+            for key in keys_:
+                value = keys[keys_exp.get(key, key)]
                 val_name = ':val_' + str(val_i)
                 attr_values[val_name] = {'S': value}
                 and_conditions.append(f'{key} = {val_name}')
                 val_i += 1
         if begins_with is not None:
-            for key, value in begins_with.items():
+            keys_ = list(begins_with.keys())
+            xp = AbstractModel.replace_keyword_attributes(keys_)
+            keys_exp = {**({} if xp is None else xp), **keys_exp}
+            for key in keys_:
+                value = begins_with[keys_exp.get(key, key)]
                 val_name = ':val_' + str(val_i)
                 attr_values[val_name] = {'S': value}
                 and_conditions.append(f'begins_with({key}, {val_name})')
                 val_i += 1
+        name_expressions = {**attr_expression, **keys_exp}
+        if len(name_expressions) == 0:
+            name_expressions = None
 
         key_conditions = ' AND '.join(and_conditions) if and_conditions is not None else None
         table = cls.get_table()
         result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=attributes, IndexName=index,
                                          ExclusiveStartKey=start_key, KeyConditionExpression=key_conditions,
-                                         ExpressionAttributeNames=attr_expression,
+                                         ExpressionAttributeNames=name_expressions,
                                          ExpressionAttributeValues=attr_values)
         return QueryResult(result)
 
