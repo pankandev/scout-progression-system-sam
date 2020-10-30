@@ -215,6 +215,15 @@ Resources:
               KeyType: HASH
             - AttributeName: unit-user
               KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - nickname
+              - birthdate
+              - target
+              - completed
+              - score
+              - full-name
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
