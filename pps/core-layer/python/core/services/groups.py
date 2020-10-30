@@ -15,8 +15,8 @@ schema = Schema({
 
 class GroupsService(ModelService):
     __table_name__ = "groups"
-    __partition_key__ = "code"
-    __sort_key__ = "district"
+    __partition_key__ = "district"
+    __sort_key__ = "code"
     __indices__ = {
         "ByBeneficiaryCode": ("code", "beneficiary-code")
     }
@@ -55,12 +55,12 @@ class GroupsService(ModelService):
             attributes = ["district", "code", "name"]
 
         interface = cls.get_interface()
-        return interface.get(code, district, attributes=attributes)
+        return interface.get(district, code, attributes=attributes)
 
     @classmethod
     def query(cls, district: str):
         interface = cls.get_interface()
-        return interface.query(sort_key=district, attributes=["district", "name", "code"])
+        return interface.query(district, attributes=["district", "name", "code"])
 
     @classmethod
     def get_by_code(cls, code: str):

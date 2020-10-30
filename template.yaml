@@ -199,36 +199,43 @@ Resources:
   BeneficiariesTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: user-sub
+        - AttributeName: user
           AttributeType: S
-        - AttributeName: unit
+        - AttributeName: group
+          AttributeType: S
+        - AttributeName: unit-user
           AttributeType: S
       KeySchema:
-        - AttributeName: user-sub
+        - AttributeName: user
           KeyType: HASH
-        - AttributeName: unit
-          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ByGroup
+          KeySchema:
+            - AttributeName: group
+              KeyType: HASH
+            - AttributeName: unit-user
+              KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      TableName: beneficiaries
+      TableName: beneficiaries-tmp
     Type: AWS::DynamoDB::Table
   ShopItemsTable:
     Properties:
       AttributeDefinitions:
-        - AttributeName: id
+        - AttributeName: category
           AttributeType: S
-        - AttributeName: category-release
+        - AttributeName: release-id
           AttributeType: S
       KeySchema:
-        - AttributeName: id
+        - AttributeName: category
           KeyType: HASH
-        - AttributeName: category-release
+        - AttributeName: release-id
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items
+      TableName: items-tmp
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
@@ -292,7 +299,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
-      TableName: groups-tmp
+      TableName: groups
     Type: AWS::DynamoDB::Table
   # App
   DistrictsFunction:

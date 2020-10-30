@@ -35,7 +35,7 @@ def test_add(ddb_stubber):
                     "sub": "abc123"
                 }
             },
-            'ConditionExpression': 'attribute_not_exists(code) AND attribute_not_exists(district)',
+            'ConditionExpression': 'attribute_not_exists(district) AND attribute_not_exists(code)',
             'ReturnValues': 'NONE'
         }
         add_item_response = {}

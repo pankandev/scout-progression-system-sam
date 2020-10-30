@@ -48,7 +48,7 @@ class ModelIndex:
         self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions,
                         raise_attribute_equals=raise_attribute_equals)
 
-    def query(self, partition_key=None, sort_key=None, limit=None, start_key=None, attributes=None, begins_with: str=None):
+    def query(self, partition_key, sort_key=None, limit=None, start_key=None, attributes=None, begins_with: str=None):
         no_key = partition_key is None and sort_key is None
         key = None if no_key else self.generate_key(partition_key, sort_key, False)
         return self._model.query(keys=key, limit=limit, start_key=start_key, attributes=attributes,
