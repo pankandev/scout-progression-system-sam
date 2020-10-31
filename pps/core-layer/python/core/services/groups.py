@@ -46,12 +46,13 @@ class GroupsService(ModelService):
         group = schema.validate(item)
         group['beneficiary_code'] = cls.generate_beneficiary_code(district, code)
         group['scouters_code'] = cls.generate_scouters_code(district, code)
-        group['creator'] = {
-            "sub": creator_sub,
-            "name": creator_full_name
+        group['creator'] = creator_sub
+        group['scouters'] = {
+            creator_sub: {
+                "name": creator_full_name,
+                "role": "creator"
+            }
         }
-        group['scouters'] = [creator_sub]
-
         interface.create(code, group, district, raise_if_exists_partition=True, raise_if_exists_sort=True)
 
     @classmethod

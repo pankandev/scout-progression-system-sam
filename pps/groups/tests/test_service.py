@@ -29,11 +29,9 @@ def test_add(ddb_stubber):
                 "code": "group",
                 "name": "Group",
                 "beneficiary_code": ANY,
-                "scouters": [],
-                "creator": {
-                    "name": "Name Family",
-                    "sub": "abc123"
-                }
+                "scouters_code": ANY,
+                "scouters": {"abc123": {"name": "Name Family", "role": "creator"}},
+                "creator": "abc123"
             },
             'ConditionExpression': 'attribute_not_exists(district) AND attribute_not_exists(code)',
             'ReturnValues': 'NONE'
