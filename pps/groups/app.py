@@ -67,10 +67,7 @@ def get_handler(event: HTTPEvent):
                                                  "scouters"])
         if response.item is None:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
-        scouter = next(
-            (scouter for scouter in response.item['scouters'] if scouter['sub'] == event.authorizer.sub), None
-        )
-        if scouter is None:
+        if event.authorizer.sub in response.item['scouters'].keys():
             del response.item['scouters']
             del response.item['beneficiary_code']
             del response.item['scouters_code']

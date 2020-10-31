@@ -6,7 +6,7 @@ from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
 
 from core.aws.event import Authorizer
-from core.utils.key import join_key, epoch
+from core.utils.key import epoch
 from ..app import GroupsService, create_group, BeneficiariesService, join_group
 
 
