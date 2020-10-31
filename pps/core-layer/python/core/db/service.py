@@ -75,6 +75,10 @@ class ModelService(ABC):
     __indices__: Dict[str, Tuple[str, str]] = None
 
     @classmethod
+    def exceptions(cls):
+        return cls.get_interface().exceptions
+
+    @classmethod
     def get_interface(cls, index_name=None):
         index = cls.__indices__.get(index_name) if cls.__indices__ is not None else None
         if index is None:

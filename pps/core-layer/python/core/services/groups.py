@@ -1,12 +1,12 @@
 import hashlib
 import random
-import time
+from typing import Any
 
 from schema import Schema
 
 from core import ModelService
 from core.utils import join_key
-from core.utils.key import split_key, epoch
+from core.utils.key import split_key
 
 schema = Schema({
     'name': str,
@@ -20,6 +20,10 @@ class GroupsService(ModelService):
     __indices__ = {
         "ByBeneficiaryCode": ("code", "beneficiary-code")
     }
+
+    @property
+    def exceptions(self) -> Any:
+        return self.get_interface().client.exceptions
 
     @staticmethod
     def generate_beneficiary_code(district: str, group_code: str):

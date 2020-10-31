@@ -23,12 +23,15 @@ def process_group(item: dict, event: HTTPEvent):
 
 
 def create_group(district: str, item: dict, authorizer: Authorizer):
+    code = item.get('code')
     try:
-        code = item.get('code')
         if code is None:
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "No code given for new group")
         del item['code']
         GroupsService.create(district, code, item, authorizer.sub, authorizer.full_name)
+    except GroupsService.exceptions.ConditionalCheckFailedException:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
+                                           f"Group in district {district} with code {code} already exists")
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Item content is invalid: \"{e.code}\"")
     return JSONResponse({"message": "OK"})
