@@ -1,3 +1,5 @@
+import json
+
 from schema import Schema, SchemaError
 
 from core import HTTPEvent, JSONResponse
@@ -72,7 +74,12 @@ def start_task(event: HTTPEvent) -> JSONResponse:
         'description': str,
         'sub-tasks': [str]
     })
-    body = schema.validate(event.body)
+
+    try:
+        body = json.loads(event.body)
+        body = schema.validate(body)
+    except SchemaError as e:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
     if event.authorizer.sub != sub:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
@@ -97,7 +104,8 @@ def update_active_task(event: HTTPEvent) -> JSONResponse:
     })
 
     try:
-        body = schema.validate(event.body)
+        body = json.loads(event.body)
+        body = schema.validate(body)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
