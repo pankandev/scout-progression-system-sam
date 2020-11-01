@@ -6,16 +6,22 @@ class Router:
     def __init__(self):
         self.routes = {}
 
-    def _add_route_method(self, method, resource, fun):
+    @staticmethod
+    def standardize_resource(resource: str):
+        return '/'.join(resource.split('/'))
+
+    def _add_route_method(self, method: str, resource: str, fun):
         if self.routes.get(method) is None:
             self.routes[method] = {}
+        resource = self.standardize_resource(resource)
         self.routes[method][resource] = fun
 
     def route(self, event: HTTPEvent) -> JSONResponse:
         resources = self.routes.get(event.method)
         if resources is None:
             return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown method {event.method}")
-        fun = resources.get(event.resource)
+        resource = self.standardize_resource(event.resource)
+        fun = resources.get(resource)
         if fun is None:
             return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
         return fun(event)
