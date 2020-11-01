@@ -50,7 +50,10 @@ class TasksService(ModelService):
             } for description in tasks]
         }
 
-        BeneficiariesService.update(authorizer, active_task=task)
+        try:
+            BeneficiariesService.update(authorizer, active_task=task)
+        except BeneficiariesService.exceptions().ConditionalCheckFailedException:
+            return None
         return task
 
     @classmethod

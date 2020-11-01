@@ -83,8 +83,9 @@ def start_task(event: HTTPEvent) -> JSONResponse:
     if event.authorizer.sub != sub:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
     try:
-        TasksService.start_task(event.authorizer, stage, area, subline, body['sub-tasks'],
-                                body['description'])
+        task = TasksService.start_task(event.authorizer, stage, area, subline, body['sub-tasks'], body['description'])
+        if task is None:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, 'An active task already exists')
     except NotFoundException:
         JSONResponse.generate_error(HTTPError.NOT_FOUND, 'Objective not found')
     return JSONResponse({'message': 'Started new task'})

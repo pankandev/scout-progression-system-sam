@@ -659,13 +659,13 @@ Resources:
         DismissActiveTask:
           Type: Api
           Properties:
-            Path: /api/districts/tasks/active/
+            Path: /api/users/{sub}/tasks/active/
             Method: delete
             RestApiId: !Ref PPSAPI
         CompleteActiveTask:
           Type: Api
           Properties:
-            Path: /api/districts/tasks/active/complete/
+            Path: /api/users/{sub}/tasks/active/
             Method: post
             RestApiId: !Ref PPSAPI
   LogsFunction:
