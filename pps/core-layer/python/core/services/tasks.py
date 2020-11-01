@@ -1,58 +1,72 @@
+import time
 from typing import List
 
 from schema import Schema
 
 from core import ModelService
 from core.aws.event import Authorizer
+from core.db.model import Operator, UpdateReturnValues
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
 
-schema = Schema({
-    'stage': str,
-    'objective': {
-        'area': str,
-        'line': int
-    },
-    'tasks': [str]
-})
-
 
 class TasksService(ModelService):
-    __table_name__ = "objectives"
+    __table_name__ = "tasks"
     __partition_key__ = "user"
-    __sort_key__ = "objective-timestamp"
+    __sort_key__ = "objective"
 
     @classmethod
-    def create(cls, stage: str, area: str, line: int, tasks: List[str], description: str, authorizer: Authorizer):
+    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int):
         interface = cls.get_interface()
+        return interface.get(authorizer.sub, join_key(stage, area, subline))
 
-        objective = ObjectivesService.get(authorizer.unit, stage, area, line)
+    @classmethod
+    def query(cls, authorizer: Authorizer, stage: str = None, area: str = None):
+        interface = cls.get_interface()
+        args = [arg for arg in (stage, area) if arg is not None]
+        sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
+        return interface.query(partition_key=authorizer.sub, sort_key=sort_key,
+                               attributes=['objective-description', 'completed', 'tasks'])
+
+    """Active Task methods"""
+
+    @classmethod
+    def start_task(cls, authorizer: Authorizer, stage: str, area: str, subline: str, tasks: List[str],
+                   description: str):
+        line_, subline_ = subline.split('.')
+        objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
 
         task = {
-            'objective-description': objective.item['description'],
-            'personal-objective': description,
             'completed': False,
+            'created': int(time.time()),
+            'objective': join_key(stage, area, subline),
+            'original-objective': objective,
+            'personal-objective': description,
             'tasks': [{
-                'description': description
+                'completed': False,
+                'description': description,
             } for description in tasks]
         }
 
-        interface.create(authorizer.sub, task, join_key(authorizer.unit, stage, area, line))
+        BeneficiariesService.update(authorizer, active_task=task)
+        return task
 
     @classmethod
-    def complete(cls, stage: str, area: str, line: int, authorizer: Authorizer):
-        interface = cls.get_interface()
-        return interface.update(partition_key=authorizer.sub, updates={
-            'completed': True
-        }, sort_key=join_key(authorizer.unit, stage, area, line), condition_equals={'completed': False})
+    def get_active_task(cls, authorizer: Authorizer):
+        return BeneficiariesService.get(authorizer.sub, "target")["target"]
 
     @classmethod
-    def get(cls, stage: str, area: str, line: int, authorizer: Authorizer):
-        interface = cls.get_interface()
-        return interface.get(join_key(authorizer.unit, stage), join_key(area, line))
+    def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]):
+        return BeneficiariesService.update_active_task(authorizer, description, tasks)["target"]
 
     @classmethod
-    def query(cls, authorizer: Authorizer):
+    def complete_active_task(cls, authorizer: Authorizer):
+        old_active_task = BeneficiariesService.clear_active_task(authorizer,
+                                                                 return_values=UpdateReturnValues.UPDATED_OLD)["target"]
         interface = cls.get_interface()
-        return interface.query(partition_key=authorizer.sub, attributes=['objective-description', 'completed', 'tasks'])
+        old_active_task['completed'] = True
+        for subtask in old_active_task['tasks']:
+            subtask['completed'] = True
+        interface.create(authorizer.sub, old_active_task, old_active_task['objective'])
+        return old_active_task

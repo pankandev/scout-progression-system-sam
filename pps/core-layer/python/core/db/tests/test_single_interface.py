@@ -117,8 +117,10 @@ def test_update(ddb_stubber):
         'Key': {
             'hash': 'value_h'
         },
-        'UpdateExpression': 'SET key_a=:val0, key_b=:val1',
-        'ExpressionAttributeValues': {'val0': 'value_a', 'val1': 'value_b'},
+        'UpdateExpression': 'SET #attr_key_a=:val_key_a, #attr_key_b=:val_key_b',
+        'ExpressionAttributeNames': {'#attr_key_a': 'key_a', '#attr_key_b': 'key_b'},
+        'ExpressionAttributeValues': {':val_key_a': {'S': 'value_a'}, ':val_key_b': {'S': 'value_b'}},
+        'ReturnValues': 'UPDATED_NEW',
     }
     update_response = {}
 

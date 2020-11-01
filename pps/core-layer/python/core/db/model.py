@@ -1,6 +1,6 @@
 import abc
 import enum
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union
 
 from boto3 import dynamodb
 from boto3.dynamodb.conditions import Key
@@ -22,6 +22,28 @@ def pass_not_none_arguments(fn, **kwargs):
         if kwargs[key] is not None:
             args[key] = kwargs[key]
     return fn(**args)
+
+
+class UpdateReturnValues(enum.Enum):
+    NONE = 0
+    ALL_OLD = 1
+    UPDATED_OLD = 2
+    ALL_NEW = 3
+    UPDATED_NEW = 4
+
+    @staticmethod
+    def to_str(value):
+        if value == UpdateReturnValues.NONE:
+            return "NONE"
+        elif value == UpdateReturnValues.ALL_OLD:
+            return "ALL_OLD"
+        elif value == UpdateReturnValues.UPDATED_OLD:
+            return "UPDATED_OLD"
+        elif value == UpdateReturnValues.ALL_NEW:
+            return "ALL_NEW"
+        elif value == UpdateReturnValues.UPDATED_NEW:
+            return "UPDATED_NEW"
+        raise ValueError(f"Unknown UpdateReturnValues: {value}")
 
 
 class Operator(enum.Enum):
@@ -89,14 +111,36 @@ class AbstractModel(abc.ABC):
 
     @staticmethod
     def add_to_attribute_names(attribute: str, attribute_names: dict) -> str:
-        name_exp = f"#attr_{attribute}".replace('-', '_')
+        name_exp = f"#attr_{attribute}".replace('-', '_').replace('.', '_')
         attribute_names[name_exp] = attribute
         return name_exp
 
     @staticmethod
+    def value_to_value_expression(value: Union[str, int, float, dict, bool]):
+        if value is None:
+            return value
+        types = {
+            str: 'S',
+            int: 'N',
+            float: 'N',
+            dict: 'M',
+            bool: 'BOOL',
+            list: 'L'
+        }
+        value_type = types[type(value)]
+        if type(value) is dict:
+            for key, inner_value in value.items():
+                value[key] = AbstractModel.value_to_value_expression(inner_value)
+        elif type(value) is list:
+            for i in range(len(value)):
+                value[i] = AbstractModel.value_to_value_expression(value[i])
+
+        return {value_type: value}
+
+    @staticmethod
     def add_to_attribute_values(value: Any, attribute_values: dict, attribute: str) -> str:
-        name_exp = f":val_{attribute}".replace('-', '_')
-        attribute_values[name_exp] = {'S': value}
+        name_exp = f":val_{attribute}".replace('-', '_').replace('.', '_')
+        attribute_values[name_exp] = AbstractModel.value_to_value_expression(value)
         return name_exp
 
     @classmethod
@@ -206,15 +250,12 @@ class AbstractModel(abc.ABC):
 
     @classmethod
     def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None,
-               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None):
+               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None,
+               return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
         """
         Update an item from the database changing only the given attributes
         """
         table = cls.get_table()
-
-        attribute_values = {}
-
-        value_i = 0
 
         if updates is None:
             updates = {}
@@ -226,19 +267,19 @@ class AbstractModel(abc.ABC):
             add_to = {}
 
         if len(updates) == 0 and len(append_to) == 0:
-            raise ValueError("The updates or append_to dictionary must not be empty")
+            raise ValueError("The updates or append_to dictionary must not be empty at the same time")
 
+        attr_names = {}
+        attr_values = {}
         update_expressions = []
         for item_key, item_value in updates.items():
-            value_name = 'val' + str(value_i)
-            attribute_values[value_name] = item_value
-            update_expressions.append(f"{item_key}=:{value_name}")
-            value_i += 1
+            item_key_ = cls.add_to_attribute_names(item_key, attr_names)
+            item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key)
+            update_expressions.append(f"{item_key_}={item_value_}")
         for item_key, item_value in append_to.items():
-            value_name = 'val' + str(value_i)
-            attribute_values[value_name] = item_value
-            update_expressions.append(f"{item_key}=list_append({item_key}, :{value_name})")
-            value_i += 1
+            item_key_ = cls.add_to_attribute_names(item_key, attr_names)
+            item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key)
+            update_expressions.append(f"{item_key_}=list_append({item_key_}, {item_value_})")
         if len(update_expressions) > 0:
             expression = "SET " + ', '.join(update_expressions)
         else:
@@ -246,37 +287,38 @@ class AbstractModel(abc.ABC):
 
         add_expressions = []
         for item_key, amount in add_to.items():
-            value_name = 'val' + str(value_i)
-            attribute_values[value_name] = item_value
-            add_expressions.append(f"{item_key}=list_append({item_key}, :{value_name})")
-            value_i += 1
+            item_key_ = cls.add_to_attribute_names(item_key, attr_names)
+            item_value_ = cls.add_to_attribute_values(amount, attr_values, item_key)
+            add_expressions.append(f"ADD {item_key_} {item_value_}")
         if len(add_expressions) > 0:
             expression = ("" if expression is None else expression + " ") + "ADD " + ', '.join(add_expressions)
 
         conditions = list()
 
-        attribute_names = None
         if condition_equals is not None:
-            attribute_names = dict()
-            for attr_key, attr_value in condition_equals.items():
-                key_name = '#attr' + str(value_i)
-                attribute_names[key_name] = attr_key
+            for item_key, item_value in condition_equals.items():
+                item_key_ = cls.add_to_attribute_names(item_key, attr_names)
+                item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key)
 
-                value_name = 'val' + str(value_i)
-                attribute_values[value_name] = attr_value
-                conditions.append(f"{key_name} = :{value_name}")
-                value_i += 1
+                conditions.append(f"{item_key_} = {item_value_}")
 
         if len(conditions) == 0:
             condition_exp = None
         else:
             condition_exp = ' AND '.join(conditions)
+
+        if len(attr_names) == 0:
+            attr_names = None
+        if len(attr_values) == 0:
+            attr_values = None
+
         return pass_not_none_arguments(table.update_item,
                                        Key=key,
                                        UpdateExpression=expression,
-                                       ExpressionAttributeNames=attribute_names,
-                                       ExpressionAttributeValues=attribute_values,
-                                       ConditionExpression=condition_exp
+                                       ExpressionAttributeNames=attr_names,
+                                       ExpressionAttributeValues=attr_values,
+                                       ConditionExpression=condition_exp,
+                                       ReturnValues=UpdateReturnValues.to_str(return_values),
                                        )
 
     @classmethod

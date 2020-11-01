@@ -617,37 +617,55 @@ Resources:
         ListUserTasks:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/
+            Path: /api/users/{sub}/tasks/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        ListUserStageTasks:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/{stage}/
             Method: get
             RestApiId: !Ref PPSAPI
         ListUserAreaTasks:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/
+            Path: /api/users/{sub}/tasks/{stage}/{area}/
             Method: get
             RestApiId: !Ref PPSAPI
-        GetTask:
+        GetUserTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Path: /api/users/{sub}/tasks/{stage}/{area}/
             Method: get
             RestApiId: !Ref PPSAPI
-        DeleteTask:
+        StartTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
-            Method: delete
+            Path: /api/users/{sub}/tasks/{stage}/{area}/{subline}/
+            Method: post
             RestApiId: !Ref PPSAPI
-        UpdateTask:
+        GetActiveTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Path: /api/users/{sub}/tasks/active/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        UpdateActiveTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/tasks/active/
             Method: put
             RestApiId: !Ref PPSAPI
-        CreateTask:
+        DismissActiveTask:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/tasks/{area}/{subline}/
+            Path: /api/districts/tasks/active/
+            Method: delete
+            RestApiId: !Ref PPSAPI
+        CompleteActiveTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/tasks/active/complete/
             Method: post
             RestApiId: !Ref PPSAPI
   LogsFunction:

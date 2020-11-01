@@ -1,10 +1,11 @@
 from datetime import datetime, date
+from typing import List, Tuple
 
 import botocore
 
 from core import ModelService
 from core.aws.event import Authorizer
-from core.db.model import Operator
+from core.db.model import Operator, UpdateReturnValues
 from core.exceptions.forbidden import ForbiddenException
 from core.utils.consts import VALID_STAGES, VALID_AREAS, BASE_TARGET_COMPLETE_SCORE
 from core.utils.key import clean_text, date_to_text, join_key
@@ -22,9 +23,9 @@ class BeneficiariesService(ModelService):
         return join_key(nick, s_date).replace('::', '')
 
     @classmethod
-    def get(cls, district: str, group: str, unit: str, sub: str):
+    def get(cls, sub: str, attributes: List[str] = None):
         interface = cls.get_interface()
-        return interface.get(join_key(district, group, unit), sub)
+        return interface.get(sub, attributes=attributes)
 
     @classmethod
     def calculate_stage(cls, birth_date: datetime):
@@ -70,48 +71,35 @@ class BeneficiariesService(ModelService):
             return False
 
     @classmethod
-    def set_target_objective(cls, district: str, group: str, authorizer: Authorizer, area: str, line: int,
-                             subline: int, task: str):
+    def buy_item(cls, authorizer: Authorizer, area: str, item_code: str, amount: int = 1):
         interface = cls.get_interface()
+        interface.update(authorizer.sub, None, None, add_to={
+            f'bought_items.{item_code}': amount,
+            f'score.{area}': -amount
+        })
 
-        beneficiary = {
-            "target": {
-                "area": area,
-                "line": line,
-                "subline": subline,
-                "task": task
-            }
+    @classmethod
+    def update(cls, authorizer: Authorizer, group: str = None, name: str = None, nickname: str = None,
+               active_task=None, return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
+        interface = cls.get_interface()
+        updates = {key: value for key, value in [
+            ('group', group), ('full-name', name), ('nickname', nickname), ('target', active_task)
+        ] if value is not None}
+        return interface.update(authorizer.sub, updates, None, return_values=return_values)
+
+    @classmethod
+    def clear_active_task(cls, authorizer: Authorizer,
+                          return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_OLD):
+        interface = cls.get_interface()
+        updates = {'target': None}
+        return interface.update(authorizer.sub, updates, None, return_values=return_values)["Attributes"]
+
+    @classmethod
+    def update_active_task(cls, authorizer: Authorizer, description: str, tasks: list):
+        interface = cls.get_interface()
+        updates = {
+            'target.personal-objective': description,
+            'target.tasks': tasks
         }
-
-        try:
-            interface.update(join_key(district, group, authorizer.unit), beneficiary, authorizer.sub,
-                             raise_if_exists_sort=True)
-            return True
-        except botocore.exceptions.ClientError as e:
-            print(str(e))
-            return False
-
-    @classmethod
-    def complete_target(cls, district: str, group: str, authorizer: Authorizer):
-        interface = cls.get_interface()
-        beneficiary = interface.get(join_key(district, group, authorizer.unit), authorizer.sub, ['target'])
-        if beneficiary['target'] is None:
-            raise ForbiddenException("No target has been selected")
-        area = beneficiary['target']['area']
-        interface.update(join_key(district, group, authorizer.unit),
-                         {"target": None},
-                         authorizer.sub,
-                         append_to={f'completed-objectives': beneficiary['target_objective']},
-                         add_to={f"score.{area}": BASE_TARGET_COMPLETE_SCORE})
-        return True
-
-    @classmethod
-    def buy_item(cls, district: str, group: str, area: str, authorizer: Authorizer, item_code: str, amount: int = 1):
-        interface = cls.get_interface()
-        interface.update(join_key(district, group, authorizer.unit),
-                         None,
-                         authorizer.sub,
-                         add_to={
-                             f'bought_items.{item_code}': amount,
-                             f'score.{area}': -amount
-                         })
+        return interface.update(authorizer.sub, updates, None, return_values=UpdateReturnValues.UPDATED_NEW) \
+            .get('Attributes')
