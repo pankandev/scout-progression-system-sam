@@ -635,7 +635,7 @@ Resources:
         GetUserTask:
           Type: Api
           Properties:
-            Path: /api/users/{sub}/tasks/{stage}/{area}/
+            Path: /api/users/{sub}/tasks/{stage}/{area}/{subline}/
             Method: get
             RestApiId: !Ref PPSAPI
         StartTask:
@@ -644,17 +644,17 @@ Resources:
             Path: /api/users/{sub}/tasks/{stage}/{area}/{subline}/
             Method: post
             RestApiId: !Ref PPSAPI
+        UpdateActiveTask:
+          Type: Api
+          Properties:
+            Path: /api/districts/tasks/active/
+            Method: patch
+            RestApiId: !Ref PPSAPI
         GetActiveTask:
           Type: Api
           Properties:
             Path: /api/users/{sub}/tasks/active/
             Method: get
-            RestApiId: !Ref PPSAPI
-        UpdateActiveTask:
-          Type: Api
-          Properties:
-            Path: /api/districts/tasks/active/
-            Method: put
             RestApiId: !Ref PPSAPI
         DismissActiveTask:
           Type: Api
