@@ -172,11 +172,13 @@ def test_start_task(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
         'ReturnValues': 'UPDATED_NEW',
+        'ConditionExpression': '#attr_target = :val_target_condition',
         'UpdateExpression': 'SET #attr_target=:val_target',
         'ExpressionAttributeNames': {
             '#attr_target': 'target'
         },
         'ExpressionAttributeValues': {
+            ':val_target_condition': {'NULL': True},
             ':val_target': {'M': {
                 'completed': False,
                 'created': now,
@@ -304,7 +306,7 @@ def test_complete_task(ddb_stubber: Stubber):
             '#attr_target': 'target'
         },
         'ExpressionAttributeValues': {
-            ':val_target': None,
+            ':val_target': {'NULL': True},
         }
     }
     now = int(time.time())

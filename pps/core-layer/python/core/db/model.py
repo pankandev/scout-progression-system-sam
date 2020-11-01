@@ -117,17 +117,19 @@ class AbstractModel(abc.ABC):
 
     @staticmethod
     def value_to_value_expression(value: Union[str, int, float, dict, bool]):
-        if value is None:
-            return value
         types = {
             str: 'S',
             int: 'N',
             float: 'N',
             dict: 'M',
             bool: 'BOOL',
-            list: 'L'
+            list: 'L',
+            type(None): 'NULL'
         }
         value_type = types[type(value)]
+        if value_type == 'NULL':
+            value = True
+
         return {value_type: value}
 
     @staticmethod
@@ -291,7 +293,7 @@ class AbstractModel(abc.ABC):
         if condition_equals is not None:
             for item_key, item_value in condition_equals.items():
                 item_key_ = cls.add_to_attribute_names(item_key, attr_names)
-                item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key)
+                item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key + '_condition')
 
                 conditions.append(f"{item_key_} = {item_value_}")
 

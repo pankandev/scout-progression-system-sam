@@ -85,7 +85,15 @@ class BeneficiariesService(ModelService):
         updates = {key: value for key, value in [
             ('group', group), ('full-name', name), ('nickname', nickname), ('target', active_task)
         ] if value is not None}
-        return interface.update(authorizer.sub, updates, None, return_values=return_values)
+
+        condition_equals = {}
+        if active_task is not None:
+            condition_equals['target'] = None
+        if len(condition_equals) == 0:
+            condition_equals = None
+
+        return interface.update(authorizer.sub, updates, None, return_values=return_values,
+                                condition_equals=condition_equals)
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
