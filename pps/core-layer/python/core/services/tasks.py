@@ -62,6 +62,10 @@ class TasksService(ModelService):
         return BeneficiariesService.update_active_task(authorizer, description, tasks)["target"]
 
     @classmethod
+    def dismiss_active_task(cls, authorizer: Authorizer):
+        return BeneficiariesService.clear_active_task(authorizer)["target"]
+
+    @classmethod
     def complete_active_task(cls, authorizer: Authorizer):
         old_active_task = BeneficiariesService.clear_active_task(authorizer,
                                                                  return_values=UpdateReturnValues.UPDATED_OLD)["target"]

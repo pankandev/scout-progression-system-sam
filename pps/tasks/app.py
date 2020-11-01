@@ -2,7 +2,9 @@ from schema import Schema, SchemaError
 
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
+from core.exceptions.notfound import NotFoundException
 from core.services.tasks import TasksService
+from core.utils.consts import VALID_STAGES, VALID_AREAS
 
 """
 List user tasks:
@@ -23,7 +25,7 @@ PATCH /api/users/{sub}/tasks/active/
 Dismiss active task:
 DELETE /api/users/{sub}/tasks/active/
 Complete active task:
-POST /api/users/{sub}/tasks/active/
+POST /api/users/{sub}/tasks/active/complete/
 """
 
 
@@ -58,11 +60,18 @@ def list_user_area_tasks(event: HTTPEvent) -> JSONResponse:
 def get_user_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
     stage = event.params['stage']
+    if stage not in VALID_STAGES:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Stage {stage} not found")
     area = event.params['area']
+    if area not in VALID_AREAS:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Area {area} not found")
     subline = event.params['subline']
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.get(event.authorizer, stage, area, subline).as_dict())
+    result = TasksService.get(event.authorizer, stage, area, subline)
+    if result.item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Task not found")
+    return JSONResponse(result.as_dict())
 
 
 # GET  /api/users/{sub}/tasks/active/
@@ -88,8 +97,11 @@ def start_task(event: HTTPEvent) -> JSONResponse:
 
     if event.authorizer.sub != sub:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    TasksService.start_task(event.authorizer, stage, area, subline, body['sub-tasks'],
-                            body['description'])
+    try:
+        TasksService.start_task(event.authorizer, stage, area, subline, body['sub-tasks'],
+                                body['description'])
+    except NotFoundException:
+        JSONResponse.generate_error(HTTPError.NOT_FOUND, 'Objective not found')
     return JSONResponse({'message': 'Created new task'})
 
 
@@ -134,6 +146,20 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
     )
 
 
+# DELETE /api/users/{sub}/tasks/active/complete/
+def dismiss_active_task(event: HTTPEvent) -> JSONResponse:
+    sub = event.params['sub']
+
+    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
+    return JSONResponse(
+        {
+            'message': 'Task dismissed',
+            'task': TasksService.dismiss_active_task(event.authorizer)
+        }
+    )
+
+
 def get_handler(event: HTTPEvent):
     last_section = event.resource.split('/')[-1]
     if last_section == 'tasks':
@@ -150,14 +176,25 @@ def get_handler(event: HTTPEvent):
 
 
 def post_handler(event: HTTPEvent):
-    if event.resource.split('/')[-1] == 'tasks':
-        # create new task
-        sub = event.params['sub']
-        if event.authorizer.sub != sub:
-            return JSONResponse.generate_error(HTTPError.FORBIDDEN,
-                                               "You have no access to this resource with this user")
-        tasks = TasksService.query(event.authorizer)
+    last_section = event.resource.split('/')[-1]
+    if last_section == '{subline}':
+        return start_task(event)
+    if last_section == 'complete':
+        return complete_active_task(event)
+    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
 
+
+def put_handler(event: HTTPEvent):
+    last_section = event.resource.split('/')[-1]
+    if last_section == 'active':
+        return update_active_task(event)
+    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
+
+
+def delete_handler(event: HTTPEvent):
+    last_section = event.resource.split('/')[-1]
+    if last_section == 'active':
+        return dismiss_active_task(event)
     return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
 
 
@@ -165,4 +202,12 @@ def handler(event: dict, _) -> dict:
     event = HTTPEvent(event)
     if event.method == "GET":
         response = get_handler(event)
+    elif event.method == "POST":
+        response = post_handler(event)
+    elif event.method == "PUT":
+        response = put_handler(event)
+    elif event.method == "DELETE":
+        response = delete_handler(event)
+    else:
+        response = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Bad method: {event.method}")
     return response.as_dict()
