@@ -648,7 +648,7 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/tasks/active/
-            Method: patch
+            Method: put
             RestApiId: !Ref PPSAPI
         GetActiveTask:
           Type: Api

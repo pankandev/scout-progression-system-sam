@@ -3,30 +3,9 @@ from schema import Schema, SchemaError
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
+from core.router.router import Router
 from core.services.tasks import TasksService
 from core.utils.consts import VALID_STAGES, VALID_AREAS
-
-"""
-List user tasks:
-GET  /api/users/{sub}/tasks/
-List user stage tasks:
-GET  /api/users/{sub}/tasks/{stage}/
-List user area tasks:
-GET  /api/users/{sub}/tasks/{stage}/{area}/
-Get user task:
-GET  /api/users/{sub}/tasks/{stage}/{area}/{subline}/
-Get active task:
-GET  /api/districts/{sub}/tasks/active/
-
-Start task:
-POST /api/users/{sub}/tasks/{stage}/{area}/{subline}/
-Update active task:
-PATCH /api/users/{sub}/tasks/active/
-Dismiss active task:
-DELETE /api/users/{sub}/tasks/active/
-Complete active task:
-POST /api/users/{sub}/tasks/active/complete/
-"""
 
 
 # GET  /api/users/{sub}/tasks/
@@ -160,54 +139,23 @@ def dismiss_active_task(event: HTTPEvent) -> JSONResponse:
     )
 
 
-def get_handler(event: HTTPEvent):
-    last_section = event.resource.split('/')[-1]
-    if last_section == 'tasks':
-        return list_user_tasks(event)
-    if last_section == '{stage}':
-        return list_user_stage_tasks(event)
-    if last_section == '{area}':
-        return list_user_area_tasks(event)
-    if last_section == '{subline}':
-        return get_user_task(event)
-    if last_section == 'active':
-        return get_user_active_task(event)
-    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
+router = Router()
 
+router.get("/api/users/{sub}/tasks/", list_user_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/", list_user_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/", list_user_area_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", get_user_task)
+router.get("/api/users/{sub}/tasks/active/", get_user_active_task)
 
-def post_handler(event: HTTPEvent):
-    last_section = event.resource.split('/')[-1]
-    if last_section == '{subline}':
-        return start_task(event)
-    if last_section == 'complete':
-        return complete_active_task(event)
-    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
+router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
+router.post("/api/districts/tasks/active/complete/", complete_active_task)
 
+router.put("/api/districts/tasks/active/", update_active_task)
 
-def put_handler(event: HTTPEvent):
-    last_section = event.resource.split('/')[-1]
-    if last_section == 'active':
-        return update_active_task(event)
-    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
-
-
-def delete_handler(event: HTTPEvent):
-    last_section = event.resource.split('/')[-1]
-    if last_section == 'active':
-        return dismiss_active_task(event)
-    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
+router.delete("/api/districts/tasks/active/", dismiss_active_task)
 
 
 def handler(event: dict, _) -> dict:
     event = HTTPEvent(event)
-    if event.method == "GET":
-        response = get_handler(event)
-    elif event.method == "POST":
-        response = post_handler(event)
-    elif event.method == "PUT":
-        response = put_handler(event)
-    elif event.method == "DELETE":
-        response = delete_handler(event)
-    else:
-        response = JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Bad method: {event.method}")
+    response = router.route(event)
     return response.as_dict()
