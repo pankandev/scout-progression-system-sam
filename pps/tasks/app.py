@@ -65,6 +65,14 @@ def get_user_task(event: HTTPEvent) -> JSONResponse:
     return JSONResponse(TasksService.get(event.authorizer, stage, area, subline).as_dict())
 
 
+# GET  /api/users/{sub}/tasks/active/
+def get_user_active_task(event: HTTPEvent) -> JSONResponse:
+    sub = event.params['sub']
+    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
+    return JSONResponse(TasksService.get_active_task(event.authorizer).as_dict())
+
+
 # POST /api/users/{sub}/tasks/{stage}/{area}/{subline}/
 def start_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
@@ -127,8 +135,17 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
 
 
 def get_handler(event: HTTPEvent):
-    if event.resource.split('/')[-1] == 'tasks':
+    last_section = event.resource.split('/')[-1]
+    if last_section == 'tasks':
         return list_user_tasks(event)
+    if last_section == '{stage}':
+        return list_user_stage_tasks(event)
+    if last_section == '{area}':
+        return list_user_area_tasks(event)
+    if last_section == '{subline}':
+        return get_user_task(event)
+    if last_section == 'active':
+        return get_user_active_task(event)
     return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
 
 

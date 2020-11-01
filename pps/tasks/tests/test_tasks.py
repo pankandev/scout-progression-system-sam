@@ -119,6 +119,52 @@ def test_get_user_task(ddb_stubber: Stubber):
     ddb_stubber.assert_no_pending_responses()
 
 
+def test_get_active_task(ddb_stubber: Stubber):
+    params = {
+        'TableName': 'beneficiaries',
+        'Key': {'user': 'user-sub'},
+        'ProjectionExpression': 'target'
+    }
+    response = {
+        'Item': {
+            'target': {
+                'M': {
+                    'completed': {'BOOL': False},
+                    'created': {'N': str(int(time.time()))},
+                    'objective': {'S': 'puberty::corporality::2.3'},
+                    'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
+                    'personal-objective': {'S': 'A new task'},
+                    'tasks': {'L': [
+                        {'M': {
+                            'completed': {'BOOL': False},
+                            'description': {'S': 'Sub-task 1'},
+                        }},
+                        {'M': {
+                            'completed': {'BOOL': False},
+                            'description': {'S': 'Sub-task 2'}
+                        }}
+                    ]}
+                }
+            }
+        }
+    }
+    ddb_stubber.add_response('get_item', response, params)
+    get_user_active_task(HTTPEvent({
+        "pathParameters": {
+            "sub": 'user-sub',
+            "stage": 'puberty',
+            "area": 'sociability',
+            "subline": "2.3"
+        },
+        "requestContext": {
+            "authorizer": {
+                "claims": {"sub": 'user-sub'}
+            }
+        }
+    }))
+    ddb_stubber.assert_no_pending_responses()
+
+
 def test_start_task(ddb_stubber: Stubber):
     now = int(time.time())
 

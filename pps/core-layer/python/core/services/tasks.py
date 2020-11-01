@@ -6,6 +6,7 @@ from schema import Schema
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
+from core.db.results import GetResult
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
@@ -54,7 +55,7 @@ class TasksService(ModelService):
 
     @classmethod
     def get_active_task(cls, authorizer: Authorizer):
-        return BeneficiariesService.get(authorizer.sub, "target")["target"]
+        return GetResult(BeneficiariesService.get(authorizer.sub, ["target"]).item["target"])
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]):
