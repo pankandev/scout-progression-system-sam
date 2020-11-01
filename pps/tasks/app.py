@@ -87,7 +87,7 @@ def start_task(event: HTTPEvent) -> JSONResponse:
                                 body['description'])
     except NotFoundException:
         JSONResponse.generate_error(HTTPError.NOT_FOUND, 'Objective not found')
-    return JSONResponse({'message': 'Created new task'})
+    return JSONResponse({'message': 'Started new task'})
 
 
 # PATCH /api/users/{sub}/tasks/active/

@@ -128,13 +128,6 @@ class AbstractModel(abc.ABC):
             list: 'L'
         }
         value_type = types[type(value)]
-        if type(value) is dict:
-            for key, inner_value in value.items():
-                value[key] = AbstractModel.value_to_value_expression(inner_value)
-        elif type(value) is list:
-            for i in range(len(value)):
-                value[i] = AbstractModel.value_to_value_expression(value[i])
-
         return {value_type: value}
 
     @staticmethod

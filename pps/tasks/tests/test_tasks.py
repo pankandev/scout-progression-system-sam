@@ -178,21 +178,21 @@ def test_start_task(ddb_stubber: Stubber):
         },
         'ExpressionAttributeValues': {
             ':val_target': {'M': {
-                'completed': {'BOOL': False},
-                'created': {'N': now},
-                'objective': {'S': 'puberty::corporality::2.3'},
-                'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
-                'personal-objective': {'S': 'A new task'},
-                'tasks': {'L': [
-                    {'M': {
-                        'completed': {'BOOL': False},
-                        'description': {'S': 'Sub-task 1'},
-                    }},
-                    {'M': {
-                        'completed': {'BOOL': False},
-                        'description': {'S': 'Sub-task 2'}
-                    }}
-                ]}
+                'completed': False,
+                'created': now,
+                'objective': 'puberty::corporality::2.3',
+                'original-objective': ObjectivesService.get('puberty', 'corporality', 2, 3),
+                'personal-objective': 'A new task',
+                'tasks': [
+                    {
+                        'completed': False,
+                        'description': 'Sub-task 1',
+                    },
+                    {
+                        'completed': False,
+                        'description': 'Sub-task 2'
+                    }
+                ]
             }}
         }
     }
@@ -233,16 +233,12 @@ def test_update_task(ddb_stubber: Stubber):
         'ExpressionAttributeValues': {
             ':val_target_tasks': {'L': [
                 {
-                    'M': {
-                        'completed': {'BOOL': True},
-                        'description': {'S': 'Sub-task 1'},
-                    }
+                    'completed': True,
+                    'description': 'Sub-task 1',
                 },
                 {
-                    'M': {
-                        'completed': {'BOOL': False},
-                        'description': {'S': 'Sub-task 2'}
-                    }
+                    'completed': False,
+                    'description': 'Sub-task 2'
                 }
             ]},
             ':val_target_personal_objective': {'S': 'A new task'}
