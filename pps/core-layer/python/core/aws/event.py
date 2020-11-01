@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, date
+from json import JSONDecodeError
 
 
 class Authorizer:
@@ -88,7 +89,10 @@ class HTTPEvent:
 
     @property
     def json(self):
-        return json.loads(self.body)
+        try:
+            return json.loads(self.body)
+        except JSONDecodeError:
+            return {}
 
     def concat_url(self, *args):
         url = self.url
