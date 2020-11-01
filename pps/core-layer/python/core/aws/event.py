@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, date
 
@@ -84,6 +85,10 @@ class HTTPEvent:
         if self.headers is None or self.context is None:
             return None
         return "https://" + os.path.join(self.headers.get('Host'), self.context.get('stage'))
+
+    @property
+    def json(self):
+        return json.loads(self.body)
 
     def concat_url(self, *args):
         url = self.url

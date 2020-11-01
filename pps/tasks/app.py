@@ -76,8 +76,7 @@ def start_task(event: HTTPEvent) -> JSONResponse:
     })
 
     try:
-        body = json.loads(event.body)
-        body = schema.validate(body)
+        body = schema.validate(event.json)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
@@ -104,8 +103,7 @@ def update_active_task(event: HTTPEvent) -> JSONResponse:
     })
 
     try:
-        body = json.loads(event.body)
-        body = schema.validate(body)
+        body = schema.validate(event.json)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
