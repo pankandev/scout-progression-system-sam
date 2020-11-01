@@ -154,11 +154,11 @@ router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", get_user_task)
 router.get("/api/users/{sub}/tasks/active/", get_user_active_task)
 
 router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
-router.post("/api/districts/tasks/active/complete/", complete_active_task)
+router.post("/api/users/{sub}/tasks/active/complete/", complete_active_task)
 
-router.put("/api/districts/tasks/active/", update_active_task)
+router.put("/api/users/{sub}/tasks/active/", update_active_task)
 
-router.delete("/api/districts/tasks/active/", dismiss_active_task)
+router.delete("/api/users/{sub}/tasks/active/", dismiss_active_task)
 
 
 def handler(event: dict, _) -> dict:
