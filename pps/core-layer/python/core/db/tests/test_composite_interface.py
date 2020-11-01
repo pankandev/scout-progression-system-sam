@@ -129,9 +129,9 @@ def test_update(ddb_stubber):
             '#attr_key_c': 'key_c'
         },
         'ExpressionAttributeValues': {
-            ':val_key_a': {'S': 'value_a'},
-            ':val_key_b': {'S': 'value_b'},
-            ':val_key_c_condition': {'S': 'value_c'}
+            ':val_key_a': 'value_a',
+            ':val_key_b': 'value_b',
+            ':val_key_c_condition': 'value_c'
         },
         'ConditionExpression': '#attr_key_c = :val_key_c_condition',
         'ReturnValues': 'UPDATED_NEW',

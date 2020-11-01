@@ -78,7 +78,7 @@ class ModelService(ABC):
 
     @classmethod
     def exceptions(cls):
-        return cls.get_interface().exceptions
+        return cls.get_interface().client.exceptions
 
     @classmethod
     def get_interface(cls, index_name=None):

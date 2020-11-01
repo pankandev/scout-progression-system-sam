@@ -178,8 +178,8 @@ def test_start_task(ddb_stubber: Stubber):
             '#attr_target': 'target'
         },
         'ExpressionAttributeValues': {
-            ':val_target_condition': {'NULL': True},
-            ':val_target': {'M': {
+            ':val_target_condition': None,
+            ':val_target': {
                 'completed': False,
                 'created': now,
                 'objective': 'puberty::corporality::2.3',
@@ -195,7 +195,7 @@ def test_start_task(ddb_stubber: Stubber):
                         'description': 'Sub-task 2'
                     }
                 ]
-            }}
+            }
         }
     }
     response = {}
@@ -233,7 +233,7 @@ def test_update_task(ddb_stubber: Stubber):
             '#attr_target_tasks': 'target.tasks',
         },
         'ExpressionAttributeValues': {
-            ':val_target_tasks': {'L': [
+            ':val_target_tasks': [
                 {
                     'completed': True,
                     'description': 'Sub-task 1',
@@ -242,8 +242,8 @@ def test_update_task(ddb_stubber: Stubber):
                     'completed': False,
                     'description': 'Sub-task 2'
                 }
-            ]},
-            ':val_target_personal_objective': {'S': 'A new task'}
+            ],
+            ':val_target_personal_objective': 'A new task'
         }
     }
     response = {
@@ -306,7 +306,7 @@ def test_complete_task(ddb_stubber: Stubber):
             '#attr_target': 'target'
         },
         'ExpressionAttributeValues': {
-            ':val_target': {'NULL': True},
+            ':val_target': None,
         }
     }
     now = int(time.time())

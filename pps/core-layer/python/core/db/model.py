@@ -135,7 +135,7 @@ class AbstractModel(abc.ABC):
     @staticmethod
     def add_to_attribute_values(value: Any, attribute_values: dict, attribute: str) -> str:
         name_exp = f":val_{attribute}".replace('-', '_').replace('.', '_')
-        attribute_values[name_exp] = AbstractModel.value_to_value_expression(value)
+        attribute_values[name_exp] = value
         return name_exp
 
     @classmethod
