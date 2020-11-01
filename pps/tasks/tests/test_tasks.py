@@ -206,10 +206,10 @@ def test_start_task(ddb_stubber: Stubber):
                 "area": 'corporality',
                 "subline": "2.3"
             },
-            "body": {
+            "body": json.dumps({
                 "description": "A new task",
                 "sub-tasks": ["Sub-task 1", "Sub-task 2"]
-            },
+            }),
             "requestContext": {
                 "authorizer": {
                     "claims": {"sub": 'user-sub'}
@@ -279,7 +279,7 @@ def test_update_task(ddb_stubber: Stubber):
             "area": 'corporality',
             "subline": "2.3"
         },
-        "body": {
+        "body": json.dumps({
             "description": "A new task",
             "sub-tasks": [{
                 "description": "Sub-task 1",
@@ -288,7 +288,7 @@ def test_update_task(ddb_stubber: Stubber):
                 "description": "Sub-task 2",
                 "completed": False
             }]
-        },
+        }),
         "requestContext": {
             "authorizer": {
                 "claims": {"sub": 'user-sub'}
