@@ -97,7 +97,7 @@ def test_get_user_task(ddb_stubber: Stubber):
     params = {
         'TableName': 'tasks',
         'Key': {
-            'objective': 'puberty::an-area::2.3',
+            'objective': 'puberty::spirituality::2.3',
             'user': 'user-sub'
         },
     }
@@ -107,7 +107,7 @@ def test_get_user_task(ddb_stubber: Stubber):
         "pathParameters": {
             "sub": 'user-sub',
             "stage": 'puberty',
-            "area": 'an-area',
+            "area": 'spirituality',
             "subline": "2.3"
         },
         "requestContext": {
