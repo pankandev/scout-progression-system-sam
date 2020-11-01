@@ -8,7 +8,7 @@ class Router:
 
     @staticmethod
     def standardize_resource(resource: str):
-        return '/'.join(resource.split('/'))
+        return '/'.join(filter(lambda x: x != '', resource.split('/')))
 
     def _add_route_method(self, method: str, resource: str, fun):
         if self.routes.get(method) is None:
