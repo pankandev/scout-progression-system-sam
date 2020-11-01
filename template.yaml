@@ -665,7 +665,7 @@ Resources:
         CompleteActiveTask:
           Type: Api
           Properties:
-            Path: /api/users/{sub}/tasks/active/
+            Path: /api/users/{sub}/tasks/active/complete/
             Method: post
             RestApiId: !Ref PPSAPI
   LogsFunction:
