@@ -9,7 +9,7 @@ from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
 from core.services.shop import ShopService
 from core.utils.consts import VALID_STAGES, VALID_AREAS
-from core.utils.key import clean_text, date_to_text, join_key
+from core.utils.key import clean_text, date_to_text, join_key, split_key
 
 
 class BeneficiariesService(ModelService):
@@ -85,7 +85,8 @@ class BeneficiariesService(ModelService):
         return interface.update(authorizer.sub, None, None, add_to={
             f'bought_items.{item_category}{release_id}': amount,
             f'score.{area}': int(-amount * price)
-        }, conditions=Attr(f'score.{area}').gte(int(amount * price)), return_values=UpdateReturnValues.UPDATED_NEW)['Attributes']
+        }, conditions=Attr(f'score.{area}').gte(int(amount * price)), return_values=UpdateReturnValues.UPDATED_NEW)[
+            'Attributes']
 
     @classmethod
     def update(cls, authorizer: Authorizer, group: str = None, name: str = None, nickname: str = None,
@@ -106,10 +107,24 @@ class BeneficiariesService(ModelService):
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
-                          return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_OLD):
+                          return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_OLD,
+                          receive_score=False
+                          ):
         interface = cls.get_interface()
         updates = {'target': None}
-        return interface.update(authorizer.sub, updates, None, return_values=return_values)["Attributes"]
+        add_to = None
+        if receive_score:
+            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.score", "target.objective"]).item
+
+            score = int(beneficiary['target']['score'])
+            area = split_key(beneficiary['target']['objective'])[1]
+            add_to = {
+                f'score.{area}': score,
+                f'n_tasks.{area}': 1
+            }
+
+        return interface.update(authorizer.sub, updates, None, return_values=return_values,
+                                add_to=add_to)["Attributes"]
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: list):

@@ -91,7 +91,7 @@ def start_task(event: HTTPEvent) -> JSONResponse:
     return JSONResponse({'message': 'Started new task'})
 
 
-# PATCH /api/users/{sub}/tasks/active/
+# PUT /api/users/{sub}/tasks/active/
 def update_active_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
 

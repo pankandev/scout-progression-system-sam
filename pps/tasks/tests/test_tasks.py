@@ -134,6 +134,7 @@ def test_get_active_task(ddb_stubber: Stubber):
                     'objective': {'S': 'puberty::corporality::2.3'},
                     'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
                     'personal-objective': {'S': 'A new task'},
+                    'score': {'N': str(100)},
                     'tasks': {'L': [
                         {'M': {
                             'completed': {'BOOL': False},
@@ -168,6 +169,26 @@ def test_get_active_task(ddb_stubber: Stubber):
 def test_start_task(ddb_stubber: Stubber):
     now = int(time.time())
 
+    beneficiary_get_params = {
+        'TableName': 'beneficiaries',
+        'Key': {'user': 'user-sub'},
+        'ProjectionExpression': 'n_tasks'
+    }
+    beneficiary_get_response = {
+        "Item": {
+            "n_tasks": {
+                'M': {
+                    "corporality": {'N': str(3)},
+                    "creativity": {'N': str(1)},
+                    "character": {'N': str(2)},
+                    "affectivity": {'N': str(0)},
+                    "sociability": {'N': str(1)},
+                    "spirituality": {'N': str(3)}
+                }
+            }
+        }
+    }
+
     params = {
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
@@ -185,6 +206,7 @@ def test_start_task(ddb_stubber: Stubber):
                 'objective': 'puberty::corporality::2.3',
                 'original-objective': ObjectivesService.get('puberty', 'corporality', 2, 3),
                 'personal-objective': 'A new task',
+                'score': 96,
                 'tasks': [
                     {
                         'completed': False,
@@ -199,6 +221,7 @@ def test_start_task(ddb_stubber: Stubber):
         }
     }
     response = {}
+    ddb_stubber.add_response('get_item', beneficiary_get_response, beneficiary_get_params)
     ddb_stubber.add_response('update_item', response, params)
     with patch('time.time', lambda: now):
         start_task(HTTPEvent({
@@ -297,21 +320,49 @@ def test_update_task(ddb_stubber: Stubber):
 
 
 def test_complete_task(ddb_stubber: Stubber):
-    beneficiary_params = {
+    now = int(time.time())
+
+    get_params = {
+        'Key': {'user': 'user-sub'},
+        'ProjectionExpression': 'target.score, target.objective',
+        'TableName': 'beneficiaries'
+    }
+
+    get_response = {
+        'Item': {
+            'target': {
+                'M': {
+                    'objective': {'S': 'puberty::corporality::2.3'},
+                    'score': {'N': str(94)}
+                }
+            }
+        }
+    }
+
+    beneficiary_update_params = {
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
         'ReturnValues': 'UPDATED_OLD',
-        'UpdateExpression': 'SET #attr_target=:val_target',
+        'UpdateExpression': 'SET #attr_target=:val_target ADD #attr_score_corporality :val_score_corporality, '
+                            '#attr_n_tasks_corporality :val_n_tasks_corporality',
         'ExpressionAttributeNames': {
-            '#attr_target': 'target'
+            '#attr_n_tasks_corporality': 'n_tasks.corporality',
+            '#attr_score_corporality': 'score.corporality',
+            '#attr_target': 'target',
         },
         'ExpressionAttributeValues': {
             ':val_target': None,
+            ':val_n_tasks_corporality': 1,
+            ':val_score_corporality': 94
         }
     }
-    now = int(time.time())
-    beneficiary_response = {
+    beneficiary_update_response = {
         "Attributes": {
+            'n_tasks': {
+                'M': {
+                    'corporality': {'N': str(2)}  # this is one less than its current value
+                }
+            },
             "target": {
                 'M': {
                     'tasks': {'L': [
@@ -330,6 +381,7 @@ def test_complete_task(ddb_stubber: Stubber):
                     ]},
                     'personal-objective': {'S': 'A new task'},
                     'created': {'N': str(now)},
+                    'score': {'N': str(80)},
                     'objective': {'S': 'puberty::corporality::2.3'},
                     'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
                 }
@@ -348,7 +400,8 @@ def test_complete_task(ddb_stubber: Stubber):
             'personal-objective': 'A new task',
             'tasks': [{'completed': True, 'description': 'Sub-task 1'},
                       {'completed': True, 'description': 'Sub-task 2'}],
-            'user': 'user-sub'
+            'user': 'user-sub',
+            'score': 80
         }
     }
 
@@ -356,7 +409,8 @@ def test_complete_task(ddb_stubber: Stubber):
 
     }
 
-    ddb_stubber.add_response('update_item', beneficiary_response, beneficiary_params)
+    ddb_stubber.add_response('get_item', get_response, get_params)
+    ddb_stubber.add_response('update_item', beneficiary_update_response, beneficiary_update_params)
     ddb_stubber.add_response('put_item', tasks_response, tasks_params)
 
     complete_active_task(HTTPEvent({

@@ -63,7 +63,7 @@ def create_item(event: HTTPEvent):
         'price': int
     })
     try:
-        schema.validate(body)
+        body = schema.validate(body)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 

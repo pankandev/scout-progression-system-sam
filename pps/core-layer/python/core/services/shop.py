@@ -1,12 +1,7 @@
-import hashlib
-import math
 import time
-from decimal import Decimal
-from uuid import UUID
 
 from core import ModelService
 from core.db.model import Operator
-from core.utils import join_key
 
 
 class ShopService(ModelService):
@@ -18,8 +13,8 @@ class ShopService(ModelService):
     def create(cls, name: str, description: str, price: int, category: str, release: int):
         index = cls.get_interface()
 
-        ms_time = int(time.time() * 1e3)
-        release_id = Decimal(release * 1e5 + ms_time % 1e5)
+        ms_time = int(time.time() * 1000)
+        release_id = int(release * 100000 + ms_time % 100000)
 
         item = {
             'name': name,

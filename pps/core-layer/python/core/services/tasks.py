@@ -10,6 +10,7 @@ from core.db.results import GetResult
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
+from core.utils.key import split_key
 
 
 class TasksService(ModelService):
@@ -37,6 +38,7 @@ class TasksService(ModelService):
                    description: str):
         line_, subline_ = subline.split('.')
         objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
+        n_tasks = BeneficiariesService.get(authorizer.sub, attributes=['n_tasks']).item['n_tasks']
 
         task = {
             'completed': False,
@@ -44,6 +46,7 @@ class TasksService(ModelService):
             'objective': join_key(stage, area, subline),
             'original-objective': objective,
             'personal-objective': description,
+            'score': ObjectivesService.calculate_score_for_task(area, n_tasks),
             'tasks': [{
                 'completed': False,
                 'description': description,
@@ -71,7 +74,8 @@ class TasksService(ModelService):
     @classmethod
     def complete_active_task(cls, authorizer: Authorizer):
         old_active_task = BeneficiariesService.clear_active_task(authorizer,
-                                                                 return_values=UpdateReturnValues.UPDATED_OLD)["target"]
+                                                                 return_values=UpdateReturnValues.UPDATED_OLD,
+                                                                 receive_score=True)["target"]
         interface = cls.get_interface()
         old_active_task['completed'] = True
         for subtask in old_active_task['tasks']:
