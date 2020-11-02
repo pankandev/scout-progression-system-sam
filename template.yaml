@@ -573,7 +573,7 @@ Resources:
   ShopFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: pps/beneficiaries/
+      CodeUri: pps/shop/
       Handler: app.handler
       Runtime: python3.8
       Layers:
