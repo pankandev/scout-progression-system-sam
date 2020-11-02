@@ -85,7 +85,7 @@ class BeneficiariesService(ModelService):
         return interface.update(authorizer.sub, None, None, add_to={
             f'bought_items.{item_category}{release_id}': amount,
             f'score.{area}': int(-amount * price)
-        }, conditions=Attr(f'score.{area}').gte(int(amount * price)), return_values=UpdateReturnValues.UPDATED_NEW)
+        }, conditions=Attr(f'score.{area}').gte(int(amount * price)), return_values=UpdateReturnValues.UPDATED_NEW)['Attributes']
 
     @classmethod
     def update(cls, authorizer: Authorizer, group: str = None, name: str = None, nickname: str = None,
