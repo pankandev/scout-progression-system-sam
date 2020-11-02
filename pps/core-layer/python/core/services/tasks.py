@@ -76,6 +76,9 @@ class TasksService(ModelService):
         old_active_task = BeneficiariesService.clear_active_task(authorizer,
                                                                  return_values=UpdateReturnValues.UPDATED_OLD,
                                                                  receive_score=True)["target"]
+        if old_active_task is None:
+            return None
+
         interface = cls.get_interface()
         old_active_task['completed'] = True
         for subtask in old_active_task['tasks']:

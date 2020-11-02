@@ -117,6 +117,8 @@ class BeneficiariesService(ModelService):
         if receive_score:
             beneficiary = BeneficiariesService.get(authorizer.sub, ["target.score", "target.objective"]).item
 
+            if beneficiary.get('target') is None:
+                return None
             score = int(beneficiary['target']['score'])
             area = split_key(beneficiary['target']['objective'])[1]
             add_to = {

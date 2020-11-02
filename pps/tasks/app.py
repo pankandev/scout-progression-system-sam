@@ -124,10 +124,14 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
 
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
+    completed_task = TasksService.complete_active_task(event.authorizer)
+    if completed_task is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active task found")
+
     return JSONResponse(
         {
             'message': 'Completed task',
-            'task': TasksService.complete_active_task(event.authorizer)
+            'task': completed_task
         }
     )
 
