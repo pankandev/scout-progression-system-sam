@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from .errors import HTTPError, ERROR_CODES
 
@@ -8,13 +9,25 @@ class JSONResponse:
         self.body = body
         self.status = status
 
+    @staticmethod
+    def clean_for_json(item):
+        if type(item) is dict:
+            for key, value in item.items():
+                item[key] = JSONResponse.clean_for_json(value)
+        elif type(item) is Decimal:
+            if float(item) == int(item):
+                return int(item)
+            else:
+                return float(item)
+        return item
+
     def as_dict(self):
         return {
             "statusCode": self.status,
             "headers": {
                 "Content-Type": "application/json"
             },
-            "body": json.dumps(self.body)
+            "body": json.dumps(JSONResponse.clean_for_json(self.body))
         }
 
     @staticmethod
