@@ -59,12 +59,13 @@ def test_query(ddb_stubber: Stubber):
     params = {
         'KeyConditionExpression': Key('category').eq('category') & Key('release-id').lt(400000),
         'TableName': 'items',
-        'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id',
+        'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id, #attr_price',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
             '#attr_description': 'description',
             '#attr_name': 'name',
-            '#attr_release_id': 'release-id'
+            '#attr_release_id': 'release-id',
+            '#attr_price': 'price'
         },
     }
 
@@ -89,7 +90,7 @@ def test_get(ddb_stubber: Stubber):
     params = {
         'TableName': 'items',
         'Key': {'category': 'category', 'release-id': 312345},
-        'ProjectionExpression': '#model_name, category, description, #model_release_id',
+        'ProjectionExpression': '#model_name, category, description, #model_release_id, price',
         'ExpressionAttributeNames': {
             '#model_name': 'name',
             '#model_release_id': 'release-id'
