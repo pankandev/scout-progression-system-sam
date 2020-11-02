@@ -59,11 +59,12 @@ def test_query(ddb_stubber: Stubber):
     params = {
         'KeyConditionExpression': Key('category').eq('category') & Key('release-id').lt(400000),
         'TableName': 'items',
-        'ProjectionExpression': '#attr_name, #attr_category, #attr_description',
+        'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
             '#attr_description': 'description',
-            '#attr_name': 'name'
+            '#attr_name': 'name',
+            '#attr_release_id': 'release-id'
         },
     }
 
