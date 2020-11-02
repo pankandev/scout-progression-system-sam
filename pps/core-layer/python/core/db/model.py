@@ -49,6 +49,7 @@ class UpdateReturnValues(enum.Enum):
 class Operator(enum.Enum):
     EQ = 0
     BEGINS_WITH = 1
+    LESS_THAN = 2
 
     @staticmethod
     def to_expression(key_name, op, value):
@@ -57,6 +58,8 @@ class Operator(enum.Enum):
             exp = exp.eq(value)
         elif op == Operator.BEGINS_WITH:
             exp = exp.begins_with(value)
+        elif op == Operator.LESS_THAN:
+            exp = exp.lt(value)
         else:
             raise ValueError(f"Unknown operator {str(op)}")
         return exp
@@ -163,7 +166,6 @@ class AbstractModel(abc.ABC):
         if sort_key:
             sort_name, sort_op, sort_value = sort_key
             key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value)
-
         if len(attr_names) == 0:
             attr_names = None
 
@@ -207,8 +209,8 @@ class AbstractModel(abc.ABC):
             conditions.append(' AND '.join(and_conditions))
 
         condition = ' AND '.join(conditions) if conditions is not None else None
-        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
-                                ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
+        return pass_not_none_arguments(table.put_item, Item=item, ReturnValues='ALL_NEW', ConditionExpression=condition,
+                                       ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
 
     @classmethod
     def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:
@@ -261,8 +263,8 @@ class AbstractModel(abc.ABC):
         if add_to is None:
             add_to = {}
 
-        if len(updates) == 0 and len(append_to) == 0:
-            raise ValueError("The updates or append_to dictionary must not be empty at the same time")
+        if len(updates) == 0 and len(append_to) == 0 and len(add_to) == 0:
+            raise ValueError("The updates, append_to and add_to dictionaries must not be empty at the same time")
 
         attr_names = {}
         attr_values = {}
@@ -284,7 +286,7 @@ class AbstractModel(abc.ABC):
         for item_key, amount in add_to.items():
             item_key_ = cls.add_to_attribute_names(item_key, attr_names)
             item_value_ = cls.add_to_attribute_values(amount, attr_values, item_key)
-            add_expressions.append(f"ADD {item_key_} {item_value_}")
+            add_expressions.append(f"{item_key_} {item_value_}")
         if len(add_expressions) > 0:
             expression = ("" if expression is None else expression + " ") + "ADD " + ', '.join(add_expressions)
 

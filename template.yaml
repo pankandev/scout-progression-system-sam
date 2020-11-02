@@ -247,7 +247,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items
+      TableName: items-tmp
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
@@ -586,17 +586,29 @@ Resources:
             TableName:
               !Ref ShopItemsTable
       Events:
-        ListShopCategoryItems:
+        ListShopVersionItems:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/items/
+            Path: /api/shop/{category}/{release}/
             Method: get
             RestApiId: !Ref PPSAPI
         GetShopItem:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/items/{id}/
+            Path: /api/shop/{category}/{release}/{id}/
             Method: get
+            RestApiId: !Ref PPSAPI
+        CreateShopItem:
+          Type: Api
+          Properties:
+            Path: /api/shop/{category}/{release}/
+            Method: post
+            RestApiId: !Ref PPSAPI
+        BuyItem:
+          Type: Api
+          Properties:
+            Path: /api/shop/{category}/{release}/{id}/buy/{area}/
+            Method: post
             RestApiId: !Ref PPSAPI
   TasksFunction:
     Type: AWS::Serverless::Function

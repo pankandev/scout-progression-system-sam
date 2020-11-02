@@ -6,6 +6,7 @@ import botocore
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
+from core.services.shop import ShopService
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key
 
@@ -70,12 +71,20 @@ class BeneficiariesService(ModelService):
             return False
 
     @classmethod
-    def buy_item(cls, authorizer: Authorizer, area: str, item_code: str, amount: int = 1):
+    def buy_item(cls, authorizer: Authorizer, area: str, item_category: str, item_release: int, item_id: int,
+                 amount: int = 1):
         interface = cls.get_interface()
-        interface.update(authorizer.sub, None, None, add_to={
-            f'bought_items.{item_code}': amount,
-            f'score.{area}': -amount
-        })
+        item = ShopService.get(item_category, item_release, item_id).item
+        if item is None:
+            return False
+
+        price = item['price']
+
+        release_id = item_release * 100000 + item_id
+        return interface.update(authorizer.sub, None, None, add_to={
+            f'bought_items.{item_category}{release_id}': amount,
+            f'score.{area}': int(-amount * price)
+        }, return_values=UpdateReturnValues.UPDATED_NEW)
 
     @classmethod
     def update(cls, authorizer: Authorizer, group: str = None, name: str = None, nickname: str = None,

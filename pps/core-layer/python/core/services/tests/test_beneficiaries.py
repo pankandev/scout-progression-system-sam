@@ -3,8 +3,6 @@ from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
 from core.services.beneficiaries import BeneficiariesService
-from core.services.groups import GroupsService
-from core.utils import join_key
 
 
 @pytest.fixture(scope="function")

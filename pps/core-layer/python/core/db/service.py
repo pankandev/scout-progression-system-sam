@@ -3,6 +3,7 @@ from typing import Dict, Tuple, List, Any
 
 from .db import db
 from .model import Operator, UpdateReturnValues
+from .results import GetResult
 
 
 class ModelIndex:
@@ -46,8 +47,8 @@ class ModelIndex:
                 must_exist.append(self.partition)
             if raise_if_exists_sort:
                 must_exist.append(self.sort)
-        self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions,
-                        raise_attribute_equals=raise_attribute_equals)
+        return GetResult(self._model.add({**item, **key}, raise_if_attributes_exist=must_exist, conditions=conditions,
+                                         raise_attribute_equals=raise_attribute_equals))
 
     def query(self, partition_key, sort_key: Tuple[Operator, Any] = None, limit=None, start_key=None, attributes=None):
         self.generate_key(partition_key, sort_key, False)

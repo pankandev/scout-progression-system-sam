@@ -34,7 +34,7 @@ def test_add(ddb_stubber):
                 "creator": "abc123"
             },
             'ConditionExpression': 'attribute_not_exists(district) AND attribute_not_exists(code)',
-            'ReturnValues': 'NONE'
+            'ReturnValues': 'ALL_NEW'
         }
         add_item_response = {}
         ddb_stubber.add_response('put_item', add_item_response, add_item_params)
@@ -103,7 +103,7 @@ def test_join(ddb_stubber: Stubber):
                 "spirituality": 0
             },
         },
-        'ReturnValues': 'NONE',
+        'ReturnValues': 'ALL_NEW',
         'ExpressionAttributeNames': {'#model_user': 'user'},
         'ConditionExpression': 'attribute_not_exists(#model_user)'
     }
