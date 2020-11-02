@@ -34,8 +34,8 @@ class ShopService(ModelService):
         result = index.query(category, (Operator.LESS_THAN, int((release + 1) * 1e5)),
                              attributes=['name', 'category', 'description'])
         for item in result.items:
-            release = item['release-id'] // 100000
-            id_ = item['release-id'] % 100000
+            release = int(item['release-id'] // 100000)
+            id_ = int(item['release-id'] % 100000)
             item['release'] = release
             item['id'] = id_
             del item['release-id']

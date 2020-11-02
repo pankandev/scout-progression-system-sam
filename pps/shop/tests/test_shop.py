@@ -118,7 +118,15 @@ def test_get(ddb_stubber: Stubber):
 
 
 def test_query(ddb_stubber):
-    response = {}
+    response = {
+        'Items': [{
+            'name': {'S': 'An item'},
+            'description': {'S': 'An item description'},
+            'release-id': {'N': '312345'},
+            'category': {'S': 'category'},
+        }],
+        'Count': 0
+    }
 
     params = {
         'KeyConditionExpression': Key('category').eq('cat') & Key('release-id').lt(400000),

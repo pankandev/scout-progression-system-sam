@@ -46,7 +46,15 @@ def test_create(ddb_stubber: Stubber):
 
 
 def test_query(ddb_stubber: Stubber):
-    response = {}
+    response = {
+        'Items': [{
+            'name': {'S': 'An item'},
+            'description': {'S': 'An item description'},
+            'release-id': {'N': '312345'},
+            'category': {'S': 'category'},
+        }],
+        'Count': 0
+    }
 
     params = {
         'KeyConditionExpression': Key('category').eq('category') & Key('release-id').lt(400000),
@@ -60,7 +68,9 @@ def test_query(ddb_stubber: Stubber):
     }
 
     ddb_stubber.add_response('query', response, params)
-    ShopService.query("category", 3)
+    result = ShopService.query("category", 3)
+    assert result.items[0]['release'] == 3
+    assert result.items[0]['id'] == 12345
 
     ddb_stubber.assert_no_pending_responses()
 
