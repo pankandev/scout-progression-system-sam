@@ -238,7 +238,7 @@ Resources:
         - AttributeName: category
           AttributeType: S
         - AttributeName: release-id
-          AttributeType: S
+          AttributeType: N
       KeySchema:
         - AttributeName: category
           KeyType: HASH
@@ -247,7 +247,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items
+      TableName: items-tmp
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
