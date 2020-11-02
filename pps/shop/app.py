@@ -99,7 +99,11 @@ def buy_item(event: HTTPEvent):
     if amount < 1:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"The amount must be one or more")
 
-    result = BeneficiariesService.buy_item(event.authorizer, area, category, release, id_, amount)
+    try:
+        result = BeneficiariesService.buy_item(event.authorizer, area, category, release, id_, amount)
+    except BeneficiariesService.exceptions().ConditionalCheckFailedException:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, f"You don't have enough {area} score to buy this item")
+
     if not result:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Item not found")
     return JSONResponse(result)
