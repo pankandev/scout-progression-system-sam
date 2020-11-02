@@ -248,7 +248,7 @@ class AbstractModel(abc.ABC):
 
     @classmethod
     def update(cls, key: DynamoDBKey, updates: dict = None, append_to: Dict[str, Any] = None,
-               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None,
+               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None, conditions=None,
                return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
         """
         Update an item from the database changing only the given attributes
@@ -291,19 +291,19 @@ class AbstractModel(abc.ABC):
         if len(add_expressions) > 0:
             expression = ("" if expression is None else expression + " ") + "ADD " + ', '.join(add_expressions)
 
-        conditions = list()
+        eq_conditions = list()
 
         if condition_equals is not None:
             for item_key, item_value in condition_equals.items():
                 item_key_ = cls.add_to_attribute_names(item_key, attr_names)
                 item_value_ = cls.add_to_attribute_values(item_value, attr_values, item_key + '_condition')
 
-                conditions.append(f"{item_key_} = {item_value_}")
+                eq_conditions.append(f"{item_key_} = {item_value_}")
 
-        if len(conditions) == 0:
+        if len(eq_conditions) == 0:
             condition_exp = None
         else:
-            condition_exp = ' AND '.join(conditions)
+            condition_exp = ' AND '.join(eq_conditions)
 
         if len(attr_names) == 0:
             attr_names = None
@@ -315,7 +315,7 @@ class AbstractModel(abc.ABC):
                                        UpdateExpression=expression,
                                        ExpressionAttributeNames=attr_names,
                                        ExpressionAttributeValues=attr_values,
-                                       ConditionExpression=condition_exp,
+                                       ConditionExpression=conditions if conditions is not None else condition_exp,
                                        ReturnValues=UpdateReturnValues.to_str(return_values),
                                        )
 

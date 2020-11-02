@@ -64,11 +64,11 @@ class ModelIndex:
         self._model.delete(key)
 
     def update(self, partition_key, updates: dict = None, sort_key=None, append_to: dict = None,
-               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None,
+               condition_equals: Dict[str, Any] = None, add_to: Dict[str, int] = None, conditions=None,
                return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
         key = self.generate_key(partition_key, sort_key)
         return self._model.update(key, updates=updates, append_to=append_to, condition_equals=condition_equals,
-                                  add_to=add_to, return_values=return_values)
+                                  add_to=add_to, return_values=return_values, conditions=conditions)
 
 
 class ModelService(ABC):

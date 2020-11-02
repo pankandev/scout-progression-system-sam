@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.stub import Stubber
 
 from ..app import *
@@ -176,6 +176,10 @@ def test_buy(ddb_stubber: Stubber):
     }
 
     update_response = {
+        "Attributes": {
+            "score.corporality": {'N': '-20'},
+            "bought_items.shirts127190": {'N': '2'}
+        }
     }
 
     update_params = {
@@ -186,6 +190,7 @@ def test_buy(ddb_stubber: Stubber):
             '#attr_bought_items_cat301234': 'bought_items.cat301234',
             '#attr_score_corporality': 'score.corporality'
         },
+        'ConditionExpression': Attr('score.corporality').gte(20),
         'ExpressionAttributeValues': {':val_bought_items_cat301234': 2,
                                       ':val_score_corporality': -20},
         'UpdateExpression': 'ADD #attr_bought_items_cat301234 :val_bought_items_cat301234, '
