@@ -586,6 +586,12 @@ Resources:
             TableName:
               !Ref ShopItemsTable
       Events:
+        ListMyItems:
+          Type: Api
+          Properties:
+            Path: /api/shop/my-items/
+            Method: get
+            RestApiId: !Ref PPSAPI
         ListShopVersionItems:
           Type: Api
           Properties:

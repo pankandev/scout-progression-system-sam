@@ -40,6 +40,10 @@ def get_item(event: HTTPEvent):
     return JSONResponse(ShopService.get(category, release, id_).as_dict())
 
 
+def get_my_items(event: HTTPEvent):
+    return JSONResponse(BeneficiariesService.get(event.authorizer.sub, ['bought_items']).as_dict())
+
+
 def create_item(event: HTTPEvent):
     category = event.params['category']
 
@@ -111,6 +115,7 @@ def buy_item(event: HTTPEvent):
 
 router.get("/api/shop/{category}/{release}/", list_shop_category)
 router.get("/api/shop/{category}/{release}/{id}/", get_item)
+router.get("/api/shop/my-items/", get_my_items)
 
 router.post("/api/shop/{category}/{release}/", create_item)
 router.post("/api/shop/{category}/{release}/{id}/buy/{area}/", buy_item)
