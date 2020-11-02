@@ -53,5 +53,7 @@ class ObjectivesService:
         boost_factor = conf["boost-factor"]
         base_score = conf["base-score"]
 
+        if this_n_tasks == 0:
+            this_n_tasks = 0.5
         factor = 1 + other_n_tasks / (5 * this_n_tasks)
         return int(math.ceil(base_score + factor * boost_factor))
