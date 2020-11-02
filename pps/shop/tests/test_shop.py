@@ -85,14 +85,22 @@ def test_query(ddb_stubber):
 
 
 def test_get(ddb_stubber: Stubber):
-    response = {}
+    response = {
+        'Item': {
+            'name': {'S': 'An item'},
+            'description': {'S': 'An item description'},
+            'release-id': {'N': '312345'},
+            'category': {'S': 'category'},
+        }
+    }
 
     params = {
         'TableName': 'items',
         'Key': {'category': 'cat', 'release-id': 301234},
-        'ProjectionExpression': '#model_name, category, description',
+        'ProjectionExpression': '#model_name, category, description, #model_release_id',
         'ExpressionAttributeNames': {
-            '#model_name': 'name'
+            '#model_name': 'name',
+            '#model_release_id': 'release-id'
         },
     }
 
@@ -142,17 +150,19 @@ def test_buy(ddb_stubber: Stubber):
             'category': {'S': 'cat'},
             'name': {'S': 'An item'},
             'description': {'S': 'An item description'},
-            'price': {'N': '10'}
+            'price': {'N': '10'},
+            'release-id': {'N': '301234'}
         }
     }
 
     get_params = {
         'TableName': 'items',
         'Key': {'category': 'cat', 'release-id': 301234},
-        'ProjectionExpression': '#model_name, category, description',
+        'ProjectionExpression': '#model_name, category, description, #model_release_id',
         'ExpressionAttributeNames': {
-            '#model_name': 'name'
-        }
+            '#model_name': 'name',
+            '#model_release_id': 'release-id'
+        },
     }
 
     update_response = {

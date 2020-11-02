@@ -38,4 +38,9 @@ class ShopService(ModelService):
     def get(cls, category: str, release: int, id_: int):
         index = cls.get_interface()
         release_id = release * 100000 + id_
-        return index.get(category, release_id, attributes=['name', 'category', 'description'])
+        result = index.get(category, release_id, attributes=['name', 'category', 'description', 'release-id'])
+        release = result.item['release-id'] // 100000
+        id_ = result.item['release-id'] % 100000
+        result.item['release'] = release
+        result.item['id'] = id_
+        return result

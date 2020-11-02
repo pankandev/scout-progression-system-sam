@@ -66,14 +66,22 @@ def test_query(ddb_stubber: Stubber):
 
 
 def test_get(ddb_stubber: Stubber):
-    response = {}
+    response = {
+        'Item': {
+            'name': {'S': 'An item'},
+            'description': {'S': 'An item description'},
+            'release-id': {'N': '312345'},
+            'category': {'S': 'category'},
+        }
+    }
 
     params = {
         'TableName': 'items',
         'Key': {'category': 'category', 'release-id': 312345},
-        'ProjectionExpression': '#model_name, category, description',
+        'ProjectionExpression': '#model_name, category, description, #model_release_id',
         'ExpressionAttributeNames': {
-            '#model_name': 'name'
+            '#model_name': 'name',
+            '#model_release_id': 'release-id'
         },
     }
 
