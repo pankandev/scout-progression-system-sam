@@ -94,6 +94,14 @@ def test_join(ddb_stubber: Stubber):
             "target": None,
             "bought_items": {},
             "completed": None,
+            "n_tasks": {
+                "corporality": 0,
+                "creativity": 0,
+                "character": 0,
+                "affectivity": 0,
+                "sociability": 0,
+                "spirituality": 0
+            },
             "score": {
                 "corporality": 0,
                 "creativity": 0,

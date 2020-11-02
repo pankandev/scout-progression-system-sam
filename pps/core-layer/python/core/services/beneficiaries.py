@@ -60,6 +60,7 @@ class BeneficiariesService(ModelService):
             "target": None,
             "completed": None,
             "score": {area: 0 for area in VALID_AREAS},
+            "n_tasks": {area: 0 for area in VALID_AREAS},
             "bought_items": {}
         }
 
