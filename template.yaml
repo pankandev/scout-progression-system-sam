@@ -247,7 +247,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items-tmp
+      TableName: items
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
