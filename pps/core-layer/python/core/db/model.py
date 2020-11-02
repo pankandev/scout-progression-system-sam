@@ -113,9 +113,22 @@ class AbstractModel(abc.ABC):
         return attr_expression, attributes
 
     @staticmethod
-    def add_to_attribute_names(attribute: str, attribute_names: dict) -> str:
-        name_exp = f"#attr_{attribute}".replace('-', '_').replace('.', '_')
-        attribute_names[name_exp] = attribute
+    def clean_for_exp(text: str):
+        return text.replace('-', '_').replace('.', '_')
+
+    @staticmethod
+    def add_to_attribute_names(attribute: str, attribute_names: dict, prefix: str = None) -> str:
+        dot_splitted = attribute.split('.')
+        if len(dot_splitted) > 1:
+            exp = []
+            for attr in dot_splitted:
+                pref = '_'.join(exp).replace('#attr_', '')
+                exp.append(AbstractModel.add_to_attribute_names(attr, attribute_names, pref))
+            name_exp = '.'.join(exp)
+        else:
+            name = (prefix + '_' if prefix else '') + attribute
+            name_exp = AbstractModel.clean_for_exp(f"#attr_{name}")
+            attribute_names[name_exp] = attribute
         return name_exp
 
     @staticmethod

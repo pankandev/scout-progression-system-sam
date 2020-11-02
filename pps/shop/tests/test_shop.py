@@ -187,14 +187,16 @@ def test_buy(ddb_stubber: Stubber):
         'Key': {'user': 'u-sub'},
         'ReturnValues': 'UPDATED_NEW',
         'ExpressionAttributeNames': {
-            '#attr_bought_items_cat301234': 'bought_items.cat301234',
-            '#attr_score_corporality': 'score.corporality'
+            '#attr_bought_items': 'bought_items',
+            '#attr_bought_items_cat301234': 'cat301234',
+            '#attr_score_corporality': 'corporality',
+            '#attr_score': 'score'
         },
         'ConditionExpression': Attr('score.corporality').gte(20),
         'ExpressionAttributeValues': {':val_bought_items_cat301234': 2,
                                       ':val_score_corporality': -20},
-        'UpdateExpression': 'ADD #attr_bought_items_cat301234 :val_bought_items_cat301234, '
-                            '#attr_score_corporality :val_score_corporality'
+        'UpdateExpression': 'ADD #attr_bought_items.#attr_bought_items_cat301234 :val_bought_items_cat301234, '
+                            '#attr_score.#attr_score_corporality :val_score_corporality'
     }
 
     ddb_stubber.add_response('get_item', get_response, get_params)

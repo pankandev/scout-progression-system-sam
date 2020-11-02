@@ -249,11 +249,12 @@ def test_update_task(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
         'ReturnValues': 'UPDATED_NEW',
-        'UpdateExpression': 'SET #attr_target_personal_objective=:val_target_personal_objective, '
-                            '#attr_target_tasks=:val_target_tasks',
+        'UpdateExpression': 'SET #attr_target.#attr_target_personal_objective=:val_target_personal_objective, '
+                            '#attr_target.#attr_target_tasks=:val_target_tasks',
         'ExpressionAttributeNames': {
-            '#attr_target_personal_objective': 'target.personal-objective',
-            '#attr_target_tasks': 'target.tasks',
+            '#attr_target': 'target',
+            '#attr_target_personal_objective': 'personal-objective',
+            '#attr_target_tasks': 'tasks',
         },
         'ExpressionAttributeValues': {
             ':val_target_tasks': [
@@ -343,11 +344,13 @@ def test_complete_task(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
         'ReturnValues': 'UPDATED_OLD',
-        'UpdateExpression': 'SET #attr_target=:val_target ADD #attr_score_corporality :val_score_corporality, '
-                            '#attr_n_tasks_corporality :val_n_tasks_corporality',
+        'UpdateExpression': 'SET #attr_target=:val_target ADD #attr_score.#attr_score_corporality :val_score_corporality, '
+                            '#attr_n_tasks.#attr_n_tasks_corporality :val_n_tasks_corporality',
         'ExpressionAttributeNames': {
-            '#attr_n_tasks_corporality': 'n_tasks.corporality',
-            '#attr_score_corporality': 'score.corporality',
+            '#attr_score': 'score',
+            '#attr_n_tasks': 'n_tasks',
+            '#attr_n_tasks_corporality': 'corporality',
+            '#attr_score_corporality': 'corporality',
             '#attr_target': 'target',
         },
         'ExpressionAttributeValues': {
