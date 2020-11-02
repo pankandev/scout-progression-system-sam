@@ -209,8 +209,9 @@ class AbstractModel(abc.ABC):
             conditions.append(' AND '.join(and_conditions))
 
         condition = ' AND '.join(conditions) if conditions is not None else None
-        return pass_not_none_arguments(table.put_item, Item=item, ReturnValues='ALL_NEW', ConditionExpression=condition,
-                                       ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
+        pass_not_none_arguments(table.put_item, Item=item, ReturnValues='NONE', ConditionExpression=condition,
+                                ExpressionAttributeNames=exp, ExpressionAttributeValues=attribute_values)
+        return item
 
     @classmethod
     def get(cls, key: DynamoDBKey, attributes: List[str] = None) -> GetResult:

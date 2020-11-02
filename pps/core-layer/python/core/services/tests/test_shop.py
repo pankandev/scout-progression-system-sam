@@ -33,7 +33,7 @@ def test_create(ddb_stubber: Stubber):
             'price': 10,
             'release-id': release_id
         },
-        'ReturnValues': 'ALL_NEW',
+        'ReturnValues': 'NONE',
         'TableName': 'items'
     }
 

@@ -52,7 +52,7 @@ def create_item(event: HTTPEvent):
     body = event.json
 
     try:
-        body['price'] = int(body['price'])
+        body['price'] = int(body.get('price'))
     except ValueError:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
                                            f"Invalid price {body['price']}, it should be an int")

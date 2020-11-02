@@ -23,7 +23,7 @@ def test_add(ddb_stubber):
     add_item_params = {
         'TableName': 'items',
         'Item': item,
-        'ReturnValues': 'ALL_NEW'
+        'ReturnValues': 'NONE'
     }
     add_item_response = {}
     ddb_stubber.add_response('put_item', add_item_response, add_item_params)

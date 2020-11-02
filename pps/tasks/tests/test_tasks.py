@@ -339,7 +339,7 @@ def test_complete_task(ddb_stubber: Stubber):
 
     tasks_params = {
         'TableName': 'tasks',
-        'ReturnValues': 'ALL_NEW',
+        'ReturnValues': 'NONE',
         'Item': {
             'completed': True,
             'created': ANY,
