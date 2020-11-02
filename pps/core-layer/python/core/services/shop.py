@@ -31,8 +31,15 @@ class ShopService(ModelService):
     @classmethod
     def query(cls, category: str, release: int):
         index = cls.get_interface()
-        return index.query(category, (Operator.LESS_THAN, int((release + 1) * 1e5)),
-                           attributes=['name', 'category', 'description'])
+        result = index.query(category, (Operator.LESS_THAN, int((release + 1) * 1e5)),
+                             attributes=['name', 'category', 'description'])
+        for item in result.items:
+            release = item['release-id'] // 100000
+            id_ = item['release-id'] % 100000
+            item['release'] = release
+            item['id'] = id_
+            del item['release-id']
+        return result
 
     @classmethod
     def get(cls, category: str, release: int, id_: int):
