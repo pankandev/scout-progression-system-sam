@@ -1,13 +1,12 @@
 from datetime import datetime, date
-from typing import List, Tuple
+from typing import List
 
 import botocore
 
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
-from core.exceptions.forbidden import ForbiddenException
-from core.utils.consts import VALID_STAGES, VALID_AREAS, BASE_TARGET_COMPLETE_SCORE
+from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key
 
 

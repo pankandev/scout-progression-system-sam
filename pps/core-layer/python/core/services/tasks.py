@@ -58,7 +58,7 @@ class TasksService(ModelService):
 
     @classmethod
     def get_active_task(cls, authorizer: Authorizer):
-        return GetResult(BeneficiariesService.get(authorizer.sub, ["target"]).item["target"])
+        return GetResult.from_item(BeneficiariesService.get(authorizer.sub, ["target"]).item["target"])
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]):

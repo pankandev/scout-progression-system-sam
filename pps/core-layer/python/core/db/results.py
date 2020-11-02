@@ -47,5 +47,9 @@ class GetResult(Result):
         self.item = clean_item(result.get("Item"))
         self.metadata = result.get("ResponseMetadata")
 
+    @classmethod
+    def from_item(cls, item):
+        return GetResult({'Item': item})
+
     def as_dict(self):
         return self.item
