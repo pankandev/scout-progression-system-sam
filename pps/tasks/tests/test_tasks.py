@@ -169,26 +169,6 @@ def test_get_active_task(ddb_stubber: Stubber):
 def test_start_task(ddb_stubber: Stubber):
     now = int(time.time())
 
-    beneficiary_get_params = {
-        'TableName': 'beneficiaries',
-        'Key': {'user': 'user-sub'},
-        'ProjectionExpression': 'n_tasks'
-    }
-    beneficiary_get_response = {
-        "Item": {
-            "n_tasks": {
-                'M': {
-                    "corporality": {'N': str(3)},
-                    "creativity": {'N': str(1)},
-                    "character": {'N': str(2)},
-                    "affectivity": {'N': str(0)},
-                    "sociability": {'N': str(1)},
-                    "spirituality": {'N': str(3)}
-                }
-            }
-        }
-    }
-
     params = {
         'TableName': 'beneficiaries',
         'Key': {'user': 'user-sub'},
@@ -206,7 +186,7 @@ def test_start_task(ddb_stubber: Stubber):
                 'objective': 'puberty::corporality::2.3',
                 'original-objective': ObjectivesService.get('puberty', 'corporality', 2, 3),
                 'personal-objective': 'A new task',
-                'score': 96,
+                'score': 80,
                 'tasks': [
                     {
                         'completed': False,
@@ -221,7 +201,6 @@ def test_start_task(ddb_stubber: Stubber):
         }
     }
     response = {}
-    ddb_stubber.add_response('get_item', beneficiary_get_response, beneficiary_get_params)
     ddb_stubber.add_response('update_item', response, params)
     with patch('time.time', lambda: now):
         start_task(HTTPEvent({
