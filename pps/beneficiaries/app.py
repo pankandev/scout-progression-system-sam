@@ -5,6 +5,7 @@ from botocore.exceptions import ParamValidationError
 
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
+from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
 from core.services.users import UsersCognito
 from core.utils.consts import VALID_UNITS
@@ -15,8 +16,7 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
         district, group, unit = beneficiary["unit"].split("::")
 
         beneficiary["district"] = event.concat_url('districts', district)
-        beneficiary["url"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit,
-                                              beneficiary["user-sub"])
+        beneficiary["url"] = event.concat_url('beneficiaries', beneficiary["user-sub"])
         beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
         beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)
         beneficiary["stage"] = BeneficiariesService.calculate_stage(
@@ -29,24 +29,35 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
         pass
 
 
-def get_beneficiary(district: str, group: str, unit: str, sub: str, event: HTTPEvent):
-    result = BeneficiariesService.get(district, group, unit, sub)
+def get_beneficiary(event: HTTPEvent):
+    result = BeneficiariesService.get(event.authorizer.sub)
+    if result.item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
+
     process_beneficiary(result.item, event)
-    return result
+    return JSONResponse(result.as_dict())
 
 
-def get_group(district: str, group: str, event: HTTPEvent):
+def list_beneficiaries_group(event: HTTPEvent):
+    district = event.params["district"]
+    group = event.params["group"]
     result = BeneficiariesService.query_group(district, group)
     for obj in result.items:
         process_beneficiary(obj, event)
-    return result
+    return JSONResponse(result.as_dict())
 
 
-def get_unit(district: str, group: str, unit: str, event: HTTPEvent):
+def list_beneficiaries_unit(event: HTTPEvent):
+    district = event.params["district"]
+    group = event.params["group"]
+    unit = event.params["unit"]
+    if unit not in VALID_UNITS:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit: {unit}")
+
     result = BeneficiariesService.query_unit(district, group, unit)
     for obj in result.items:
         process_beneficiary(obj, event)
-    return result
+    return JSONResponse(result.as_dict())
 
 
 def signup_beneficiary(event: HTTPEvent):
@@ -76,48 +87,16 @@ def signup_beneficiary(event: HTTPEvent):
 """Handlers"""
 
 
-def get_handler(event: HTTPEvent):
-    district = event.params["district"]
-    group = event.params["group"]
-    unit = event.params.get("unit")
-    code = event.params.get("code")
+router = Router()
 
-    if unit is None:
-        # get all beneficiaries from group
-        return JSONResponse(get_group(district, group, event).as_dict())
+router.get("/api/districts/{district}/groups/{group}/beneficiaries/{unit}/", list_beneficiaries_unit)
+router.get("/api/districts/{district}/groups/{group}/beneficiaries/", list_beneficiaries_group)
+router.get("/api/beneficiaries/{sub}/", get_beneficiary)
 
-    if unit not in VALID_UNITS:
-        # unknown unit
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit '{unit}'")
-
-    if code is None:
-        # get all beneficiaries from a unit in a group
-        return JSONResponse(get_unit(district, group, unit, event).as_dict())
-
-    # get one beneficiary
-    result = get_beneficiary(district, group, unit, code, event)
-    if result.item is None:
-        # beneficiary not found
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Beneficiary not found")
-    return result
-
-
-def post_handler(event: HTTPEvent):
-    if event.resource == "/api/auth/beneficiaries-signup":
-        result = signup_beneficiary(event)
-    else:
-        result = JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, "Unknown route")
-    return result
+router.post("/api/auth/beneficiaries-signup/", signup_beneficiary)
 
 
 def handler(event: dict, _) -> dict:
     event = HTTPEvent(event)
-
-    if event.method == "GET":
-        result = get_handler(event)
-    elif event.method == "POST":
-        result = post_handler(event)
-    else:
-        result = JSONResponse.generate_error(HTTPError.NOT_IMPLEMENTED, f"Method {event.method} is not valid")
-
-    return result.as_dict()
+    response = router.route(event)
+    return response.as_dict()

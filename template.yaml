@@ -513,7 +513,7 @@ Resources:
         GetBeneficiary:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/
+            Path: /api/beneficiaries/{sub}/
             Method: get
             RestApiId: !Ref PPSAPI
         SignupBeneficiary:
