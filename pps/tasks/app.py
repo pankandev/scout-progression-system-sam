@@ -60,7 +60,10 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.get_active_task(event.authorizer).as_dict())
+    result = TasksService.get_active_task(event.authorizer)
+    if result.item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active tasks")
+    return JSONResponse(result.as_dict())
 
 
 # POST /api/users/{sub}/tasks/{stage}/{area}/{subline}/
