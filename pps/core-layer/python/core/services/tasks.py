@@ -38,7 +38,6 @@ class TasksService(ModelService):
                    description: str):
         line_, subline_ = subline.split('.')
         objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
-        n_tasks = BeneficiariesService.get(authorizer.sub, attributes=['n_tasks']).item['n_tasks']
 
         task = {
             'completed': False,
@@ -46,7 +45,7 @@ class TasksService(ModelService):
             'objective': join_key(stage, area, subline),
             'original-objective': objective,
             'personal-objective': description,
-            'score': ObjectivesService.calculate_score_for_task(area, n_tasks),
+            'score': 80,
             'tasks': [{
                 'completed': False,
                 'description': description,
