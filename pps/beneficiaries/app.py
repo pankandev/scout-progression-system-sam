@@ -63,14 +63,19 @@ def list_beneficiaries_unit(event: HTTPEvent):
 def signup_beneficiary(event: HTTPEvent):
     data = json.loads(event.body)
     try:
-        UsersCognito.sign_up(data['email'], data['password'], {
+        data = {
             'name': data['name'],
-            'middle_name': data.get('middle_name'),
             'family_name': data['family_name'],
-            'nickname': data.get('nickname'),
             'birthdate': data['birthdate'],
             'gender': data['unit'],
-        })
+            'nickname': data['nickname']
+        }
+
+        middle_name = data.get('middle_name')
+        if middle_name is not None:
+            data['middle_name'] = middle_name
+
+        UsersCognito.sign_up(data['email'], data['password'], )
     except UsersCognito.get_client().exceptions.UsernameExistsException:
         return JSONResponse.generate_error(HTTPError.EMAIL_ALREADY_IN_USE, "E-mail already in use")
     except UsersCognito.get_client().exceptions.InvalidPasswordException:
