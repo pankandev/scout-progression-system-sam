@@ -30,11 +30,15 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
 
 
 def get_beneficiary(event: HTTPEvent):
-    result = BeneficiariesService.get(event.authorizer.sub)
+    if event.authorizer.sub != event.params["sub"]:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You can not access data from this beneficiary")
+
+    result = BeneficiariesService.get(event.params["sub"])
     if result.item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
     process_beneficiary(result.item, event)
+
     return JSONResponse(result.as_dict())
 
 
@@ -70,6 +74,12 @@ def signup_beneficiary(event: HTTPEvent):
             'gender': data['unit'],
             'nickname': data['nickname']
         }
+
+        try:
+            datetime.strptime(attrs["birthdate"], "%d-%m-%Y")
+        except ValueError:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Invalid date format, it must match "
+                                                                          "%d-%m-%Y format")
 
         middle_name = data.get('middle_name')
         if middle_name is not None:
