@@ -714,6 +714,10 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/logs/{tag}/
             Method: get
             RestApiId: !Ref PPSAPI
+  PinpointApp:
+    Type: AWS::Pinpoint::App
+    Properties:
+      Name: Scout Spirit
   CloudFrontOriginAccessIdentity:
     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
     Properties:
