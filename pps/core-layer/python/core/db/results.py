@@ -27,7 +27,6 @@ def clean_item(item: dict):
 class QueryResult(Result):
 
     def __init__(self, result: dict):
-        print(result)
         uncleaned_items = result.get('Items')
         self.items = [clean_item(item) for item in uncleaned_items] if uncleaned_items is not None else None
         self.count = result.get('Count'),

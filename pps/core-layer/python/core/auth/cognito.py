@@ -83,11 +83,6 @@ class CognitoService(ABC):
         )
 
     @classmethod
-    def email_exists(cls, email: str):
-        client = cls.get_client()
-        client
-
-    @classmethod
     def add_to_group(cls, username: str, group: str):
         client = cls.get_client()
         client.admin_add_user_to_group(
