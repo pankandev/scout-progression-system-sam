@@ -3,6 +3,8 @@ import os
 from datetime import datetime, date
 from json import JSONDecodeError
 
+from core.auth import CognitoService
+
 
 class Authorizer:
     def __init__(self, authorizer: dict):
@@ -28,6 +30,11 @@ class Authorizer:
 
         birth_date = claims.get("birthdate")
         self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y") if birth_date is not None else None
+
+    @property
+    def add_as_beneficiary(self):
+        if not self.is_beneficiary:
+            return CognitoService.add_to_group(self.username, "Beneficiary")
 
     @property
     def is_beneficiary(self):
