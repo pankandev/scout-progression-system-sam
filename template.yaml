@@ -357,6 +357,12 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref BeneficiariesTable
+        - Statement:
+            - Sid: CognitoIDPAddUserToGroup
+              Effect: Allow
+              Action:
+                - cognito-idp:AdminAddUserToGroup
+              Resource: '*'
       Events:
         CreateGroup:
           Type: Api
