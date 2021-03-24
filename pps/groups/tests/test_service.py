@@ -126,6 +126,7 @@ def test_join(ddb_stubber: Stubber):
             "nickname": "Nick Name",
             "name": "Name",
             "family_name": "Family",
+            "cognito:username": "mail@mail.com",
             "birthdate": birthdate,
             "gender": "scouts",
             "cognito:groups": ["Beneficiaries"]

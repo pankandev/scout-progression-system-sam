@@ -29,12 +29,6 @@ class Authorizer:
         birth_date = claims.get("birthdate")
         self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y") if birth_date is not None else None
 
-    def add_as_beneficiary(self):
-        from core.services.users import UsersCognito
-
-        if not self.is_beneficiary:
-            return UsersCognito.add_to_group(self.username, "Beneficiary")
-
     @property
     def is_beneficiary(self):
         return "Beneficiaries" in self.groups

@@ -1,8 +1,10 @@
 import json
+import os
 
 from schema import SchemaError
 
 from core import db, HTTPEvent
+from core.auth import CognitoService
 from core.aws.errors import HTTPError
 from core.aws.event import Authorizer
 from core.aws.response import JSONResponse
@@ -12,6 +14,10 @@ from core.services.groups import GroupsService
 
 class District(db.Model):
     __table_name__ = "districts"
+
+
+class UsersCognito(CognitoService):
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 def process_group(item: dict, event: HTTPEvent):
@@ -38,7 +44,8 @@ def create_group(district: str, item: dict, authorizer: Authorizer):
 
 
 def join_group(district: str, group: str, code: str, authorizer: Authorizer):
-    authorizer.add_as_beneficiary()
+    if not authorizer.is_beneficiary:
+        UsersCognito.add_to_group(authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
