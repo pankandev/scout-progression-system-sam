@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from schema import Schema, SchemaError
 
@@ -6,7 +7,7 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
-from core.services.tasks import TasksService
+from core.services.tasks import TasksService, ObjectiveKey
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 
 
@@ -153,6 +154,41 @@ def dismiss_active_task(event: HTTPEvent) -> JSONResponse:
     )
 
 
+# POST /api/users/{sub}/tasks/base/initialize/
+def initialize_tasks(event: HTTPEvent) -> JSONResponse:
+    sub = event.params['sub']
+
+    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
+    body = event.json
+    if 'objectives' not in body:
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "No objectives found")
+    if not isinstance(body['objectives'], list):
+        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Objectives must be a list of objects")
+    objectives: List[ObjectiveKey] = []
+    for obj in body['objectives']:
+        if not isinstance(obj, dict):
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Each objective must be an object")
+        if 'line' not in obj or not isinstance(obj['line'], int):
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
+                                               "Each objective must have the key 'line' and it must be an int")
+        if 'subline' not in obj or not isinstance(obj['subline'], int):
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
+                                               "Each objective must have the key 'subline' and it must be an int")
+        if 'area' not in obj or obj['area'] not in VALID_AREAS:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
+                                               f"Each objective must have the key 'area' and it must a valid area "
+                                               f"name: {VALID_AREAS}")
+        objectives.append(ObjectiveKey(line=obj['line'], subline=obj['subline'], area=obj['area']))
+
+    return JSONResponse(
+        {
+            'message': 'Task dismissed',
+            'task': TasksService.initialize(event.authorizer, objectives)
+        }
+    )
+
+
 router = Router()
 
 router.get("/api/users/{sub}/tasks/", list_user_tasks)
@@ -163,6 +199,7 @@ router.get("/api/users/{sub}/tasks/active/", get_user_active_task)
 
 router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
 router.post("/api/users/{sub}/tasks/active/complete/", complete_active_task)
+router.post("/api/users/{sub}/tasks/initialize/", initialize_tasks)
 
 router.put("/api/users/{sub}/tasks/active/", update_active_task)
 

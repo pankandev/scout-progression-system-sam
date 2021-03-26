@@ -638,6 +638,12 @@ Resources:
             TableName:
               !Ref TasksTable
       Events:
+        InitializeUserTasks:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/initialize/
+            Method: post
+            RestApiId: !Ref PPSAPI
         ListUserTasks:
           Type: Api
           Properties:

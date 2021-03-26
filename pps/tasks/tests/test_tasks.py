@@ -463,10 +463,34 @@ def test_initialize(ddb_stubber: Stubber):
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
     ddb_stubber.add_response('update_item', ben_response, ben_params)
     with patch('time.time', lambda: now):
-        TasksService.initialize(Authorizer({
-            "claims": {
-                'sub': 'userABC123',
-                'birthdate': (datetime.now() - relativedelta(years=12, day=1)).strftime("%d-%m-%Y")
-            }}),
-            [ObjectiveKey(area='corporality', line=1, subline=1), ObjectiveKey(area='character', line=2, subline=3)])
+        response = initialize_tasks(HTTPEvent(
+            event={
+                "pathParameters": {
+                    "sub": 'userABC123'
+                },
+                "requestContext": {
+                    "authorizer": {
+                        "claims": {
+                            'sub': 'userABC123',
+                            'birthdate': (datetime.now() - relativedelta(years=12, day=1)).strftime("%d-%m-%Y")
+                        }
+                    },
+                },
+                "body": json.dumps({
+                    "objectives": [
+                        {
+                            "area": "corporality",
+                            "line": 1,
+                            "subline": 1
+                        },
+                        {
+                            "area": "character",
+                            "line": 2,
+                            "subline": 3
+                        }
+                    ]
+                })
+            },
+        ))
+        assert response.status == 200
     ddb_stubber.assert_no_pending_responses()
