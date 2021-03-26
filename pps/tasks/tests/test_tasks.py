@@ -134,7 +134,6 @@ def test_get_active_task(ddb_stubber: Stubber):
                     'objective': {'S': 'puberty::corporality::2.3'},
                     'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
                     'personal-objective': {'S': 'A new task'},
-                    'score': {'N': str(100)},
                     'tasks': {'L': [
                         {'M': {
                             'completed': {'BOOL': False},
@@ -186,7 +185,6 @@ def test_start_task(ddb_stubber: Stubber):
                 'objective': 'puberty::corporality::2.3',
                 'original-objective': ObjectivesService.get('puberty', 'corporality', 2, 3),
                 'personal-objective': 'A new task',
-                'score': 80,
                 'tasks': [
                     {
                         'completed': False,
@@ -304,7 +302,7 @@ def test_complete_task(ddb_stubber: Stubber):
 
     get_params = {
         'Key': {'user': 'user-sub'},
-        'ProjectionExpression': 'target.score, target.objective',
+        'ProjectionExpression': 'target.objective',
         'TableName': 'beneficiaries'
     }
 
@@ -313,7 +311,6 @@ def test_complete_task(ddb_stubber: Stubber):
             'target': {
                 'M': {
                     'objective': {'S': 'puberty::corporality::2.3'},
-                    'score': {'N': str(94)}
                 }
             }
         }
@@ -335,7 +332,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'ExpressionAttributeValues': {
             ':val_target': None,
             ':val_n_tasks_corporality': 1,
-            ':val_score_corporality': 94
+            ':val_score_corporality': 80
         }
     }
     beneficiary_update_response = {
@@ -363,7 +360,6 @@ def test_complete_task(ddb_stubber: Stubber):
                     ]},
                     'personal-objective': {'S': 'A new task'},
                     'created': {'N': str(now)},
-                    'score': {'N': str(80)},
                     'objective': {'S': 'puberty::corporality::2.3'},
                     'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
                 }
@@ -383,7 +379,6 @@ def test_complete_task(ddb_stubber: Stubber):
             'tasks': [{'completed': True, 'description': 'Sub-task 1'},
                       {'completed': True, 'description': 'Sub-task 2'}],
             'user': 'user-sub',
-            'score': 80
         }
     }
 

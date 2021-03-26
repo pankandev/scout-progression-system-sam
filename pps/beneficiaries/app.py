@@ -15,7 +15,6 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
     try:
         district, group, unit = beneficiary["unit"].split("::")
 
-        beneficiary["district"] = event.concat_url('districts', district)
         beneficiary["url"] = event.concat_url('beneficiaries', beneficiary["user-sub"])
         beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
         beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)

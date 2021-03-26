@@ -1,7 +1,5 @@
 import time
-from typing import List
-
-from schema import Schema
+from typing import List, Union
 
 from core import ModelService
 from core.aws.event import Authorizer
@@ -10,7 +8,61 @@ from core.db.results import GetResult
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
-from core.utils.key import split_key
+
+
+class Subtask:
+    description: str
+    completed: bool
+
+    def __init__(self, description: str, completed: str):
+        self.description = description
+        self.completed = completed
+
+    @staticmethod
+    def from_dict(d: dict):
+        return Subtask(d["description"], d["completed"])
+
+    def to_dict(self):
+        return {
+            "description": self.description,
+            "completed": self.completed
+        }
+
+
+class Task:
+    completed: bool
+    created: int
+    objective_key: str
+    original_objective: str
+    personal_objective: str
+    tasks: List[Subtask]
+
+    def __init__(self, created: int, completed: str, objective_key: str, original_objective: str,
+                 personal_objective: str, tasks: List[Subtask]):
+        self.created = created
+        self.completed = completed
+        self.objective_key = objective_key
+        self.original_objective = original_objective
+        self.personal_objective = personal_objective
+        self.tasks = tasks
+
+    @staticmethod
+    def from_db_dict(d: dict):
+        return Task(d["created"], d["completed"], d["objective"], d["original-objective"], d["personal-objective"],
+                    [Subtask.from_dict(c) for c in d["tasks"]])
+
+    def to_dict(self):
+        return {
+            'completed': False,
+            'created': int(time.time()),
+            'objective': self.objective_key,
+            'original-objective': self.original_objective,
+            'personal-objective': self.personal_objective,
+            'tasks': [{
+                'completed': False,
+                'description': task.description,
+            } for task in self.tasks]
+        }
 
 
 class TasksService(ModelService):
@@ -39,31 +91,27 @@ class TasksService(ModelService):
         line_, subline_ = subline.split('.')
         objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
 
-        task = {
-            'completed': False,
-            'created': int(time.time()),
-            'objective': join_key(stage, area, subline),
-            'original-objective': objective,
-            'personal-objective': description,
-            'score': 80,
-            'tasks': [{
-                'completed': False,
-                'description': description,
-            } for description in tasks]
-        }
+        task = Task(
+            created=int(time.time()),
+            completed=False,
+            objective_key=join_key(stage, area, subline),
+            original_objective=objective,
+            personal_objective=description,
+            tasks=[Subtask(completed=False, description=description) for description in tasks]
+        )
 
         try:
-            BeneficiariesService.update(authorizer, active_task=task)
+            BeneficiariesService.update(authorizer, active_task=task.to_dict())
         except BeneficiariesService.exceptions().ConditionalCheckFailedException:
             return None
         return task
 
     @classmethod
-    def get_active_task(cls, authorizer: Authorizer):
+    def get_active_task(cls, authorizer: Authorizer) -> Union[Task, None]:
         return GetResult.from_item(BeneficiariesService.get(authorizer.sub, ["target"]).item["target"])
 
     @classmethod
-    def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]):
+    def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]) -> Union[Task, None]:
         return BeneficiariesService.update_active_task(authorizer, description, tasks)["target"]
 
     @classmethod

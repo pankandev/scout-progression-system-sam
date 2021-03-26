@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import List
+from typing import List, Dict, Any
 
 import botocore
 from boto3.dynamodb.conditions import Attr
@@ -10,6 +10,82 @@ from core.db.model import Operator, UpdateReturnValues
 from core.services.shop import ShopService
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
+
+
+class Beneficiary:
+    user_sub: str
+    district: str
+    group: str
+    unit: str
+    birthdate: datetime
+    full_name: str
+    nickname: str
+    score: Dict[str, int]
+    n_tasks: Dict[str, int]
+    target: Any
+    bought_items: Dict[int, str]
+    initial_objectives: List[str]
+
+    def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
+                 score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Any,
+                 bought_items: Dict[int, str], initial_objectives: List[str]):
+        self.user_sub = user_sub
+        self.district = district
+        self.group = group
+        self.unit = unit
+        self.birthdate = birthdate
+        self.full_name = full_name
+        self.nickname = nickname
+        self.score = {area: score.get(area, 0) for area in VALID_AREAS}
+        self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS}
+        self.target = target
+        self.bought_items = bought_items
+        self.initial_objectives = initial_objectives
+
+    @staticmethod
+    def from_db_map(beneficiary: dict):
+        from core.services.tasks import Task
+
+        user_sub = beneficiary["user"]
+        district, group, unit = beneficiary["unit"].split("::")
+        unit = split_key(beneficiary["unit-user"])[0]
+        full_name = beneficiary["full-name"]
+        nickname = beneficiary["nickname"]
+        birthdate = datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
+        score = {area: beneficiary["score"].get(area, 0) for area in VALID_AREAS}
+        n_tasks = {area: beneficiary["n_tasks"].get(area, 0) for area in VALID_AREAS}
+        target = Task.from_db_dict(beneficiary["target"]) if beneficiary.get("target") is not None else None
+        bought_items = beneficiary["bought_items"]
+        initial_objectives = beneficiary["initial_objectives"]
+
+        return Beneficiary(user_sub=user_sub, full_name=full_name, nickname=nickname, district=district, group=group,
+                           unit=unit, score=score, n_tasks=n_tasks, birthdate=birthdate, target=target,
+                           bought_items=bought_items, initial_objectives=initial_objectives)
+
+    def to_db_dict(self):
+        return {
+            "user": self.user_sub,
+            "group": join_key(self.district, self.group),
+            "unit-user": join_key(self.unit, self.user_sub),
+            "full-name": self.full_name,
+            "nickname": self.nickname,
+            "birthdate": self.birthdate.strftime("%d-%m-%Y"),
+            "target": self.target.to_dict() if self.target is not None else None,
+            "completed": None,
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "bought_items": {}
+        }
+
+    def to_api_dict(self):
+        return {
+            "district": self.district,
+            "group": self.group,
+            "unit": self.unit,
+            "full-name": self.full_name,
+            "nickname": self.nickname,
+            "stage": BeneficiariesService.calculate_stage(self.birthdate),
+        }
 
 
 class BeneficiariesService(ModelService):
@@ -51,21 +127,23 @@ class BeneficiariesService(ModelService):
     def create(cls, district: str, group: str, authorizer: Authorizer):
         interface = cls.get_interface()
 
-        beneficiary = {
-            "group": join_key(district, group),
-            "unit-user": join_key(authorizer.unit, authorizer.sub),
-            "full-name": authorizer.full_name,
-            "nickname": authorizer.nickname,
-            "birthdate": authorizer.birth_date.strftime("%d-%m-%Y"),
-            "target": None,
-            "completed": None,
-            "score": {area: 0 for area in VALID_AREAS},
-            "n_tasks": {area: 0 for area in VALID_AREAS},
-            "bought_items": {}
-        }
+        beneficiary = Beneficiary(
+            user_sub=authorizer.sub,
+            district=district,
+            group=group,
+            unit=authorizer.unit,
+            full_name=authorizer.full_name,
+            nickname=authorizer.nickname,
+            birthdate=authorizer.birth_date,
+            target=None,
+            initial_objectives=[],
+            score={area: 0 for area in VALID_AREAS},
+            n_tasks={area: 0 for area in VALID_AREAS},
+            bought_items={}
+        )
 
         try:
-            interface.create(authorizer.sub, beneficiary,
+            interface.create(authorizer.sub, beneficiary.to_db_dict(),
                              raise_if_exists_partition=True)
             return True
         except botocore.exceptions.ClientError as e:
@@ -115,11 +193,11 @@ class BeneficiariesService(ModelService):
         updates = {'target': None}
         add_to = None
         if receive_score:
-            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.score", "target.objective"]).item
+            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective"]).item
 
             if beneficiary.get('target') is None:
                 return None
-            score = int(beneficiary['target']['score'])
+            score = 80
             area = split_key(beneficiary['target']['objective'])[1]
             add_to = {
                 f'score.{area}': score,
