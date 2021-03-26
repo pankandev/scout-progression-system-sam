@@ -94,6 +94,7 @@ def test_join(ddb_stubber: Stubber):
             "target": None,
             "bought_items": {},
             "completed": None,
+            'set_base_tasks': None,
             "n_tasks": {
                 "corporality": 0,
                 "creativity": 0,

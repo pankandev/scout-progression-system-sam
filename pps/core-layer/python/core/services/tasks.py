@@ -1,6 +1,8 @@
 import time
 from typing import List, Union
 
+from boto3.dynamodb.conditions import Attr
+
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
@@ -8,6 +10,20 @@ from core.db.results import GetResult
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
 from core.utils import join_key
+
+
+class ObjectiveKey:
+    area: str
+    line: int
+    subline: int
+
+    def __init__(self, area: str, line: int, subline: int):
+        self.area = area
+        self.line = line
+        self.subline = subline
+
+    def __eq__(self, other):
+        return other.line == self.line and other.subline == self.subline and other.area == self.area
 
 
 class Subtask:
@@ -132,3 +148,36 @@ class TasksService(ModelService):
             subtask['completed'] = True
         interface.create(authorizer.sub, old_active_task, old_active_task['objective'])
         return old_active_task
+
+    @classmethod
+    def initialize(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):
+        cls._add_objectives_as_completed(authorizer, objectives)
+        BeneficiariesService.mark_as_initialized(authorizer=authorizer)
+
+    @classmethod
+    def _add_objectives_as_completed(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):
+        # noinspection PyProtectedMember
+        model = cls.get_interface()._model
+        client = model.get_table().meta.client
+        now = int(time.time())
+        request_items = {
+            model.__table_name__: [
+                {
+                    'PutRequest': {
+                        'Item': {
+                            'completed': {'BOOL': True, },
+                            'created': {'N': now, },
+                            'objective': {'S': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'), },
+                            'original-objective': {
+                                'S': ObjectivesService.get(authorizer.stage, key.area, key.line, key.subline), },
+                            'personal-objective': {'NULL': True},
+                            'score': {'N': 0},
+                            'tasks': {'NULL': True},
+                            'user': {'S': authorizer.sub}
+                        },
+                    }
+                } for key in objectives]
+        }
+        client.batch_write_item(
+            RequestItems=request_items
+        )

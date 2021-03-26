@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 import botocore
 from boto3.dynamodb.conditions import Attr
@@ -24,11 +24,11 @@ class Beneficiary:
     n_tasks: Dict[str, int]
     target: Any
     bought_items: Dict[int, str]
-    initial_objectives: List[str]
+    set_base_tasks: Union[bool, None]
 
     def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
                  score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Any,
-                 bought_items: Dict[int, str], initial_objectives: List[str]):
+                 bought_items: Dict[int, str], set_base_tasks: Union[bool, None]):
         self.user_sub = user_sub
         self.district = district
         self.group = group
@@ -40,7 +40,7 @@ class Beneficiary:
         self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS}
         self.target = target
         self.bought_items = bought_items
-        self.initial_objectives = initial_objectives
+        self.set_base_tasks = set_base_tasks
 
     @staticmethod
     def from_db_map(beneficiary: dict):
@@ -56,11 +56,11 @@ class Beneficiary:
         n_tasks = {area: beneficiary["n_tasks"].get(area, 0) for area in VALID_AREAS}
         target = Task.from_db_dict(beneficiary["target"]) if beneficiary.get("target") is not None else None
         bought_items = beneficiary["bought_items"]
-        initial_objectives = beneficiary["initial_objectives"]
+        set_base_tasks = beneficiary["set_base_tasks"]
 
         return Beneficiary(user_sub=user_sub, full_name=full_name, nickname=nickname, district=district, group=group,
                            unit=unit, score=score, n_tasks=n_tasks, birthdate=birthdate, target=target,
-                           bought_items=bought_items, initial_objectives=initial_objectives)
+                           bought_items=bought_items, set_base_tasks=set_base_tasks)
 
     def to_db_dict(self):
         return {
@@ -74,6 +74,7 @@ class Beneficiary:
             "completed": None,
             "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "set_base_tasks": self.set_base_tasks,
             "bought_items": {}
         }
 
@@ -136,7 +137,7 @@ class BeneficiariesService(ModelService):
             nickname=authorizer.nickname,
             birthdate=authorizer.birth_date,
             target=None,
-            initial_objectives=[],
+            set_base_tasks=None,
             score={area: 0 for area in VALID_AREAS},
             n_tasks={area: 0 for area in VALID_AREAS},
             bought_items={}
@@ -216,3 +217,12 @@ class BeneficiariesService(ModelService):
         }
         return interface.update(authorizer.sub, updates, None, return_values=UpdateReturnValues.UPDATED_NEW) \
             .get('Attributes')
+
+    @classmethod
+    def mark_as_initialized(cls, authorizer: Authorizer):
+        interface = cls.get_interface()
+        updates = {
+            'set_base_tasks': False,
+        }
+        return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
+                                conditions=Attr('set_base_tasks').eq(None))

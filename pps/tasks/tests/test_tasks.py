@@ -1,11 +1,16 @@
 import time
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.stub import Stubber, ANY
+from dateutil.relativedelta import relativedelta
 
+from core.aws.event import Authorizer
+from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
+from core.services.tasks import ObjectiveKey
 from ..app import *
 
 
@@ -400,4 +405,68 @@ def test_complete_task(ddb_stubber: Stubber):
             }
         }
     }))
+    ddb_stubber.assert_no_pending_responses()
+
+
+def test_initialize(ddb_stubber: Stubber):
+    now = time.time()
+    user_sub = 'userABC123'
+    batch_params = {
+        'RequestItems': {
+            'tasks': [
+                {
+                    'PutRequest': {
+                        'Item': {
+                            'completed': {'BOOL': True, },
+                            'created': {'N': int(now), },
+                            'objective': {'S': 'prepuberty::corporality::1.1'},
+                            'original-objective': {
+                                'S': 'Participo en actividades que me ayudan a mantener mi cuerpo fuerte y sano.'},
+                            'personal-objective': {'NULL': True},
+                            'score': {'N': 0},
+                            'tasks': {'NULL': True},
+                            'user': {'S': user_sub}
+                        },
+                    }
+                },
+                {
+                    'PutRequest': {
+                        'Item': {
+                            'completed': {'BOOL': True, },
+                            'created': {'N': int(now), },
+                            'objective': {'S': 'prepuberty::character::2.3'},
+                            'original-objective': {
+                                'S': 'Me ofrezco para ayudar en mi patrulla y en mi casa.'},
+                            'personal-objective': {'NULL': True},
+                            'score': {'N': 0},
+                            'tasks': {'NULL': True},
+                            'user': {'S': user_sub}
+                        },
+                    }
+                },
+            ]
+        }
+    }
+    batch_response = {}
+
+    ben_params = {
+        'ConditionExpression': Attr('set_base_tasks').eq(None),
+        'ExpressionAttributeNames': {'#attr_set_base_tasks': 'set_base_tasks'},
+        'ExpressionAttributeValues': {':val_set_base_tasks': False},
+        'Key': {'user': 'userABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'SET #attr_set_base_tasks=:val_set_base_tasks'
+    }
+
+    ben_response = {}
+    ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
+    ddb_stubber.add_response('update_item', ben_response, ben_params)
+    with patch('time.time', lambda: now):
+        TasksService.initialize(Authorizer({
+            "claims": {
+                'sub': 'userABC123',
+                'birthdate': (datetime.now() - relativedelta(years=12, day=1)).strftime("%d-%m-%Y")
+            }}),
+            [ObjectiveKey(area='corporality', line=1, subline=1), ObjectiveKey(area='character', line=2, subline=3)])
     ddb_stubber.assert_no_pending_responses()
