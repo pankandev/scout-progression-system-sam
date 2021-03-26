@@ -671,7 +671,7 @@ Resources:
         UpdateActiveTask:
           Type: Api
           Properties:
-            Path: /api/districts/tasks/active/
+            Path: /api/users/{sub}/tasks/active/
             Method: put
             RestApiId: !Ref PPSAPI
         GetActiveTask:
