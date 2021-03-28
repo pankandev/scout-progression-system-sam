@@ -55,7 +55,7 @@ class ModelIndex:
         return self._model.query((self.partition, partition_key), None if sort_key is None else (self.sort, *sort_key),
                                  limit=limit, start_key=start_key, attributes=attributes, index=self.index_name)
 
-    def get(self, partition_key, sort_key=None, attributes=None):
+    def get(self, partition_key, sort_key=None, attributes: List[str] = None):
         key = self.generate_key(partition_key, sort_key)
         return self._model.get(key=key, attributes=attributes)
 
