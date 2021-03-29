@@ -590,7 +590,7 @@ Resources:
               !Ref BeneficiariesTable
         - DynamoDBCrudPolicy:
             TableName:
-              !Ref ShopItemsTable
+              !Ref RewardsTable
       Events:
         ListMyItems:
           Type: Api
