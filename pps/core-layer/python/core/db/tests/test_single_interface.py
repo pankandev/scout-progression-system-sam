@@ -4,7 +4,7 @@ from botocore.stub import Stubber
 
 from .. import ModelIndex
 
-interface = ModelIndex('items', 'hash')
+interface = ModelIndex('rewards', 'hash')
 
 
 @pytest.fixture(scope="function")
@@ -26,7 +26,7 @@ def test_generate_key():
 
 def test_add(ddb_stubber):
     add_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Item': {
             "hash": "value_h",
             "key_a": "value_a",
@@ -49,7 +49,7 @@ def test_add(ddb_stubber):
 
 def test_delete(ddb_stubber):
     delete_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {"hash": "value_h"}
     }
     delete_item_response = {}
@@ -63,7 +63,7 @@ def test_delete(ddb_stubber):
 
 def test_get(ddb_stubber):
     get_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {"hash": "value_h"}
     }
     get_item_response = {'Item': {
@@ -82,7 +82,7 @@ def test_get(ddb_stubber):
 
 def test_query(ddb_stubber):
     query_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'KeyConditionExpression': Key('hash').eq('value_h'),
         'Limit': 10
     }
@@ -113,7 +113,7 @@ def test_query(ddb_stubber):
 
 def test_update(ddb_stubber):
     update_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {
             'hash': 'value_h'
         },

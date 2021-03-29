@@ -100,7 +100,6 @@ def signup_beneficiary(event: HTTPEvent):
 
 """Handlers"""
 
-
 router = Router()
 
 router.get("/api/districts/{district}/groups/{group}/beneficiaries/{unit}/", list_beneficiaries_unit)

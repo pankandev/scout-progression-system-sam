@@ -232,7 +232,7 @@ Resources:
         WriteCapacityUnits: 4
       TableName: beneficiaries
     Type: AWS::DynamoDB::Table
-  ShopItemsTable:
+  RewardsTable:
     Properties:
       AttributeDefinitions:
         - AttributeName: category
@@ -247,7 +247,7 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 2
-      TableName: items
+      TableName: rewards
     Type: AWS::DynamoDB::Table
   TasksTable:
     Properties:
@@ -576,7 +576,7 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/avatar/
             Method: put
             RestApiId: !Ref PPSAPI
-  ShopFunction:
+  RewardsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: pps/shop/
@@ -595,31 +595,37 @@ Resources:
         ListMyItems:
           Type: Api
           Properties:
-            Path: /api/shop/my-items/
+            Path: /api/rewards/my-items/
             Method: get
             RestApiId: !Ref PPSAPI
         ListShopVersionItems:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/
+            Path: /api/rewards/{category}/{release}/
             Method: get
             RestApiId: !Ref PPSAPI
         GetShopItem:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/{id}/
+            Path: /api/rewards/{category}/{release}/{id}/
             Method: get
             RestApiId: !Ref PPSAPI
         CreateShopItem:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/
+            Path: /api/rewards/{category}/{release}/
             Method: post
             RestApiId: !Ref PPSAPI
         BuyItem:
           Type: Api
           Properties:
-            Path: /api/shop/{category}/{release}/{id}/buy/{area}/
+            Path: /api/rewards/{category}/{release}/{id}/buy/{area}/
+            Method: post
+            RestApiId: !Ref PPSAPI
+        ClaimItem:
+          Type: Api
+          Properties:
+            Path: /api/rewards/claim/
             Method: post
             RestApiId: !Ref PPSAPI
   TasksFunction:

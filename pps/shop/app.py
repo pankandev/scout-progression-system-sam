@@ -2,9 +2,12 @@ from schema import Schema, SchemaError
 
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
+from core.exceptions.forbidden import ForbiddenException
+from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
-from core.services.shop import ShopService
+from core.services.rewards import RewardsService
 from core.utils.consts import VALID_AREAS
 
 router = Router()
@@ -19,7 +22,7 @@ def list_shop_category(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
                                            f"Invalid release {event.params['release']}, it should be an int")
 
-    return JSONResponse(ShopService.query(category, release).as_dict())
+    return JSONResponse(RewardsService.query(category, release).as_dict())
 
 
 def get_item(event: HTTPEvent):
@@ -37,7 +40,7 @@ def get_item(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.NOT_FOUND,
                                            f"Unknown id {event.params['id']}, it should be an int")
 
-    return JSONResponse(ShopService.get(category, release, id_).as_dict())
+    return JSONResponse(RewardsService.get(category, release, id_).as_dict())
 
 
 def get_my_items(event: HTTPEvent):
@@ -71,7 +74,7 @@ def create_item(event: HTTPEvent):
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
-    result = ShopService.create(body['name'], body['description'], body['price'], category, release).as_dict()
+    result = RewardsService.create(body['name'], body['description'], body['price'], category, release).as_dict()
     return JSONResponse({
         'message': 'Created item',
         'item': result
@@ -84,41 +87,49 @@ def buy_item(event: HTTPEvent):
     try:
         release = int(event.params['release'])
     except ValueError:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND,
-                                           f"Unknown release {event.params['release']}, it should be an int")
+        return NotFoundException(f"Unknown release {event.params['release']}, it should be an int")
 
     try:
         id_ = int(event.params['id'])
     except ValueError:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND,
-                                           f"Unknown id {event.params['id']}, it should be an int")
+        raise NotFoundException(f"Unknown id {event.params['id']}, it should be an int")
 
     area = event.params['area']
     if area not in VALID_AREAS:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Area {area} does not exist")
+        raise NotFoundException(f"Area {area} does not exist")
 
     amount = event.json.get('amount', 1)
     if type(amount) is not int:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"The amount to be bought must be an integer")
+        raise InvalidException(f"The amount to be bought must be an integer")
     if amount < 1:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"The amount must be one or more")
+        raise InvalidException(f"The amount must be one or more")
 
     try:
         result = BeneficiariesService.buy_item(event.authorizer, area, category, release, id_, amount)
     except BeneficiariesService.exceptions().ConditionalCheckFailedException:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, f"You don't have enough {area} score to buy this item")
+        raise ForbiddenException(f"You don't have enough {area} score to buy this item")
 
     if not result:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Item not found")
+        return NotFoundException(f"Item not found")
     return JSONResponse(result)
 
 
-router.get("/api/shop/{category}/{release}/", list_shop_category)
-router.get("/api/shop/{category}/{release}/{id}/", get_item)
-router.get("/api/shop/my-items/", get_my_items)
+def claim_reward(event: HTTPEvent):
+    body = event.json
+    token = body.get('token')
+    if token is None:
+        raise InvalidException('No reward token given')
+    rewards = RewardsService.claim_reward(event.authorizer, token, box_index=body.get('box_index'))
+    return JSONResponse({'message': 'Claimed rewards!', 'rewards': [reward.to_map() for reward in rewards]})
 
-router.post("/api/shop/{category}/{release}/", create_item)
-router.post("/api/shop/{category}/{release}/{id}/buy/{area}/", buy_item)
+
+router.get("/api/rewards/{category}/{release}/", list_shop_category)
+router.get("/api/rewards/{category}/{release}/{id}/", get_item)
+router.get("/api/rewards/my-items/", get_my_items)
+
+router.post("/api/rewards/{category}/{release}/", create_item)
+router.post("/api/rewards/{category}/{release}/{id}/buy/{area}/", buy_item)
+router.post("/api/rewards/claim/", claim_reward)
 
 
 def handler(event: dict, _) -> dict:

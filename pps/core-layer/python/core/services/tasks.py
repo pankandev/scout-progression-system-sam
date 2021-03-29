@@ -1,7 +1,6 @@
+import math
 import time
 from typing import List, Union
-
-from boto3.dynamodb.conditions import Attr
 
 from core import ModelService
 from core.aws.event import Authorizer
@@ -160,24 +159,30 @@ class TasksService(ModelService):
         model = cls.get_interface()._model
         client = model.get_table().meta.client
         now = int(time.time())
-        request_items = {
-            model.__table_name__: [
-                {
-                    'PutRequest': {
-                        'Item': {
-                            'completed': {'BOOL': True, },
-                            'created': {'N': now, },
-                            'objective': {'S': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'), },
-                            'original-objective': {
-                                'S': ObjectivesService.get(authorizer.stage, key.area, key.line, key.subline), },
-                            'personal-objective': {'NULL': True},
-                            'score': {'N': 0},
-                            'tasks': {'NULL': True},
-                            'user': {'S': authorizer.sub}
-                        },
-                    }
-                } for key in objectives]
-        }
-        client.batch_write_item(
-            RequestItems=request_items
-        )
+        n_chunks = math.ceil(len(objectives) / 25)
+        # do batch writes in chunks of 25 to avoid errors
+        for i_chunk in range(n_chunks):
+            start = i_chunk * 25
+            end = min((i_chunk + 1) * 25, len(objectives))
+            chunk = objectives[start:end]
+            request_items = {
+                model.__table_name__: [
+                    {
+                        'PutRequest': {
+                            'Item': {
+                                'completed': {'BOOL': True, },
+                                'created': {'N': now, },
+                                'objective': {'S': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'), },
+                                'original-objective': {
+                                    'S': ObjectivesService.get(authorizer.stage, key.area, key.line, key.subline), },
+                                'personal-objective': {'NULL': True},
+                                'score': {'N': 0},
+                                'tasks': {'NULL': True},
+                                'user': {'S': authorizer.sub}
+                            },
+                        }
+                    } for key in chunk]
+            }
+            client.batch_write_item(
+                RequestItems=request_items
+            )

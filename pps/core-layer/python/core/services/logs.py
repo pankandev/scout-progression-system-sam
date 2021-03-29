@@ -1,0 +1,77 @@
+import time
+from enum import Enum
+from typing import Dict, Any, List
+
+from core import ModelService
+from core.exceptions.invalid import InvalidException
+
+
+class LogTag(Enum):
+    REWARD = 'REWARD',
+
+    @staticmethod
+    def from_value(value: str):
+        for member in LogTag:
+            if value == member.value:
+                return member
+        raise InvalidException(f"Unknown log tag: {value}")
+
+
+class Log:
+    tag: LogTag
+    timestamp: int
+    log: str
+    data: Dict[str, Any]
+
+    def __init__(self, tag: LogTag, timestamp: int, log: str, data: Dict[str, Any] = None):
+        self.tag = tag
+        self.timestamp = timestamp
+        self.log = log
+        self.data = data
+
+    @staticmethod
+    def from_map(log_map: Dict[str, Any]):
+        return Log(tag=LogTag.from_value(log_map["tag"]), timestamp=log_map["timestamp"], log=log_map["log"],
+                   data=log_map["data"])
+
+    def to_map(self):
+        return {
+            "tag": self.tag.value,
+            "timestamp": self.timestamp,
+            "log": self.log,
+            "data": self.data
+        }
+
+
+class LogsService(ModelService):
+    __table_name__ = "logs"
+    __partition_key__ = "tag"
+    __sort_key__ = "timestamp"
+
+    def query(self):
+        pass
+
+    @classmethod
+    def batch_create(cls, logs: List[Log]):
+        for log in logs:
+            log.timestamp = time.time()
+        cls.get_interface().client.batch_write_item(
+            RequestItems={
+                'logs': [
+                    {
+                        'PutRequest': {
+                            'Item': {
+                                'tag': {
+                                    'S': log.tag.name,
+                                },
+                                'timestamp': {
+                                    'N': str(int(log.timestamp)),
+                                },
+                                'log': {'S': log.log},
+                                'data': {'M': log.data}
+                            }
+                        }
+                    } for log in logs
+                ]
+            }
+        )

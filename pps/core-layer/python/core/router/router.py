@@ -1,5 +1,9 @@
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
+from core.exceptions.forbidden import ForbiddenException
+from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
+from core.exceptions.unauthorized import UnauthorizedException
 
 
 class Router:
@@ -24,7 +28,16 @@ class Router:
         fun = resources.get(resource)
         if fun is None:
             return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
-        return fun(event)
+        try:
+            return fun(event)
+        except ForbiddenException as e:
+            return JSONResponse.generate_error(HTTPError.FORBIDDEN, e.message)
+        except NotFoundException as e:
+            return JSONResponse.generate_error(HTTPError.NOT_FOUND, e.message)
+        except InvalidException as e:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
+        except UnauthorizedException as e:
+            return JSONResponse.generate_error(HTTPError.UNAUTHORIZED, e.message)
 
     def post(self, resource: str, fun):
         self._add_route_method("POST", resource, fun)

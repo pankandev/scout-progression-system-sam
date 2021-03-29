@@ -7,10 +7,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
 
-from core.aws.event import Authorizer
-from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
-from core.services.tasks import ObjectiveKey
 from ..app import *
 
 

@@ -1,54 +1,16 @@
-import os
-import json
-import hashlib
-from datetime import datetime, date, timezone, timedelta
-from enum import Enum
+from datetime import datetime, date
 from typing import List, Dict, Any, Union
 
-import jwt
-from jwt.utils import get_int_from_datetime
 import botocore
 from boto3.dynamodb.conditions import Attr
 
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
-from core.services.shop import ShopService
+from core.exceptions.invalid import InvalidException
+from core.services.rewards import RewardsService
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
-
-
-class RewardType(Enum):
-    POINTS = 'POINTS'
-    DECORATION = 'DECORATION'
-    AVATAR = 'AVATAR'
-    NEEDS = 'NEEDS'
-    ZONE = 'ZONE'
-
-
-class Reward:
-    type: RewardType
-    description: Dict[str, Any]
-
-    def __init__(self, reward_type: RewardType, description: Dict[str, Any]):
-        self.type = reward_type
-        self.description = description
-
-    def to_map(self) -> dict:
-        return {
-            "type": self.type.value,
-            "description": self.description
-        }
-
-
-class RewardSet:
-    rewards: List[Reward]
-
-    def __init__(self, rewards: List[Reward]):
-        self.rewards = rewards.copy()
-
-    def to_map_list(self) -> List[dict]:
-        return list(map(lambda r: r.to_map(), self.rewards))
 
 
 class Beneficiary:
@@ -194,11 +156,13 @@ class BeneficiariesService(ModelService):
     def buy_item(cls, authorizer: Authorizer, area: str, item_category: str, item_release: int, item_id: int,
                  amount: int = 1):
         interface = cls.get_interface()
-        item = ShopService.get(item_category, item_release, item_id).item
+        item = RewardsService.get(item_category, item_release, item_id).item
         if item is None:
             return False
 
-        price = item['price']
+        price = item.get('price')
+        if price is None:
+            raise InvalidException('This rewards cannot be bought')
 
         release_id = item_release * 100000 + item_id
         return interface.update(authorizer.sub, None, None, add_to={
@@ -263,26 +227,8 @@ class BeneficiariesService(ModelService):
         updates = {
             'set_base_tasks': False,
         }
-        return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
-                                conditions=Attr('set_base_tasks').eq(None))
-
-    @classmethod
-    def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
-                              box: RewardSet = None, duration: timedelta = None) -> str:
-        if duration is None:
-            duration = timedelta(hours=1)
-        jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
-        with open(jwk_path, 'r') as f:
-            jwk = jwt.jwk_from_dict(json.load(f))
-        encoder = jwt.JWT()
-
-        now = datetime.now(timezone.utc)
-        payload = {
-            "sub": authorizer.sub,
-            "iat": get_int_from_datetime(now),
-            "exp": get_int_from_datetime(now + duration),
-            "static": static.to_map_list() if static is not None else [],
-            "box": box.to_map_list() if box is not None else []
-        }
-        payload["id"] = hashlib.sha1(json.dumps(payload).encode()).hexdigest()
-        return encoder.encode(payload, jwk)
+        try:
+            return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
+                                    conditions=Attr('set_base_tasks').eq(None))
+        except interface.client.exceptions.ConditionalCheckFailedException:
+            raise InvalidException('Beneficiary already initialized')

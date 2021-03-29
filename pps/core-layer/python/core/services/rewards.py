@@ -1,0 +1,164 @@
+import hashlib
+import json
+import os
+import time
+from datetime import timedelta, timezone, datetime
+from enum import Enum
+from typing import List, Dict, Any
+
+import jwt
+from jwt.utils import get_int_from_datetime
+
+from core import ModelService
+from core.aws.event import Authorizer
+from core.db.model import Operator
+from core.exceptions.forbidden import ForbiddenException
+from core.exceptions.invalid import InvalidException
+from core.services.logs import LogsService, Log, LogTag
+
+
+class RewardType(Enum):
+    POINTS = 'POINTS'
+    DECORATION = 'DECORATION'
+    AVATAR = 'AVATAR'
+    NEEDS = 'NEEDS'
+    ZONE = 'ZONE'
+
+    @staticmethod
+    def from_value(value: str):
+        for member in RewardType:
+            if value == member.value:
+                return member
+        raise InvalidException(f"Unknown reward type: {value}")
+
+
+class Reward:
+    type: RewardType
+    description: Dict[str, Any]
+
+    def __init__(self, reward_type: RewardType, description: Dict[str, Any]):
+        self.type = reward_type
+        self.description = description
+
+    def to_map(self) -> dict:
+        return {
+            "type": self.type.value,
+            "description": self.description
+        }
+
+    @staticmethod
+    def from_map(d: dict):
+        return Reward(reward_type=RewardType.from_value(d["type"]), description=d["description"])
+
+    def __repr__(self):
+        return f"Reward(type={self.type.value}, description={self.description})"
+
+
+class RewardSet:
+    rewards: List[Reward]
+
+    def __init__(self, rewards: List[Reward]):
+        self.rewards = rewards.copy()
+
+    def to_map_list(self) -> List[dict]:
+        return list(map(lambda r: r.to_map(), self.rewards))
+
+    @staticmethod
+    def from_map_list(rewards_map: List[dict]):
+        return RewardSet(rewards=[Reward.from_map(reward) for reward in rewards_map])
+
+
+class RewardsService(ModelService):
+    __table_name__ = "rewards"
+    __partition_key__ = "category"
+    __sort_key__ = "release-id"
+
+    @classmethod
+    def create(cls, name: str, description: str, price: int, category: str, release: int):
+        index = cls.get_interface()
+
+        ms_time = int(time.time() * 1000)
+        release_id = int(release * 100000 + ms_time % 100000)
+
+        item = {
+            'name': name,
+            'description': description,
+            'price': price
+        }
+        return index.create(category, item, release_id, raise_if_exists_sort=True, raise_if_exists_partition=True)
+
+    @classmethod
+    def query(cls, category: str, release: int):
+        index = cls.get_interface()
+        result = index.query(category, (Operator.LESS_THAN, int((release + 1) * 1e5)),
+                             attributes=['name', 'category', 'description', 'release-id', 'price'])
+        for item in result.items:
+            release = int(item['release-id'] // 100000)
+            id_ = int(item['release-id'] % 100000)
+            item['release'] = release
+            item['id'] = id_
+            del item['release-id']
+        return result
+
+    @classmethod
+    def get(cls, category: str, release: int, id_: int):
+        index = cls.get_interface()
+        release_id = release * 100000 + id_
+        result = index.get(category, release_id, attributes=['name', 'category', 'description', 'release-id', 'price'])
+        if result.item is None:
+            return result
+
+        release = result.item['release-id'] // 100000
+        id_ = result.item['release-id'] % 100000
+        result.item['release'] = release
+        result.item['id'] = id_
+        return result
+
+    @classmethod
+    def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
+                              boxes: List[RewardSet] = None, duration: timedelta = None) -> str:
+        if duration is None:
+            duration = timedelta(hours=1)
+        jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
+        with open(jwk_path, 'r') as f:
+            jwk = jwt.jwk_from_dict(json.load(f))
+        encoder = jwt.JWT()
+
+        now = datetime.now(timezone.utc)
+        payload = {
+            "sub": authorizer.sub,
+            "iat": get_int_from_datetime(now),
+            "exp": get_int_from_datetime(now + duration),
+            "static": static.to_map_list() if static is not None else [],
+            "boxes": [box.to_map_list() for box in boxes] if boxes is not None else []
+        }
+        payload["id"] = hashlib.sha1(json.dumps(payload).encode()).hexdigest()
+        return encoder.encode(payload, jwk)
+
+    @classmethod
+    def claim_reward(cls, authorizer: Authorizer, reward_token: str, box_index: int = None) -> List[Reward]:
+        jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
+        with open(jwk_path, 'r') as f:
+            jwk = jwt.jwk_from_dict(json.load(f))
+
+        decoder = jwt.JWT()
+        decoded = decoder.decode(reward_token, jwk)
+
+        now = get_int_from_datetime(datetime.now())
+        if now > decoded["exp"]:
+            raise ForbiddenException("The reward token has expired")
+        if authorizer.sub != decoded["sub"]:
+            raise ForbiddenException("This token does not belong to the claimer")
+        boxes = decoded["boxes"]
+        rewards = [Reward.from_map(reward) for reward in decoded["static"]]
+        if len(boxes) > 0:
+            if box_index is None:
+                raise InvalidException("A box must be chosen")
+            if box_index >= len(boxes):
+                raise InvalidException(
+                    f"Box index out of range, it must be between 0 (inclusive) and {len(boxes)} (exclusive)")
+            rewards += [Reward.from_map(reward) for reward in boxes[box_index]]
+        LogsService.batch_create(logs=[
+            Log(tag=LogTag.REWARD, log='Won a reward', data=reward.to_map(), timestamp=time.time())
+            for reward in rewards])
+        return rewards

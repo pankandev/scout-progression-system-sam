@@ -12,7 +12,7 @@ from ..app import *
 @pytest.fixture(scope="function")
 def ddb_stubber():
     # noinspection PyProtectedMember
-    ddb_stubber = Stubber(ShopService.get_interface()._model.get_table().meta.client)
+    ddb_stubber = Stubber(RewardsService.get_interface()._model.get_table().meta.client)
     ddb_stubber.activate()
     yield ddb_stubber
     ddb_stubber.deactivate()
@@ -35,7 +35,7 @@ def test_create(ddb_stubber):
             'release-id': Decimal(release_id)
         },
         'ReturnValues': 'NONE',
-        'TableName': 'items'
+        'TableName': 'rewards'
     }
 
     ddb_stubber.add_response('put_item', response, params)
@@ -62,7 +62,7 @@ def test_query(ddb_stubber):
 
     params = {
         'KeyConditionExpression': Key('category').eq('cat') & Key('release-id').lt(400000),
-        'TableName': 'items',
+        'TableName': 'rewards',
         'ProjectionExpression': '#attr_name, #attr_category, #attr_description',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
@@ -95,7 +95,7 @@ def test_get(ddb_stubber: Stubber):
     }
 
     params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {'category': 'cat', 'release-id': 301234},
         'ProjectionExpression': '#model_name, category, description, #model_release_id, price',
         'ExpressionAttributeNames': {
@@ -130,7 +130,7 @@ def test_query(ddb_stubber):
 
     params = {
         'KeyConditionExpression': Key('category').eq('cat') & Key('release-id').lt(400000),
-        'TableName': 'items',
+        'TableName': 'rewards',
         'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id, #attr_price',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
@@ -166,7 +166,7 @@ def test_buy(ddb_stubber: Stubber):
     }
 
     get_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {'category': 'cat', 'release-id': 301234},
         'ProjectionExpression': '#model_name, category, description, #model_release_id, price',
         'ExpressionAttributeNames': {

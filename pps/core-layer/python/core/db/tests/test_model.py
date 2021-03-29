@@ -6,7 +6,7 @@ from ..db import db
 
 
 class ItemsModel(db.Model):
-    __table_name__ = 'items'
+    __table_name__ = 'rewards'
 
 
 @pytest.fixture(scope="function")
@@ -21,7 +21,7 @@ def test_add(ddb_stubber):
     item = {"key": "value"}
 
     add_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Item': item,
         'ReturnValues': 'NONE'
     }
@@ -36,7 +36,7 @@ def test_delete(ddb_stubber):
     key = {"partition": "value_partition", "sort": "value_sort"}
 
     delete_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': key
     }
     delete_item_response = {}
@@ -51,7 +51,7 @@ def test_get(ddb_stubber):
         "range": "value_r"
     }
     get_item_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': key,
         'ExpressionAttributeNames': {'#model_name': 'name'},
         'ProjectionExpression': '#model_name, key'
@@ -70,7 +70,7 @@ def test_get(ddb_stubber):
 
 def test_query(ddb_stubber):
     query_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'KeyConditionExpression': Key('hash').eq('value_h'),
         'Limit': 10,
         'ProjectionExpression': '#attr_name, #attr_key',
@@ -103,7 +103,7 @@ def test_query(ddb_stubber):
 
 def test_update(ddb_stubber):
     update_params = {
-        'TableName': 'items',
+        'TableName': 'rewards',
         'Key': {
             'hash': 'value_h'
         },
