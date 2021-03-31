@@ -126,7 +126,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD::POINTS',
+                                'S': 'abcABC123::REWARD::POINTS',
                             },
                             'timestamp': {
                                 'N': str(1577836800),
@@ -147,7 +147,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD::POINTS',
+                                'S': 'abcABC123::REWARD::POINTS',
                             },
                             'timestamp': {
                                 'N': str(1577836801),
@@ -168,7 +168,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD::ZONE',
+                                'S': 'abcABC123::REWARD::ZONE',
                             },
                             'timestamp': {
                                 'N': str(1577836802),
@@ -188,7 +188,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD::AVATAR',
+                                'S': 'abcABC123::REWARD::AVATAR',
                             },
                             'timestamp': {
                                 'N': str(1577836803),

@@ -18,7 +18,7 @@ class LogTag(Enum):
 
 
 class Log:
-    tag: LogTag
+    tag: str
     timestamp: int
     log: str
     data: Dict[str, Any]
@@ -31,12 +31,12 @@ class Log:
 
     @staticmethod
     def from_map(log_map: Dict[str, Any]):
-        return Log(tag=LogTag.from_value(log_map["tag"]), timestamp=log_map["timestamp"], log=log_map["log"],
+        return Log(tag=log_map["tag"], timestamp=log_map["timestamp"], log=log_map["log"],
                    data=log_map["data"])
 
     def to_map(self):
         return {
-            "tag": self.tag.value,
+            "tag": self.tag,
             "timestamp": self.timestamp,
             "log": self.log,
             "data": self.data
@@ -48,8 +48,9 @@ class LogsService(ModelService):
     __partition_key__ = "tag"
     __sort_key__ = "timestamp"
 
-    def query(self):
-        pass
+    @classmethod
+    def query(cls, tag: str) -> List[Log]:
+        return [Log.from_map(x) for x in cls.get_interface().query(tag).items]
 
     @classmethod
     def batch_create(cls, logs: List[Log]):

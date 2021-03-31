@@ -43,8 +43,12 @@ def get_item(event: HTTPEvent):
     return JSONResponse(RewardsService.get(category, release, id_).as_dict())
 
 
-def get_my_items(event: HTTPEvent):
-    return JSONResponse(BeneficiariesService.get(event.authorizer.sub, ['bought_items']).as_dict())
+def get_my_rewards(event: HTTPEvent):
+    category_name: str = event.params.get('category')
+    category = RewardType.from_value(category_name.upper())
+    return JSONResponse({
+        'rewards': [log.to_map() for log in RewardsService.get_user_rewards(event.authorizer, category)]
+    })
 
 
 def create_item(event: HTTPEvent):
@@ -126,7 +130,7 @@ def claim_reward(event: HTTPEvent):
 
 router.get("/api/rewards/{category}/{release}/", list_shop_category)
 router.get("/api/rewards/{category}/{release}/{id}/", get_item)
-router.get("/api/rewards/my-items/", get_my_items)
+router.get("/api/rewards/mine/{category}", get_my_rewards)
 
 router.post("/api/rewards/{category}/{release}/", create_item)
 router.post("/api/rewards/{category}/{release}/{id}/buy/{area}/", buy_item)

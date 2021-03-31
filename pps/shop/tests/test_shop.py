@@ -163,3 +163,34 @@ def test_buy(ddb_stubber: Stubber):
     buy_item(event)
 
     ddb_stubber.assert_no_pending_responses()
+
+
+def test_get_my_rewards(ddb_stubber: Stubber):
+    query_response = {
+        'Items': [{
+            'tag': {'S': 'u-sub::REWARD::AVATAR'},
+            'timestamp': {'N': str(123456)},
+            'log': {'S': 'A log'},
+            'data': {'M': {'description': {'S': 'An item description'}}},
+        }]
+    }
+
+    query_params = {
+        'TableName': 'logs',
+        'KeyConditionExpression': Key('tag').eq('u-sub::REWARD::AVATAR'),
+    }
+    ddb_stubber.add_response('query', query_response, query_params)
+    response = get_my_rewards(HTTPEvent({
+        "pathParameters": {
+            "category": "avatar",
+        },
+        "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "u-sub"
+                }
+            }
+        }
+    }))
+    assert response.status == 200
+    ddb_stubber.assert_no_pending_responses()

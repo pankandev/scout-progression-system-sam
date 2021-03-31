@@ -595,7 +595,7 @@ Resources:
         ListMyItems:
           Type: Api
           Properties:
-            Path: /api/rewards/my-items/
+            Path: /api/rewards/mine/{category}/
             Method: get
             RestApiId: !Ref PPSAPI
         ListShopVersionItems:
