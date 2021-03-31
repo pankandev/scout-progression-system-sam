@@ -7,7 +7,7 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
-from core.services.rewards import RewardsService
+from core.services.rewards import RewardsService, RewardType, RewardRarity
 from core.utils.consts import VALID_AREAS
 
 router = Router()
@@ -22,7 +22,7 @@ def list_shop_category(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
                                            f"Invalid release {event.params['release']}, it should be an int")
 
-    return JSONResponse(RewardsService.query(category, release).as_dict())
+    return JSONResponse(RewardsService.query(RewardType.from_value(category.upper()), release).as_dict())
 
 
 def get_item(event: HTTPEvent):
@@ -65,16 +65,17 @@ def create_item(event: HTTPEvent):
                                            f"Invalid price {body['price']}, it should be an int")
 
     schema = Schema({
-        'name': str,
         'description': str,
-        'price': int
+        'price': int,
+        'rarity': str
     })
     try:
         body = schema.validate(body)
     except SchemaError as e:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
 
-    result = RewardsService.create(body['name'], body['description'], body['price'], category, release).as_dict()
+    result = RewardsService.create(body['description'], RewardType.from_value(category.upper()), release,
+                                   RewardRarity.from_name(body['rarity']), body['price']).as_dict()
     return JSONResponse({
         'message': 'Created item',
         'item': result

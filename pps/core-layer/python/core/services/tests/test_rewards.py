@@ -1,12 +1,15 @@
+from unittest.mock import patch
+
 import jwt
 import pytest
 import schema
+from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 from freezegun import freeze_time
 
 from core.aws.event import Authorizer
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity
 
 
 @pytest.fixture(scope="function")
@@ -27,11 +30,11 @@ def test_reward_token():
     })
 
     static_rewards = RewardSet(rewards=[
-        Reward(reward_type=RewardType.POINTS, description={'amount': 100}),
+        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
     ])
     box_rewards = [RewardSet(rewards=[
-        Reward(reward_type=RewardType.ZONE, description={'id': 'GRASS'}),
-        Reward(reward_type=RewardType.AVATAR, description={'type': 'mouth', 'id': 'w'}),
+        RewardProbability(reward_type=RewardType.ZONE, rarity=RewardRarity.RARE),
+        RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
@@ -46,24 +49,17 @@ def test_reward_token():
         'static': [
             {
                 'type': 'POINTS',
-                'description': {
-                    'amount': 100
-                }
+                'rarity': 'COMMON'
             }
         ],
         'boxes': [[
             {
                 'type': 'ZONE',
-                'description': {
-                    'id': 'GRASS'
-                },
+                'rarity': 'RARE'
             },
             {
                 'type': 'AVATAR',
-                'description': {
-                    'type': 'mouth',
-                    'id': 'w',
-                },
+                'rarity': 'RARE'
             }
         ]]
     }).validate(decoded)
@@ -77,12 +73,47 @@ def test_claim_reward(ddb_stubber: Stubber):
         }
     })
     static_rewards = RewardSet(rewards=[
-        Reward(reward_type=RewardType.POINTS, description={'amount': 100}),
+        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
     ])
     box_rewards = [RewardSet(rewards=[
-        Reward(reward_type=RewardType.ZONE, description={'id': 'GRASS'}),
-        Reward(reward_type=RewardType.AVATAR, description={'type': 'mouth', 'id': 'w'}),
+        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
+        RewardProbability(reward_type=RewardType.ZONE, rarity=RewardRarity.RARE),
+        RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
+
+    for reward in static_rewards.rewards + box_rewards[0].rewards:
+        if reward.type == RewardType.POINTS:
+            continue
+        response = {
+            'Items': [
+                {
+                    'category': {
+                        'S': reward.type.name
+                    },
+                    'description': {
+                        'S': 'A description'
+                    },
+                    'release-id': {
+                        'N': str(-112345 if reward.rarity == RewardRarity.RARE else 112345)
+                    }
+                }
+            ]
+        }
+        lowest = 0
+        highest = -99999 if reward.rarity == RewardRarity.RARE else 99999
+        params = {
+            'ExpressionAttributeNames': {'#attr_category': 'category',
+                                         '#attr_description': 'description',
+                                         '#attr_price': 'price',
+                                         '#attr_release_id': 'release-id'},
+            'KeyConditionExpression':
+                Key('category').eq(reward.type.name) & Key('release-id').between(min(lowest, highest),
+                                                                                 max(lowest, highest)),
+            'Limit': 1,
+            'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price',
+            'TableName': 'rewards'
+        }
+        ddb_stubber.add_response('query', response, params)
 
     batch_response = {
 
@@ -95,7 +126,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD',
+                                'S': 'REWARD::POINTS',
                             },
                             'timestamp': {
                                 'N': str(1577836800),
@@ -103,7 +134,11 @@ def test_claim_reward(ddb_stubber: Stubber):
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
                                 'type': 'POINTS',
-                                'description': {'amount': 100}
+                                'description': {
+                                    'amount': 100
+                                },
+                                'rarity': 'COMMON',
+                                'release': 0
                             }}
                         }
                     }
@@ -112,15 +147,39 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD',
+                                'S': 'REWARD::POINTS',
                             },
                             'timestamp': {
-                                'N': str(1577836800),
+                                'N': str(1577836801),
+                            },
+                            'log': {'S': 'Won a reward'},
+                            'data': {'M': {
+                                'type': 'POINTS',
+                                'rarity': 'COMMON',
+                                'release': 0,
+                                'description': {
+                                    'amount': 100
+                                }
+                            }}
+                        }
+                    }
+                },
+                {
+                    'PutRequest': {
+                        'Item': {
+                            'tag': {
+                                'S': 'REWARD::ZONE',
+                            },
+                            'timestamp': {
+                                'N': str(1577836802),
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
                                 'type': 'ZONE',
-                                'description': {'id': 'GRASS'}
+                                'rarity': 'RARE',
+                                'description': 'A description',
+                                'id': 12345,
+                                'release': 1,
                             }}
                         }
                     }
@@ -129,15 +188,18 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'tag': {
-                                'S': 'REWARD',
+                                'S': 'REWARD::AVATAR',
                             },
                             'timestamp': {
-                                'N': str(1577836800),
+                                'N': str(1577836803),
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
                                 'type': 'AVATAR',
-                                'description': {'type': 'mouth', 'id': 'w'}
+                                'rarity': 'RARE',
+                                'id': 12345,
+                                'release': 1,
+                                'description': 'A description'
                             }}
                         }
                     }
@@ -146,5 +208,46 @@ def test_claim_reward(ddb_stubber: Stubber):
     }
 
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
+
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
-    RewardsService.claim_reward(authorizer=authorizer, reward_token=token, box_index=0)
+    with patch('random.randint', lambda a, b: 0 if a < 0 else b):
+        RewardsService.claim_reward(authorizer=authorizer, reward_token=token, release=1, box_index=0)
+
+    ddb_stubber.assert_no_pending_responses()
+
+
+def test_get_random(ddb_stubber: Stubber):
+    params = {
+        'KeyConditionExpression': Key('category').eq('AVATAR') & Key('release-id').between(0, 99999),
+        'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price',
+        'ExpressionAttributeNames': {
+            '#attr_category': 'category',
+            '#attr_description': 'description',
+            '#attr_price': 'price',
+            '#attr_release_id': 'release-id'
+        },
+        'Limit': 1,
+        'TableName': 'rewards'}
+    response = {
+        'Items': [
+            {
+                'category': {
+                    'S': 'AVATAR'
+                },
+                'description': {
+                    'S': 'A description'
+                },
+                'release-id': {
+                    'N': str(112345)
+                }
+            }
+        ]
+    }
+    ddb_stubber.add_response('query', response, params)
+    with patch('random.randint', lambda a, b: b):
+        reward = RewardsService.get_random(RewardType.AVATAR, 1, RewardRarity.COMMON)
+    assert reward.release == 1
+    assert reward.id == 12345
+    assert reward.type == RewardType.AVATAR
+    assert reward.description == 'A description'
+    ddb_stubber.assert_no_pending_responses()

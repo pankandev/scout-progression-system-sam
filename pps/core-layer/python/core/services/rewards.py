@@ -1,3 +1,4 @@
+import random
 import hashlib
 import json
 import os
@@ -14,7 +15,23 @@ from core.aws.event import Authorizer
 from core.db.model import Operator
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, Log, LogTag
+from core.utils import join_key
+
+REWARDS_PER_RELEASE = 100000
+
+
+class RewardRarity(Enum):
+    COMMON = 1
+    RARE = 2
+
+    @staticmethod
+    def from_name(name: str):
+        for member in RewardRarity:
+            if name == member.name:
+                return member
+        raise InvalidException(f"Unknown reward rarity: {name}")
 
 
 class RewardType(Enum):
@@ -35,29 +52,84 @@ class RewardType(Enum):
 class Reward:
     type: RewardType
     description: Dict[str, Any]
+    rarity: RewardRarity
+    release: int
+    id: int
 
-    def __init__(self, reward_type: RewardType, description: Dict[str, Any]):
-        self.type = reward_type
+    def __init__(self, category: RewardType, release: int, id_: int, description: Dict[str, Any], rarity: RewardRarity):
+        self.type = category
         self.description = description
+        self.release = release
+        self.id = id_
+        self.rarity = rarity
 
-    def to_map(self) -> dict:
-        return {
+    def to_api_map(self) -> dict:
+        m = {
             "type": self.type.value,
+            "release": self.release,
+            "rarity": self.rarity.name,
             "description": self.description
         }
+        if self.id is not None:
+            m["id"] = self.id
+        return m
 
     @staticmethod
-    def from_map(d: dict):
-        return Reward(reward_type=RewardType.from_value(d["type"]), description=d["description"])
+    def factory(category: RewardType, rarity: RewardRarity):
+        if category == RewardType.POINTS:
+            return Reward(
+                category=RewardType.POINTS,
+                release=0,
+                rarity=rarity,
+                id_=None,
+                description={
+                    'amount': 250 if rarity == RewardRarity.RARE else 100
+                }
+            )
+        elif category == RewardType.NEEDS:
+            return None
+
+    @staticmethod
+    def from_db_map(item: dict):
+        release_id = int(abs(item['release-id']))
+        release = int(release_id // REWARDS_PER_RELEASE)
+        id_ = int(release_id % REWARDS_PER_RELEASE)
+        item['release'] = release
+        item['id'] = id_
+        return Reward(category=RewardType.from_value(item["category"]), release=release, id_=id_,
+                      description=item["description"],
+                      rarity=RewardRarity.RARE if int(item['release-id']) < 0 else RewardRarity.COMMON)
 
     def __repr__(self):
         return f"Reward(type={self.type.value}, description={self.description})"
 
 
-class RewardSet:
-    rewards: List[Reward]
+class RewardProbability:
+    type: RewardType
+    rarity: RewardRarity
 
-    def __init__(self, rewards: List[Reward]):
+    def __init__(self, reward_type: RewardType, rarity: RewardRarity):
+        self.type = reward_type
+        self.rarity = rarity
+
+    def to_map(self) -> dict:
+        return {
+            "type": self.type.value,
+            "rarity": self.rarity.name
+        }
+
+    @classmethod
+    def from_map(cls, reward_map: Dict[str, Any]):
+        return RewardProbability(
+            reward_type=RewardType.from_value(reward_map["type"]),
+            rarity=RewardRarity.from_name(reward_map["rarity"])
+        )
+
+
+class RewardSet:
+    rewards: List[RewardProbability]
+
+    def __init__(self, rewards: List[RewardProbability]):
         self.rewards = rewards.copy()
 
     def to_map_list(self) -> List[dict]:
@@ -65,7 +137,7 @@ class RewardSet:
 
     @staticmethod
     def from_map_list(rewards_map: List[dict]):
-        return RewardSet(rewards=[Reward.from_map(reward) for reward in rewards_map])
+        return RewardSet(rewards=[RewardProbability.from_map(reward) for reward in rewards_map])
 
 
 class RewardsService(ModelService):
@@ -74,42 +146,70 @@ class RewardsService(ModelService):
     __sort_key__ = "release-id"
 
     @classmethod
-    def create(cls, name: str, description: str, price: int, category: str, release: int):
+    def create(cls, description: Any, category: RewardType, release: int, rarity: RewardRarity, price: int = None):
         index = cls.get_interface()
 
         ms_time = int(time.time() * 1000)
-        release_id = int(release * 100000 + ms_time % 100000)
+        id_ = ms_time % REWARDS_PER_RELEASE
+        release_id = int(release * REWARDS_PER_RELEASE + id_)
 
         item = {
-            'name': name,
             'description': description,
-            'price': price
+            'rarity': rarity.name
         }
-        return index.create(category, item, release_id, raise_if_exists_sort=True, raise_if_exists_partition=True)
+        if price is not None:
+            item['price'] = price
+        return index.create(category.name, item, release_id, raise_if_exists_sort=True, raise_if_exists_partition=True)
 
     @classmethod
-    def query(cls, category: str, release: int):
+    def query(cls, category: RewardType, release: int):
         index = cls.get_interface()
-        result = index.query(category, (Operator.LESS_THAN, int((release + 1) * 1e5)),
-                             attributes=['name', 'category', 'description', 'release-id', 'price'])
+        result = index.query(category.name, (Operator.LESS_THAN, int((release + 1) * REWARDS_PER_RELEASE)),
+                             attributes=['category', 'description', 'release-id', 'price'])
         for item in result.items:
-            release = int(item['release-id'] // 100000)
-            id_ = int(item['release-id'] % 100000)
+            release = int(item['release-id'] // REWARDS_PER_RELEASE)
+            id_ = int(item['release-id'] % REWARDS_PER_RELEASE)
             item['release'] = release
             item['id'] = id_
             del item['release-id']
         return result
 
     @classmethod
+    def get_random(cls, category: RewardType, release: int, rarity: RewardRarity):
+        reward = Reward.factory(category, rarity)
+        if reward is not None:
+            return reward
+
+        top = abs(release * REWARDS_PER_RELEASE - 1)
+        if rarity == RewardRarity.RARE:
+            top = -top
+
+        lowest = min(0, top)
+        highest = max(0, top)
+        random_point = random.randint(lowest, highest)
+
+        index = cls.get_interface()
+        result = index.query(category.name,
+                             (Operator.BETWEEN, lowest, random_point),
+                             attributes=['category', 'description', 'release-id', 'price'], limit=1)
+        if len(result.items) == 0:
+            result = index.query(category.name,
+                                 (Operator.BETWEEN, random_point, highest),
+                                 attributes=['category', 'description', 'release-id', 'price'], limit=1)
+        if len(result.items) == 0:
+            raise NotFoundException('No item found')
+        return Reward.from_db_map(result.items[0])
+
+    @classmethod
     def get(cls, category: str, release: int, id_: int):
         index = cls.get_interface()
-        release_id = release * 100000 + id_
+        release_id = release * REWARDS_PER_RELEASE + id_
         result = index.get(category, release_id, attributes=['name', 'category', 'description', 'release-id', 'price'])
         if result.item is None:
             return result
 
-        release = result.item['release-id'] // 100000
-        id_ = result.item['release-id'] % 100000
+        release = result.item['release-id'] // REWARDS_PER_RELEASE
+        id_ = result.item['release-id'] % REWARDS_PER_RELEASE
         result.item['release'] = release
         result.item['id'] = id_
         return result
@@ -136,7 +236,8 @@ class RewardsService(ModelService):
         return encoder.encode(payload, jwk)
 
     @classmethod
-    def claim_reward(cls, authorizer: Authorizer, reward_token: str, box_index: int = None) -> List[Reward]:
+    def claim_reward(cls, authorizer: Authorizer, reward_token: str, release: int, box_index: int = None) -> List[
+        Reward]:
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
         with open(jwk_path, 'r') as f:
             jwk = jwt.jwk_from_dict(json.load(f))
@@ -150,15 +251,18 @@ class RewardsService(ModelService):
         if authorizer.sub != decoded["sub"]:
             raise ForbiddenException("This token does not belong to the claimer")
         boxes = decoded["boxes"]
-        rewards = [Reward.from_map(reward) for reward in decoded["static"]]
+        probabilities: List[RewardProbability] = [RewardProbability.from_map(reward) for reward in decoded["static"]]
         if len(boxes) > 0:
             if box_index is None:
                 raise InvalidException("A box must be chosen")
             if box_index >= len(boxes):
                 raise InvalidException(
                     f"Box index out of range, it must be between 0 (inclusive) and {len(boxes)} (exclusive)")
-            rewards += [Reward.from_map(reward) for reward in boxes[box_index]]
+            probabilities += [RewardProbability.from_map(reward) for reward in boxes[box_index]]
+        rewards = [RewardsService.get_random(probability.type, release, probability.rarity)
+                   for probability in probabilities]
         LogsService.batch_create(logs=[
-            Log(tag=LogTag.REWARD, log='Won a reward', data=reward.to_map(), timestamp=time.time())
-            for reward in rewards])
-        return rewards
+            Log(tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
+                data=rewards[reward_i].to_api_map(), timestamp=now + reward_i)
+            for reward_i in range(len(rewards))])
+        return probabilities

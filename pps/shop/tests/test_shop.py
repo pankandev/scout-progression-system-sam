@@ -28,11 +28,11 @@ def test_create(ddb_stubber):
         'ConditionExpression': 'attribute_not_exists(category) AND attribute_not_exists(#model_release_id)',
         'ExpressionAttributeNames': {'#model_release_id': 'release-id'},
         'Item': {
-            'category': 'cat',
+            'category': 'AVATAR',
             'description': 'An item description',
-            'name': 'An Item',
             'price': 10,
-            'release-id': Decimal(release_id)
+            'release-id': release_id,
+            'rarity': 'RARE'
         },
         'ReturnValues': 'NONE',
         'TableName': 'rewards'
@@ -42,77 +42,18 @@ def test_create(ddb_stubber):
 
     event = HTTPEvent({
         "pathParameters": {
-            "category": "cat",
+            "category": "avatar",
             "release": "3"
         },
         "body": json.dumps({
-            'name': 'An Item',
+            'rarity': 'RARE',
             'description': 'An item description',
             'price': 10
         })
     })
     with patch('time.time', lambda: now):
-        create_item(event)
-
-    ddb_stubber.assert_no_pending_responses()
-
-
-def test_query(ddb_stubber):
-    response = {}
-
-    params = {
-        'KeyConditionExpression': Key('category').eq('cat') & Key('release-id').lt(400000),
-        'TableName': 'rewards',
-        'ProjectionExpression': '#attr_name, #attr_category, #attr_description',
-        'ExpressionAttributeNames': {
-            '#attr_category': 'category',
-            '#attr_description': 'description',
-            '#attr_name': 'name'
-        },
-    }
-
-    ddb_stubber.add_response('query', response, params)
-
-    event = HTTPEvent({
-        "pathParameters": {
-            "category": "cat",
-            "release": "3"
-        }
-    })
-    list_shop_category(event)
-
-    ddb_stubber.assert_no_pending_responses()
-
-
-def test_get(ddb_stubber: Stubber):
-    response = {
-        'Item': {
-            'name': {'S': 'An item'},
-            'description': {'S': 'An item description'},
-            'release-id': {'N': '312345'},
-            'category': {'S': 'category'},
-        }
-    }
-
-    params = {
-        'TableName': 'rewards',
-        'Key': {'category': 'cat', 'release-id': 301234},
-        'ProjectionExpression': '#model_name, category, description, #model_release_id, price',
-        'ExpressionAttributeNames': {
-            '#model_name': 'name',
-            '#model_release_id': 'release-id'
-        },
-    }
-
-    ddb_stubber.add_response('get_item', response, params)
-    event = HTTPEvent({
-        "pathParameters": {
-            "category": "cat",
-            "release": "3",
-            "id": "1234"
-        }
-    })
-    get_item(event)
+        response = create_item(event)
+        assert response.status == 200
 
     ddb_stubber.assert_no_pending_responses()
 
@@ -129,13 +70,12 @@ def test_query(ddb_stubber):
     }
 
     params = {
-        'KeyConditionExpression': Key('category').eq('cat') & Key('release-id').lt(400000),
+        'KeyConditionExpression': Key('category').eq('AVATAR') & Key('release-id').lt(400000),
         'TableName': 'rewards',
-        'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id, #attr_price',
+        'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
             '#attr_description': 'description',
-            '#attr_name': 'name',
             '#attr_release_id': 'release-id',
             '#attr_price': 'price'
         },
@@ -145,11 +85,12 @@ def test_query(ddb_stubber):
 
     event = HTTPEvent({
         "pathParameters": {
-            "category": "cat",
+            "category": "avatar",
             "release": "3"
         }
     })
-    list_shop_category(event)
+    response = list_shop_category(event)
+    assert response.status == 200
 
     ddb_stubber.assert_no_pending_responses()
 

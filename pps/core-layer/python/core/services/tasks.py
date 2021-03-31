@@ -8,6 +8,7 @@ from core.db.model import Operator, UpdateReturnValues
 from core.db.results import GetResult
 from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardRarity, RewardProbability
 from core.utils import join_key
 
 
@@ -152,6 +153,34 @@ class TasksService(ModelService):
     def initialize(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):
         cls._add_objectives_as_completed(authorizer, objectives)
         BeneficiariesService.mark_as_initialized(authorizer=authorizer)
+        return RewardsService.generate_reward_token(authorizer=authorizer,
+                                                    static=RewardSet(rewards=[
+                                                        RewardProbability(reward_type=RewardType.POINTS,
+                                                                          rarity=RewardRarity.RARE),
+                                                        RewardProbability(reward_type=RewardType.NEEDS,
+                                                                          rarity=RewardRarity.RARE),
+                                                    ]),
+                                                    boxes=[
+                                                        RewardSet(rewards=[
+                                                            RewardProbability(
+                                                                reward_type=RewardType.ZONE,
+                                                                rarity=RewardRarity.RARE
+                                                            )
+                                                        ]),
+                                                        RewardSet(rewards=[
+                                                            RewardProbability(
+                                                                reward_type=RewardType.DECORATION,
+                                                                rarity=RewardRarity.RARE
+                                                            )
+                                                        ]),
+                                                        RewardSet(rewards=[
+                                                            RewardProbability(
+                                                                reward_type=RewardType.AVATAR,
+                                                                rarity=RewardRarity.RARE
+                                                            )
+                                                        ]),
+                                                    ]
+                                                    )
 
     @classmethod
     def _add_objectives_as_completed(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):

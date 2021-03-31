@@ -53,8 +53,10 @@ class LogsService(ModelService):
 
     @classmethod
     def batch_create(cls, logs: List[Log]):
+        count = 0
         for log in logs:
-            log.timestamp = time.time()
+            log.timestamp = int(time.time() + count)
+            count += 1
         cls.get_interface().client.batch_write_item(
             RequestItems={
                 'logs': [
@@ -62,10 +64,10 @@ class LogsService(ModelService):
                         'PutRequest': {
                             'Item': {
                                 'tag': {
-                                    'S': log.tag.name,
+                                    'S': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
                                 },
                                 'timestamp': {
-                                    'N': str(int(log.timestamp)),
+                                    'N': str(log.timestamp),
                                 },
                                 'log': {'S': log.log},
                                 'data': {'M': log.data}

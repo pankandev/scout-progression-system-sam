@@ -5,7 +5,7 @@ import pytest
 from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
 
-from core.services.rewards import RewardsService
+from core.services.rewards import RewardsService, RewardRarity, RewardType
 
 
 @pytest.fixture(scope="function")
@@ -27,11 +27,11 @@ def test_create(ddb_stubber: Stubber):
         'ConditionExpression': 'attribute_not_exists(category) AND attribute_not_exists(#model_release_id)',
         'ExpressionAttributeNames': {'#model_release_id': 'release-id'},
         'Item': {
-            'category': 'category',
+            'category': 'AVATAR',
             'description': 'An item description',
-            'name': 'item',
-            'price': 10,
-            'release-id': release_id
+            'price': 100,
+            'release-id': release_id,
+            'rarity': 'RARE'
         },
         'ReturnValues': 'NONE',
         'TableName': 'rewards'
@@ -40,7 +40,7 @@ def test_create(ddb_stubber: Stubber):
     ddb_stubber.add_response('put_item', response, params)
 
     with patch('time.time', lambda: now):
-        RewardsService.create("item", "An item description", 10, "category", 3)
+        RewardsService.create("An item description", RewardType.AVATAR, 3, RewardRarity.RARE, 100)
 
     ddb_stubber.assert_no_pending_responses()
 
@@ -48,29 +48,27 @@ def test_create(ddb_stubber: Stubber):
 def test_query(ddb_stubber: Stubber):
     response = {
         'Items': [{
-            'name': {'S': 'An item'},
             'description': {'S': 'An item description'},
             'release-id': {'N': '312345'},
-            'category': {'S': 'category'},
+            'category': {'S': 'AVATAR'},
         }],
         'Count': 0
     }
 
     params = {
-        'KeyConditionExpression': Key('category').eq('category') & Key('release-id').lt(400000),
+        'KeyConditionExpression': Key('category').eq('AVATAR') & Key('release-id').lt(400000),
         'TableName': 'rewards',
-        'ProjectionExpression': '#attr_name, #attr_category, #attr_description, #attr_release_id, #attr_price',
+        'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
             '#attr_description': 'description',
-            '#attr_name': 'name',
             '#attr_release_id': 'release-id',
             '#attr_price': 'price'
         },
     }
 
     ddb_stubber.add_response('query', response, params)
-    result = RewardsService.query("category", 3)
+    result = RewardsService.query(RewardType.AVATAR, 3)
     assert result.items[0]['release'] == 3
     assert result.items[0]['id'] == 12345
 

@@ -10,6 +10,7 @@ import boto3
 
 from .results import QueryResult, GetResult
 from .types import DynamoDBKey, DynamoDBTypes
+from ..exceptions.invalid import InvalidException
 
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 
@@ -50,9 +51,13 @@ class Operator(enum.Enum):
     EQ = 0
     BEGINS_WITH = 1
     LESS_THAN = 2
+    GREATER_THAN = 3
+    GREATER_THAN_OR_EQUAL = 4
+    LOWER_THAN_OR_EQUAL = 5
+    BETWEEN = 6
 
     @staticmethod
-    def to_expression(key_name, op, value):
+    def to_expression(key_name, op, value, value2=None):
         exp = Key(key_name)
         if op == Operator.EQ:
             exp = exp.eq(value)
@@ -60,6 +65,16 @@ class Operator(enum.Enum):
             exp = exp.begins_with(value)
         elif op == Operator.LESS_THAN:
             exp = exp.lt(value)
+        elif op == Operator.GREATER_THAN:
+            exp = exp.gt(value)
+        elif op == Operator.GREATER_THAN_OR_EQUAL:
+            exp = exp.gte(value)
+        elif op == Operator.LOWER_THAN_OR_EQUAL:
+            exp = exp.lte(value)
+        elif op == Operator.BETWEEN:
+            if value2 is None:
+                raise Exception('Undefined second value for BETWEEN sort key operator')
+            exp = exp.between(value, value2)
         else:
             raise ValueError(f"Unknown operator {str(op)}")
         return exp
@@ -157,7 +172,7 @@ class AbstractModel(abc.ABC):
     @classmethod
     def query(cls,
               partition_key: Tuple[str, Any],
-              sort_key: Tuple[str, Operator, Any] = None,
+              sort_key: Union[Tuple[str, Operator, Any], List[Tuple[str, Operator, Any]]] = None,
               limit: int = None,
               start_key: DynamoDBKey = None,
               attributes: List[str] = None,
@@ -166,6 +181,11 @@ class AbstractModel(abc.ABC):
         """
         List items from a database
         """
+
+        if sort_key is None:
+            sort_key = []
+        if isinstance(sort_key, tuple):
+            sort_key = [sort_key]
 
         attr_names = {}
 
@@ -176,9 +196,16 @@ class AbstractModel(abc.ABC):
         hash_name, hash_value = partition_key
         key_conditions = Operator.to_expression(hash_name, Operator.EQ, hash_value)
 
-        if sort_key:
-            sort_name, sort_op, sort_value = sort_key
-            key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value)
+        if len(sort_key) > 0:
+            for key in sort_key:
+                if len(key) == 3:
+                    sort_name, sort_op, sort_value = key
+                    sort_value_2 = None
+                elif len(key) == 4:
+                    sort_name, sort_op, sort_value, sort_value_2 = key
+                else:
+                    raise Exception(f'Sort key operator have {len(key)} instead of 3 or 4')
+                key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value, sort_value_2)
         if len(attr_names) == 0:
             attr_names = None
 

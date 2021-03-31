@@ -162,7 +162,7 @@ class BeneficiariesService(ModelService):
 
         price = item.get('price')
         if price is None:
-            raise InvalidException('This rewards cannot be bought')
+            raise InvalidException('This reward cannot be bought')
 
         release_id = item_release * 100000 + item_id
         return interface.update(authorizer.sub, None, None, add_to={

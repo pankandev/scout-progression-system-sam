@@ -184,7 +184,7 @@ def initialize_tasks(event: HTTPEvent) -> JSONResponse:
     return JSONResponse(
         {
             'message': 'Task dismissed',
-            'task': TasksService.initialize(event.authorizer, objectives)
+            'reward': TasksService.initialize(event.authorizer, objectives)
         }
     )
 
