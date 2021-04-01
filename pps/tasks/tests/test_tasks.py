@@ -1,11 +1,14 @@
 import time
 from datetime import datetime
+from decimal import Decimal
 from unittest.mock import patch
 
+import jwt
 import pytest
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
+from freezegun import freeze_time
 
 from core.services.objectives import ObjectivesService
 from ..app import *
@@ -299,6 +302,7 @@ def test_update_task(ddb_stubber: Stubber):
     ddb_stubber.assert_no_pending_responses()
 
 
+@freeze_time('2020-01-01')
 def test_complete_task(ddb_stubber: Stubber):
     now = int(time.time())
 
@@ -312,7 +316,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'Item': {
             'target': {
                 'M': {
-                    'objective': {'S': 'puberty::corporality::2.3'},
+                    'objective': {'S': 'puberty::corporality::2.1'},
                 }
             }
         }
@@ -362,8 +366,8 @@ def test_complete_task(ddb_stubber: Stubber):
                     ]},
                     'personal-objective': {'S': 'A new task'},
                     'created': {'N': str(now)},
-                    'objective': {'S': 'puberty::corporality::2.3'},
-                    'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 3)},
+                    'objective': {'S': 'puberty::corporality::2.1'},
+                    'original-objective': {'S': ObjectivesService.get('puberty', 'corporality', 2, 1)},
                 }
             }
         }
@@ -375,7 +379,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'Item': {
             'completed': True,
             'created': ANY,
-            'objective': 'puberty::corporality::2.3',
+            'objective': 'puberty::corporality::2.1',
             'original-objective': ANY,
             'personal-objective': 'A new task',
             'tasks': [{'completed': True, 'description': 'Sub-task 1'},
@@ -392,7 +396,7 @@ def test_complete_task(ddb_stubber: Stubber):
     ddb_stubber.add_response('update_item', beneficiary_update_response, beneficiary_update_params)
     ddb_stubber.add_response('put_item', tasks_response, tasks_params)
 
-    complete_active_task(HTTPEvent({
+    response = complete_active_task(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub'
         },
@@ -402,6 +406,43 @@ def test_complete_task(ddb_stubber: Stubber):
             }
         }
     }))
+    assert response.status == 200
+    Schema({
+        'message': 'Completed task',
+        'task': {
+            'tasks': [
+                {'completed': True, 'description': 'Sub-task 1'},
+                {'completed': True, 'description': 'Sub-task 2'},
+            ],
+            'personal-objective': 'A new task',
+            'created': Decimal(now),
+            'objective': 'puberty::corporality::2.1',
+            'original-objective': 'Comprendo que los cambios que se estan produciendo en mi cuerpo influyen en mi manera de ser.',
+            'completed': True,
+        },
+        'reward': str
+    }).validate(response.body)
+    reward_token = response.body['reward']
+    decoded = jwt.JWT().decode(reward_token, do_verify=False)
+    Schema({
+        'id': str,
+        'sub': 'user-sub',
+        'iat': 1577836800,
+        'exp': 1577836800 + 60 * 60,
+        'static': [
+            {'type': 'NEEDS', 'rarity': 'RARE'},
+            {'type': 'ZONE', 'rarity': 'RARE'},
+            {'type': 'POINTS', 'rarity': 'RARE'},
+        ],
+        'boxes': [
+            [{'type': 'AVATAR', 'rarity': 'RARE'},
+             {'type': 'DECORATION', 'rarity': 'COMMON'}],
+            [{'type': 'DECORATION', 'rarity': 'RARE'},
+             {'type': 'AVATAR', 'rarity': 'COMMON'}],
+            [{'type': 'AVATAR', 'rarity': 'RARE'},
+             {'type': 'DECORATION', 'rarity': 'RARE'}]
+        ]
+    }).validate(decoded)
     ddb_stubber.assert_no_pending_responses()
 
 

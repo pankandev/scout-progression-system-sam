@@ -7,6 +7,7 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity
 from core.services.tasks import TasksService, ObjectiveKey
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 
@@ -135,7 +136,35 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
     return JSONResponse(
         {
             'message': 'Completed task',
-            'task': completed_task
+            'task': completed_task,
+            'reward': RewardsService.generate_reward_token(
+                authorizer=event.authorizer,
+                static=RewardSet(rewards=[
+                    RewardProbability(RewardType.NEEDS, RewardRarity.RARE),
+                    RewardProbability(RewardType.ZONE, RewardRarity.RARE),
+                    RewardProbability(RewardType.POINTS, RewardRarity.RARE),
+                ]),
+                boxes=[
+                    RewardSet(
+                        rewards=[
+                            RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
+                            RewardProbability(RewardType.DECORATION, RewardRarity.COMMON),
+                        ]
+                    ),
+                    RewardSet(
+                        rewards=[
+                            RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
+                            RewardProbability(RewardType.AVATAR, RewardRarity.COMMON),
+                        ]
+                    ),
+                    RewardSet(
+                        rewards=[
+                            RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
+                            RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
+                        ]
+                    ),
+                ]
+            ),
         }
     )
 
