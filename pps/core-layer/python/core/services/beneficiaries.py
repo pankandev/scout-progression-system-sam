@@ -208,8 +208,11 @@ class BeneficiariesService(ModelService):
                 f'n_tasks.{area}': 1
             }
 
-        return interface.update(authorizer.sub, updates, None, return_values=return_values,
-                                add_to=add_to)["Attributes"]
+        try:
+            return interface.update(authorizer.sub, updates, None, return_values=return_values,
+                                    add_to=add_to, conditions=Attr('target').ne(None))["Attributes"]
+        except interface.client.exceptions.ConditionalCheckFailedException:
+            raise InvalidException('No active target')
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: list):

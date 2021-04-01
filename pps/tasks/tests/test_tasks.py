@@ -335,6 +335,7 @@ def test_complete_task(ddb_stubber: Stubber):
             '#attr_score_corporality': 'corporality',
             '#attr_target': 'target',
         },
+        'ConditionExpression': Attr('target').ne(None),
         'ExpressionAttributeValues': {
             ':val_target': None,
             ':val_n_tasks_corporality': 1,
