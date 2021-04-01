@@ -236,8 +236,8 @@ class RewardsService(ModelService):
         return encoder.encode(payload, jwk)
 
     @classmethod
-    def claim_reward(cls, authorizer: Authorizer, reward_token: str, release: int, box_index: int = None) -> List[
-        Reward]:
+    def claim_reward(cls, authorizer: Authorizer, reward_token: str, release: int, box_index: int = None) -> \
+            List[Reward]:
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
         with open(jwk_path, 'r') as f:
             jwk = jwt.jwk_from_dict(json.load(f))
@@ -265,7 +265,7 @@ class RewardsService(ModelService):
             Log(tag=join_key(authorizer.sub, LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
                 data=rewards[reward_i].to_api_map(), timestamp=now + reward_i)
             for reward_i in range(len(rewards))])
-        return probabilities
+        return rewards
 
     @classmethod
     def get_user_rewards(cls, authorizer: Authorizer, category: RewardType):
