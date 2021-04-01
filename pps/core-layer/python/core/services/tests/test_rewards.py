@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import jwt
@@ -211,7 +212,38 @@ def test_claim_reward(ddb_stubber: Stubber):
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
     with patch('random.randint', lambda a, b: 0 if a < 0 else b):
-        RewardsService.claim_reward(authorizer=authorizer, reward_token=token, release=1, box_index=0)
+        rewards = RewardsService.claim_reward(authorizer=authorizer, reward_token=token, release=1, box_index=0)
+        api_map = [r.to_api_map() for r in rewards]
+        schema.Schema({
+            'type': 'POINTS',
+            'release': 0,
+            'rarity': 'COMMON',
+            'description': {
+                'amount': 100
+            }
+        }).validate(api_map[0])
+        schema.Schema({
+            'type': 'POINTS',
+            'release': 0,
+            'rarity': 'COMMON',
+            'description': {
+                'amount': 100
+            }
+        }).validate(api_map[1])
+        schema.Schema({
+            'type': 'ZONE',
+            'release': 1,
+            'rarity': 'RARE',
+            'description': 'A description',
+            'id': 12345
+        }).validate(api_map[2])
+        schema.Schema({
+            'type': 'AVATAR',
+            'release': 1,
+            'rarity': 'RARE',
+            'description': 'A description',
+            'id': 12345
+        }).validate(api_map[3])
 
     ddb_stubber.assert_no_pending_responses()
 
