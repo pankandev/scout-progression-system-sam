@@ -46,7 +46,7 @@ def test_reward_token():
         'sub': 'abcABC123',
         'id': str,
         'iat': 1577836800,
-        'exp': 1577836800 + 24 * 60 * 60,
+        'exp': 1577836800 + 7 * 24 * 60 * 60,
         'static': [
             {
                 'type': 'POINTS',

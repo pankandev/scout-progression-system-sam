@@ -219,7 +219,7 @@ class RewardsService(ModelService):
     def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
                               boxes: List[RewardSet] = None, duration: timedelta = None) -> str:
         if duration is None:
-            duration = timedelta(hours=24)
+            duration = timedelta(days=7)
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
         with open(jwk_path, 'r') as f:
             jwk = jwt.jwk_from_dict(json.load(f))

@@ -429,7 +429,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'id': str,
         'sub': 'user-sub',
         'iat': 1577836800,
-        'exp': 1577836800 + 24 * 60 * 60,
+        'exp': 1577836800 + 7 * 24 * 60 * 60,
         'static': [
             {'type': 'NEEDS', 'rarity': 'RARE'},
             {'type': 'ZONE', 'rarity': 'RARE'},
