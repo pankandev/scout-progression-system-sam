@@ -8,6 +8,7 @@ from enum import Enum
 from typing import List, Dict, Any
 
 import jwt
+from jwt.exceptions import JWTDecodeError
 from jwt.utils import get_int_from_datetime
 
 from core import ModelService
@@ -243,7 +244,10 @@ class RewardsService(ModelService):
             jwk = jwt.jwk_from_dict(json.load(f))
 
         decoder = jwt.JWT()
-        decoded = decoder.decode(reward_token, jwk)
+        try:
+            decoded = decoder.decode(reward_token, jwk)
+        except JWTDecodeError as e:
+            raise InvalidException(f'Invalid token: {e.args}')
 
         now = get_int_from_datetime(datetime.now())
         if now > decoded["exp"]:
