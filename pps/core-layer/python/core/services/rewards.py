@@ -198,7 +198,7 @@ class RewardsService(ModelService):
                                  (Operator.BETWEEN, random_point, highest),
                                  attributes=['category', 'description', 'release-id', 'price'], limit=1)
         if len(result.items) == 0:
-            raise NotFoundException('No item found')
+            raise NotFoundException(f'No reward of type {category.name} found')
         return Reward.from_db_map(result.items[0])
 
     @classmethod
