@@ -68,7 +68,6 @@ def create_item(event: HTTPEvent):
     result = RewardsService.create(reward.description, reward.type, reward.release,
                                    reward.rarity, reward.price)
     reward = Reward.from_db_map(result.item)
-    print(reward.rarity, body['rarity'])
     return JSONResponse({
         'message': 'Created item',
         'item': reward.to_api_map()
