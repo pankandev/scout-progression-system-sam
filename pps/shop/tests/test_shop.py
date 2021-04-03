@@ -31,7 +31,7 @@ def test_create(ddb_stubber):
             'category': 'AVATAR',
             'description': 'An item description',
             'price': 10,
-            'release-id': release_id,
+            'release-id': -release_id,
             'rarity': 'RARE'
         },
         'ReturnValues': 'NONE',
@@ -54,6 +54,17 @@ def test_create(ddb_stubber):
     with patch('time.time', lambda: now):
         response = create_item(event)
         assert response.status == 200
+    Schema({
+        'message': 'Created item',
+        'item': {
+            'category': 'AVATAR',
+            'description': 'An item description',
+            'price': 10,
+            'rarity': 'RARE',
+            'release': 3,
+            'id': int
+        }
+    }).validate(response.body)
 
     ddb_stubber.assert_no_pending_responses()
 

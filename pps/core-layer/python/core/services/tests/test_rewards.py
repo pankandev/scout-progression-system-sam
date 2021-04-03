@@ -134,7 +134,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
-                                'type': 'POINTS',
+                                'category': 'POINTS',
                                 'description': {
                                     'amount': 100
                                 },
@@ -155,7 +155,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
-                                'type': 'POINTS',
+                                'category': 'POINTS',
                                 'rarity': 'COMMON',
                                 'release': 0,
                                 'description': {
@@ -176,7 +176,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
-                                'type': 'ZONE',
+                                'category': 'ZONE',
                                 'rarity': 'RARE',
                                 'description': 'A description',
                                 'id': 12345,
@@ -196,7 +196,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                             },
                             'log': {'S': 'Won a reward'},
                             'data': {'M': {
-                                'type': 'AVATAR',
+                                'category': 'AVATAR',
                                 'rarity': 'RARE',
                                 'id': 12345,
                                 'release': 1,
@@ -215,7 +215,7 @@ def test_claim_reward(ddb_stubber: Stubber):
         rewards = RewardsService.claim_reward(authorizer=authorizer, reward_token=token, release=1, box_index=0)
         api_map = [r.to_api_map() for r in rewards]
         schema.Schema({
-            'type': 'POINTS',
+            'category': 'POINTS',
             'release': 0,
             'rarity': 'COMMON',
             'description': {
@@ -223,7 +223,7 @@ def test_claim_reward(ddb_stubber: Stubber):
             }
         }).validate(api_map[0])
         schema.Schema({
-            'type': 'POINTS',
+            'category': 'POINTS',
             'release': 0,
             'rarity': 'COMMON',
             'description': {
@@ -231,14 +231,14 @@ def test_claim_reward(ddb_stubber: Stubber):
             }
         }).validate(api_map[1])
         schema.Schema({
-            'type': 'ZONE',
+            'category': 'ZONE',
             'release': 1,
             'rarity': 'RARE',
             'description': 'A description',
             'id': 12345
         }).validate(api_map[2])
         schema.Schema({
-            'type': 'AVATAR',
+            'category': 'AVATAR',
             'release': 1,
             'rarity': 'RARE',
             'description': 'A description',

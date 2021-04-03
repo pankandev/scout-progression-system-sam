@@ -30,7 +30,7 @@ def test_create(ddb_stubber: Stubber):
             'category': 'AVATAR',
             'description': 'An item description',
             'price': 100,
-            'release-id': release_id,
+            'release-id': -release_id,
             'rarity': 'RARE'
         },
         'ReturnValues': 'NONE',

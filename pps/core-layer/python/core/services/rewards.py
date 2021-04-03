@@ -30,7 +30,7 @@ class RewardRarity(Enum):
     @staticmethod
     def from_name(name: str):
         for member in RewardRarity:
-            if name == member.name:
+            if name.upper() == member.name:
                 return member
         raise InvalidException(f"Unknown reward rarity: {name}")
 
@@ -45,7 +45,7 @@ class RewardType(Enum):
     @staticmethod
     def from_value(value: str):
         for member in RewardType:
-            if value == member.value:
+            if value.upper() == member.value:
                 return member
         raise InvalidException(f"Unknown reward type: {value}")
 
@@ -56,24 +56,40 @@ class Reward:
     rarity: RewardRarity
     release: int
     id: int
+    price: int
 
-    def __init__(self, category: RewardType, release: int, id_: int, description: Dict[str, Any], rarity: RewardRarity):
+    def __init__(self, category: RewardType, release: int, id_: int, description: Dict[str, Any], rarity: RewardRarity,
+                 price: int = None):
         self.type = category
         self.description = description
         self.release = release
         self.id = id_
         self.rarity = rarity
+        self.price = price
 
     def to_api_map(self) -> dict:
         m = {
-            "type": self.type.value,
+            "category": self.type.value,
             "release": self.release,
             "rarity": self.rarity.name,
-            "description": self.description
+            "description": self.description,
         }
         if self.id is not None:
             m["id"] = self.id
+        if self.price is not None:
+            m["price"] = self.price
         return m
+
+    @classmethod
+    def from_api_map(cls, item: dict):
+        return Reward(
+            category=RewardType.from_value(item['category']),
+            release=int(item['release']),
+            id_=item.get('id'),
+            description=item['description'],
+            rarity=RewardRarity.from_name(item['rarity']),
+            price=item.get('price')
+        )
 
     @staticmethod
     def factory(category: RewardType, rarity: RewardRarity):
@@ -88,7 +104,16 @@ class Reward:
                 }
             )
         elif category == RewardType.NEEDS:
-            return None
+            return Reward(
+                category=RewardType.NEEDS,
+                release=0,
+                rarity=rarity,
+                id_=None,
+                description={
+                    'hunger': 100,
+                    'thirst': 100,
+                }
+            )
 
     @staticmethod
     def from_db_map(item: dict):
@@ -97,8 +122,9 @@ class Reward:
         id_ = int(release_id % REWARDS_PER_RELEASE)
         item['release'] = release
         item['id'] = id_
+        price = item.get('price')
         return Reward(category=RewardType.from_value(item["category"]), release=release, id_=id_,
-                      description=item["description"],
+                      description=item["description"], price=int(price) if price is not None else None,
                       rarity=RewardRarity.RARE if int(item['release-id']) < 0 else RewardRarity.COMMON)
 
     def __repr__(self):
@@ -152,7 +178,9 @@ class RewardsService(ModelService):
 
         ms_time = int(time.time() * 1000)
         id_ = ms_time % REWARDS_PER_RELEASE
-        release_id = int(release * REWARDS_PER_RELEASE + id_)
+        release_id = abs(int(release * REWARDS_PER_RELEASE + id_))
+        if rarity == RewardRarity.RARE:
+            release_id = -release_id
 
         item = {
             'description': description,
@@ -180,6 +208,9 @@ class RewardsService(ModelService):
         reward = Reward.factory(category, rarity)
         if reward is not None:
             return reward
+        release = int(release)
+        if release < 1:
+            raise InvalidException('Release must be positive and non-zero')
 
         top = abs(release * REWARDS_PER_RELEASE - 1)
         if rarity == RewardRarity.RARE:

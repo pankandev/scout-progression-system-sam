@@ -7,7 +7,7 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
-from core.services.rewards import RewardsService, RewardType, RewardRarity
+from core.services.rewards import RewardsService, RewardType, RewardRarity, Reward
 from core.utils.consts import VALID_AREAS
 
 router = Router()
@@ -61,28 +61,17 @@ def create_item(event: HTTPEvent):
                                            f"Invalid release {event.params['release']}, it should be an int")
 
     body = event.json
+    body['category'] = category
+    body['release'] = release
 
-    try:
-        body['price'] = int(body.get('price'))
-    except ValueError:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
-                                           f"Invalid price {body['price']}, it should be an int")
-
-    schema = Schema({
-        'description': str,
-        'price': int,
-        'rarity': str
-    })
-    try:
-        body = schema.validate(body)
-    except SchemaError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, str(e))
-
-    result = RewardsService.create(body['description'], RewardType.from_value(category.upper()), release,
-                                   RewardRarity.from_name(body['rarity']), body['price']).as_dict()
+    reward = Reward.from_api_map(body)
+    result = RewardsService.create(reward.description, reward.type, reward.release,
+                                   reward.rarity, reward.price)
+    reward = Reward.from_db_map(result.item)
+    print(reward.rarity, body['rarity'])
     return JSONResponse({
         'message': 'Created item',
-        'item': result
+        'item': reward.to_api_map()
     })
 
 
