@@ -3,6 +3,8 @@ import os
 from datetime import datetime, date
 from json import JSONDecodeError
 
+from core.exceptions.invalid import InvalidException
+
 
 class Authorizer:
     def __init__(self, authorizer: dict):
@@ -92,7 +94,9 @@ class HTTPEvent:
         try:
             return json.loads(self.body)
         except JSONDecodeError:
-            return {}
+            raise InvalidException('Body isn\'t a valid JSON data')
+        except TypeError:
+            raise InvalidException('Body isn\'t a valid JSON data')
 
     def concat_url(self, *args):
         url = self.url
