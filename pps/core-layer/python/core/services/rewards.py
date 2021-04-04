@@ -122,7 +122,7 @@ class Reward:
     @staticmethod
     def from_db_map(item: dict):
         release_id = int(abs(item['release-id']))
-        release = int(release_id // REWARDS_PER_RELEASE)
+        release = int(release_id // REWARDS_PER_RELEASE) + 1
         id_ = int(release_id % REWARDS_PER_RELEASE)
         item['release'] = release
         item['id'] = id_

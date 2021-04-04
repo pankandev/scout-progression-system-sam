@@ -95,7 +95,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                         'S': 'A description'
                     },
                     'release-id': {
-                        'N': str(-112345 if reward.rarity == RewardRarity.RARE else 112345)
+                        'N': str(-12345 if reward.rarity == RewardRarity.RARE else 12345)
                     }
                 }
             ]
@@ -278,7 +278,7 @@ def test_get_random(ddb_stubber: Stubber):
     ddb_stubber.add_response('query', response, params)
     with patch('random.randint', lambda a, b: b):
         reward = RewardsService.get_random(RewardType.AVATAR, 1, RewardRarity.COMMON)
-    assert reward.release == 1
+    assert reward.release == 2
     assert reward.id == 12345
     assert reward.type == RewardType.AVATAR
     assert reward.description == 'A description'

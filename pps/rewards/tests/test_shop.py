@@ -22,7 +22,7 @@ def test_create(ddb_stubber):
     response = {}
 
     now = 1234567890.01234567
-    release_id = 390012
+    release_id = 290012
 
     params = {
         'ConditionExpression': 'attribute_not_exists(category) AND attribute_not_exists(#model_release_id)',
