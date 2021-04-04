@@ -579,7 +579,7 @@ Resources:
   RewardsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: pps/shop/
+      CodeUri: pps/rewards/
       Handler: app.handler
       Runtime: python3.8
       Layers:

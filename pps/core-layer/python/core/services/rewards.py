@@ -10,6 +10,7 @@ from typing import List, Dict, Any
 import jwt
 from jwt.exceptions import JWTDecodeError
 from jwt.utils import get_int_from_datetime
+from schema import Schema
 
 from core import ModelService
 from core.aws.event import Authorizer
@@ -82,14 +83,17 @@ class Reward:
 
     @classmethod
     def from_api_map(cls, item: dict):
-        return Reward(
-            category=RewardType.from_value(item['category']),
-            release=int(item['release']),
-            id_=item.get('id'),
-            description=item['description'],
-            rarity=RewardRarity.from_name(item['rarity']),
-            price=item.get('price')
-        )
+        try:
+            return Reward(
+                category=RewardType.from_value(item['category']),
+                release=int(item['release']),
+                id_=item.get('id'),
+                description=item['description'],
+                rarity=RewardRarity.from_name(item['rarity']),
+                price=item.get('price')
+            )
+        except KeyError as e:
+            raise InvalidException(f'Missing key: {e.args}')
 
     @staticmethod
     def factory(category: RewardType, rarity: RewardRarity):
