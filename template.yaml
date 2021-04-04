@@ -790,12 +790,10 @@ Resources:
     Properties:
       Bucket: !Ref S3BucketWebApp
       PolicyDocument:
-        # Restricting access to cloudfront only.
         Statement:
           - Effect: Allow
             Action:
               - 's3:GetObject'
-              - 's3:ListBucket'
             Resource:
               - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
