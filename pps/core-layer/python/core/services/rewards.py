@@ -182,7 +182,7 @@ class RewardsService(ModelService):
 
         ms_time = int(time.time() * 1000)
         id_ = ms_time % REWARDS_PER_RELEASE
-        release_id = abs(int(release * REWARDS_PER_RELEASE + id_))
+        release_id = abs(int((release - 1) * REWARDS_PER_RELEASE + id_))
         if rarity == RewardRarity.RARE:
             release_id = -release_id
 
