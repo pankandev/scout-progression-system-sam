@@ -27,7 +27,6 @@ Resources:
         AllowHeaders: "'*'"
         AllowOrigin: "'*'"
       Auth:
-        DefaultAuthorizer: UsersAuthorizer
         Authorizers:
           UsersAuthorizer:
             UserPoolArn: !GetAtt UsersPool.Arn
@@ -596,6 +595,8 @@ Resources:
           Type: Api
           Properties:
             Path: /api/rewards/mine/{category}/
+            Auth:
+              Authorizer: UsersAuthorizer
             Method: get
             RestApiId: !Ref PPSAPI
         ListShopVersionItems:
