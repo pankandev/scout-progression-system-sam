@@ -592,6 +592,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref RewardsTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref LogsTable
       Events:
         ListMyItems:
           Type: Api
