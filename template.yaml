@@ -273,7 +273,7 @@ Resources:
         - AttributeName: tag
           AttributeType: S
         - AttributeName: timestamp
-          AttributeType: S
+          AttributeType: N
       KeySchema:
         - AttributeName: tag
           KeyType: HASH
