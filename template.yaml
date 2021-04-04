@@ -751,6 +751,10 @@ Resources:
         Enabled: true
         HttpVersion: http2
         # List of origins that Cloudfront will connect to
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
         Origins:
           - Id: s3-website
             DomainName: !GetAtt S3BucketWebApp.DomainName
