@@ -25,7 +25,9 @@ class JSONResponse:
         return {
             "statusCode": self.status,
             "headers": {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": True
             },
             "body": json.dumps(JSONResponse.clean_for_json(self.body))
         }
