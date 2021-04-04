@@ -747,7 +747,7 @@ Resources:
     Properties:
       DistributionConfig:
         Comment: "Cloudfront distribution for serverless website"
-        DefaultRootObject: "index.html"
+        DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
         # List of origins that Cloudfront will connect to
@@ -777,7 +777,10 @@ Resources:
   S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
+      AccessControl: PublicRead
       BucketName: pps-webpage
+      WebsiteConfiguration:
+        IndexDocument: index.html
   S3BucketGallery:
     Type: AWS::S3::Bucket
     Properties:
@@ -790,7 +793,9 @@ Resources:
         # Restricting access to cloudfront only.
         Statement:
           - Effect: Allow
-            Action: 's3:GetObject'
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
             Resource:
               - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
