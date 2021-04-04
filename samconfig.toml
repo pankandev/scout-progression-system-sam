@@ -2,8 +2,8 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "pps-api"
+stack_name = "scout-spirit"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kqn7yarxbt5k"
-s3_prefix = "pps-api"
+s3_prefix = "scout-spirit"
 region = "us-west-2"
 capabilities = "CAPABILITY_IAM"
