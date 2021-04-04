@@ -781,7 +781,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
-      BucketName: pps-webpage
+      BucketName: scout-spirit-webpage
       WebsiteConfiguration:
         IndexDocument: index.html
   S3BucketGallery:
