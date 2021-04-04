@@ -787,7 +787,7 @@ Resources:
   S3BucketGallery:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: pps-gallery
+      BucketName: scout-spirit-gallery
   S3BucketWebAppPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
