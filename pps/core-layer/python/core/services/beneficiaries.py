@@ -189,6 +189,23 @@ class BeneficiariesService(ModelService):
                                 condition_equals=condition_equals)
 
     @classmethod
+    def set_reward_index(cls, authorizer: Authorizer, index: int):
+        interface = cls.get_interface()
+        updates = {'n_claimed_tokens': index}
+        conditions = "#attr_n_claimed_tokens < :val_n_claimed_tokens"
+        return interface.update(authorizer.sub, updates, None, conditions=conditions)
+
+    @classmethod
+    def add_token_index(cls, authorizer: Authorizer) -> int:
+        interface = cls.get_interface()
+        return interface\
+            .update(
+                authorizer.sub,
+                add_to={'generated_token_last': 1},
+                return_values=UpdateReturnValues.UPDATED_NEW
+            )['Attributes']['generated_token_last']
+
+    @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
                           return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_OLD,
                           receive_score=False

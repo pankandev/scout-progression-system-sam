@@ -70,7 +70,6 @@ class LogsService(ModelService):
                 }
             } for log in logs
         ]
-        print(items)
         cls.get_interface().client.batch_write_item(
             RequestItems={
                 'logs': items

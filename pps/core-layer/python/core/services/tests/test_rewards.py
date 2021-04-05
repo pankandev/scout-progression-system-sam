@@ -23,7 +23,7 @@ def ddb_stubber():
 
 
 @freeze_time('2020-01-01')
-def test_reward_token():
+def test_reward_token(ddb_stubber: Stubber):
     authorizer = Authorizer({
         "claims": {
             "sub": "abcABC123"
@@ -38,13 +38,28 @@ def test_reward_token():
         RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
 
+    update_params = {
+        'TableName': 'beneficiaries',
+        'Key': {'user': 'abcABC123'},
+        'ExpressionAttributeNames': {'#attr_generated_token_last': 'generated_token_last'},
+        'ExpressionAttributeValues': {':val_generated_token_last': 1},
+        'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last',
+        'ReturnValues': 'UPDATED_NEW'
+    }
+    update_response = {
+        'Attributes': {
+            'generated_token_last': {'N': str(10)}
+        }
+    }
+    ddb_stubber.add_response('update_item', update_response, update_params)
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
+    ddb_stubber.assert_no_pending_responses()
 
     decoded = jwt.JWT().decode(token, do_verify=False)
 
     schema.Schema({
         'sub': 'abcABC123',
-        'id': str,
+        'index': 10,
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
         'static': [
@@ -81,6 +96,23 @@ def test_claim_reward(ddb_stubber: Stubber):
         RewardProbability(reward_type=RewardType.ZONE, rarity=RewardRarity.RARE),
         RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
+
+    update_response = {
+        'Attributes': {
+            'generated_token_last': {'N': str(10)}
+        }
+    }
+
+    update_params = {
+        'ExpressionAttributeNames': {'#attr_generated_token_last': 'generated_token_last'},
+        'ExpressionAttributeValues': {':val_generated_token_last': 1},
+        'Key': {'user': 'abcABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
+    }
+
+    ddb_stubber.add_response('update_item', update_response, update_params)
 
     for reward in static_rewards.rewards + box_rewards[0].rewards:
         if reward.type == RewardType.POINTS:
@@ -193,6 +225,24 @@ def test_claim_reward(ddb_stubber: Stubber):
     }
 
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
+
+    update_response = {
+        'Attributes': {
+            'n_claimed_tokens': {'N': str(10)}
+        }
+    }
+
+    update_params = {
+        'ConditionExpression': '#attr_n_claimed_tokens < :val_n_claimed_tokens',
+        'ExpressionAttributeNames': {'#attr_n_claimed_tokens': 'n_claimed_tokens'},
+        'ExpressionAttributeValues': {':val_n_claimed_tokens': 10},
+        'Key': {'user': 'abcABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'SET #attr_n_claimed_tokens=:val_n_claimed_tokens'
+    }
+
+    ddb_stubber.add_response('update_item', update_response, update_params)
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
     with patch('random.randint', lambda a, b: 0 if a < 0 else b):

@@ -393,9 +393,25 @@ def test_complete_task(ddb_stubber: Stubber):
 
     }
 
+    update_response = {
+        'Attributes': {
+            'generated_token_last': {'N': str(10)}
+        }
+    }
+
+    update_params = {
+        'ExpressionAttributeNames': {'#attr_generated_token_last': 'generated_token_last'},
+        'ExpressionAttributeValues': {':val_generated_token_last': 1},
+        'Key': {'user': 'user-sub'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
+    }
+
     ddb_stubber.add_response('get_item', get_response, get_params)
     ddb_stubber.add_response('update_item', beneficiary_update_response, beneficiary_update_params)
     ddb_stubber.add_response('put_item', tasks_response, tasks_params)
+    ddb_stubber.add_response('update_item', update_response, update_params)
 
     response = complete_active_task(HTTPEvent({
         "pathParameters": {
@@ -426,7 +442,7 @@ def test_complete_task(ddb_stubber: Stubber):
     reward_token = response.body['reward']
     decoded = jwt.JWT().decode(reward_token, do_verify=False)
     Schema({
-        'id': str,
+        'index': 10,
         'sub': 'user-sub',
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
@@ -450,6 +466,22 @@ def test_complete_task(ddb_stubber: Stubber):
 def test_initialize(ddb_stubber: Stubber):
     now = time.time()
     user_sub = 'userABC123'
+
+    update_response = {
+        'Attributes': {
+            'generated_token_last': {'N': str(10)}
+        }
+    }
+
+    update_params = {
+        'ExpressionAttributeNames': {'#attr_generated_token_last': 'generated_token_last'},
+        'ExpressionAttributeValues': {':val_generated_token_last': 1},
+        'Key': {'user': 'userABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
+    }
+
     batch_params = {
         'RequestItems': {
             'tasks': [
@@ -501,6 +533,8 @@ def test_initialize(ddb_stubber: Stubber):
     ben_response = {}
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
     ddb_stubber.add_response('update_item', ben_response, ben_params)
+    ddb_stubber.add_response('update_item', update_response, update_params)
+
     with patch('time.time', lambda: now):
         response = initialize_tasks(HTTPEvent(
             event={

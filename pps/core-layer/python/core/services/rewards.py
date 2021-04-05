@@ -253,6 +253,8 @@ class RewardsService(ModelService):
     @classmethod
     def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
                               boxes: List[RewardSet] = None, duration: timedelta = None) -> str:
+        from core.services.beneficiaries import BeneficiariesService
+
         if duration is None:
             duration = timedelta(days=7)
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
@@ -261,19 +263,22 @@ class RewardsService(ModelService):
         encoder = jwt.JWT()
 
         now = datetime.now(timezone.utc)
+        token_index = int(BeneficiariesService.add_token_index(authorizer))
         payload = {
             "sub": authorizer.sub,
             "iat": get_int_from_datetime(now),
             "exp": get_int_from_datetime(now + duration),
             "static": static.to_map_list() if static is not None else [],
-            "boxes": [box.to_map_list() for box in boxes] if boxes is not None else []
+            "boxes": [box.to_map_list() for box in boxes] if boxes is not None else [],
+            "index": token_index
         }
-        payload["id"] = hashlib.sha1(json.dumps(payload).encode()).hexdigest()
         return encoder.encode(payload, jwk)
 
     @classmethod
     def claim_reward(cls, authorizer: Authorizer, reward_token: str, release: int, box_index: int = None) -> \
             List[Reward]:
+        from core.services.beneficiaries import BeneficiariesService
+
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
         with open(jwk_path, 'r') as f:
             jwk = jwt.jwk_from_dict(json.load(f))
@@ -304,6 +309,7 @@ class RewardsService(ModelService):
             Log(tag=join_key(authorizer.sub, LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
                 data=rewards[reward_i].to_api_map(), timestamp=now + reward_i)
             for reward_i in range(len(rewards))])
+        BeneficiariesService.set_reward_index(authorizer, decoded['index'])
         return rewards
 
     @classmethod
