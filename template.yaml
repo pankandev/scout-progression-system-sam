@@ -229,7 +229,7 @@ Resources:
               - 'sts:AssumeRoleWithWebIdentity'
             Condition:
               "StringEquals":
-                "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
+                "cognito-identity.amazonaws.com:aud": !Ref UsersIdentityPool
               "ForAnyValue:StringLike":
                 "cognito-identity.amazonaws.com:amr": authenticated
       Description: |
@@ -261,7 +261,7 @@ Resources:
               - 'sts:AssumeRoleWithWebIdentity'
             Condition:
               "StringEquals":
-                "cognito-identity.amazonaws:com:aud": !Ref UsersIdentityPool
+                "cognito-identity.amazonaws.com:aud": !Ref UsersIdentityPool
               "ForAnyValue:StringLike":
                 "cognito-identity.amazonaws.com:amr": unauthenticated
       Description: |
