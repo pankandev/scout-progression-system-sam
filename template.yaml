@@ -223,10 +223,15 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - cognito-idp.amazonaws.com
+              Federated:
+                - cognito-identity.amazonaws.com
             Action:
               - 'sts:AssumeRole'
+            Condition:
+              "StringEquals":
+                "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
       Description: |
         Scout spirit authenticated Role
       Path: /scout-spirit/
@@ -250,10 +255,15 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - cognito-idp.amazonaws.com
+              Federated:
+                - cognito-identity.amazonaws.com
             Action:
               - 'sts:AssumeRole'
+            Condition:
+              "StringEquals":
+                "cognito-identity.amazonaws:com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": unauthenticated
       Description: |
         Scout spirit authenticated Role
       Path: /scout-spirit/
