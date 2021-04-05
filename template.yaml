@@ -215,70 +215,75 @@ Resources:
       UserPoolId: !Ref UsersPool
   # User roles
   UsersAuthenticatedRole:
-    RoleName: Cognito_ScoutSpiritAuth_Role
-    AssumeRolePolicyDocument:
-      Version: "2012-10-17"
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - cognito-identity.amazonaws.com
-          Action:
-            - 'sts:AssumeRole'
-          Condition:
-            "StringEquals":
-              "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
-            "ForAnyValue:StringLike":
-              "cognito-identity.amazonaws.com:amr": authenticated
-    Description: |
-      Scout spirit authenticated Role
-    Path: scout-spirit/
-    Policies:
-      - PolicyName: ScoutSpiritAuthenticatedUserPolicy
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Action:
-                - mobileanalytics:PutEvents
-                - cognito-sync:*
-                - cognito-identity:*
-              Resource: '*'
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: Cognito_ScoutSpiritAuth_Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cognito-identity.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              "StringEquals":
+                "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
+      Description: |
+        Scout spirit authenticated Role
+      Path: scout-spirit/
+      Policies:
+        - PolicyName: ScoutSpiritAuthenticatedUserPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                  - cognito-identity:*
+                Resource: '*'
   UsersUnauthenticatedRole:
-    RoleName: Cognito_ScoutSpiritAuth_Role
-    AssumeRolePolicyDocument:
-      Version: "2012-10-17"
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - cognito-identity.amazonaws.com
-          Action:
-            - 'sts:AssumeRole'
-          Condition:
-            "StringEquals":
-              "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
-            "ForAnyValue:StringLike":
-              "cognito-identity.amazonaws.com:amr": unauthenticated
-    Description: |
-      Scout spirit authenticated Role
-    Path: scout-spirit/
-    Policies:
-      - PolicyName: ScoutSpiritAuthenticatedUserPolicy
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Action:
-                - mobileanalytics:PutEvents
-                - cognito-sync:*
-              Resource: '*'
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: Cognito_ScoutSpiritAuth_Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cognito-identity.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+            Condition:
+              "StringEquals":
+                "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": unauthenticated
+      Description: |
+        Scout spirit authenticated Role
+      Path: scout-spirit/
+      Policies:
+        - PolicyName: ScoutSpiritAuthenticatedUserPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - mobileanalytics:PutEvents
+                  - cognito-sync:*
+                Resource: '*'
   UsersAuthenticatedRoleAttachment:
     Type: AWS::Cognito::IdentityPoolRoleAttachment
-    IdentityPoolId: !Ref UsersIdentityPool
-    Roles:
-      authenticated: !GetAtt UsersAuthenticatedRole.Arn
-      unauthenticated: !GetAtt UsersUnauthenticatedRole.Arn
+    Properties:
+      IdentityPoolId: !Ref UsersIdentityPool
+      Roles:
+        authenticated: !GetAtt UsersAuthenticatedRole.Arn
+        unauthenticated: !GetAtt UsersUnauthenticatedRole.Arn
   # Database
   BeneficiariesTable:
     Properties:
