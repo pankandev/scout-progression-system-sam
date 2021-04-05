@@ -229,9 +229,9 @@ Resources:
               - 'sts:AssumeRole'
             Condition:
               "StringEquals":
-                "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
+                "cognito-idp:amazonaws:com:aud": !Ref UsersIdentityPool
               "ForAnyValue:StringLike":
-                "cognito-identity.amazonaws.com:amr": authenticated
+                "cognito-idp.amazonaws.com:amr": authenticated
       Description: |
         Scout spirit authenticated Role
       Path: /scout-spirit/
@@ -261,9 +261,9 @@ Resources:
               - 'sts:AssumeRole'
             Condition:
               "StringEquals":
-                "cognito-identity.amazonaws:com:aud": !Ref UsersIdentityPool
+                "cognito-idp.amazonaws:com:aud": !Ref UsersIdentityPool
               "ForAnyValue:StringLike":
-                "cognito-identity.amazonaws.com:amr": unauthenticated
+                "cognito-idp.amazonaws.com:amr": unauthenticated
       Description: |
         Scout spirit authenticated Role
       Path: /scout-spirit/
