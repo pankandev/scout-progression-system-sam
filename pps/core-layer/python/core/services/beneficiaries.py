@@ -26,10 +26,13 @@ class Beneficiary:
     target: Any
     bought_items: Dict[int, str]
     set_base_tasks: Union[bool, None]
+    generated_token_last: int
+    n_claimed_tokens: int
 
     def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
                  score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Any,
-                 bought_items: Dict[int, str], set_base_tasks: Union[bool, None]):
+                 bought_items: Dict[int, str], set_base_tasks: Union[bool, None], generated_token_last: int = -1,
+                 n_claimed_tokens: int = -1):
         self.user_sub = user_sub
         self.district = district
         self.group = group
@@ -42,6 +45,8 @@ class Beneficiary:
         self.target = target
         self.bought_items = bought_items
         self.set_base_tasks = set_base_tasks
+        self.generated_token_last = generated_token_last
+        self.n_claimed_tokens = n_claimed_tokens
 
     @staticmethod
     def from_db_map(beneficiary: dict):
@@ -58,10 +63,13 @@ class Beneficiary:
         target = Task.from_db_dict(beneficiary["target"]) if beneficiary.get("target") is not None else None
         bought_items = beneficiary["bought_items"]
         set_base_tasks = beneficiary["set_base_tasks"]
+        generated_token_last = beneficiary.get("generated_token_last", -1)
+        n_claimed_tokens = beneficiary.get("n_claimed_tokens", -1)
 
         return Beneficiary(user_sub=user_sub, full_name=full_name, nickname=nickname, district=district, group=group,
                            unit=unit, score=score, n_tasks=n_tasks, birthdate=birthdate, target=target,
-                           bought_items=bought_items, set_base_tasks=set_base_tasks)
+                           bought_items=bought_items, set_base_tasks=set_base_tasks, n_claimed_tokens=n_claimed_tokens,
+                           generated_token_last=generated_token_last)
 
     def to_db_dict(self):
         return {
@@ -76,7 +84,9 @@ class Beneficiary:
             "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "set_base_tasks": self.set_base_tasks,
-            "bought_items": {}
+            "bought_items": {},
+            "generated_token_last": self.generated_token_last,
+            "n_claimed_tokens": self.n_claimed_tokens
         }
 
     def to_api_dict(self):
@@ -87,6 +97,7 @@ class Beneficiary:
             "full-name": self.full_name,
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
+            "last_claimed_token": self.n_claimed_tokens
         }
 
 
@@ -201,12 +212,12 @@ class BeneficiariesService(ModelService):
     @classmethod
     def add_token_index(cls, authorizer: Authorizer) -> int:
         interface = cls.get_interface()
-        return interface\
+        return interface \
             .update(
-                authorizer.sub,
-                add_to={'generated_token_last': 1},
-                return_values=UpdateReturnValues.UPDATED_NEW
-            )['Attributes']['generated_token_last']
+            authorizer.sub,
+            add_to={'generated_token_last': 1},
+            return_values=UpdateReturnValues.UPDATED_NEW
+        )['Attributes']['generated_token_last']
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
