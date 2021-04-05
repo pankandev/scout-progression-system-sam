@@ -173,6 +173,10 @@ Resources:
     Properties:
       ClientName: UsersClient
       UserPoolId: !Ref UsersPool
+      UsernameAttributes:
+        - email
+      SupportedIdentityProviders:
+        - COGNITO
       ExplicitAuthFlows:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_USER_PASSWORD_AUTH
