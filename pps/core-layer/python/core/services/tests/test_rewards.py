@@ -121,7 +121,7 @@ def test_claim_reward(ddb_stubber: Stubber):
     }
 
     update_params = {
-        'ConditionExpression': '#attr_n_claimed_tokens > :val_n_claimed_tokens',
+        'ConditionExpression': '#attr_n_claimed_tokens < :val_n_claimed_tokens',
         'ExpressionAttributeNames': {'#attr_n_claimed_tokens': 'n_claimed_tokens'},
         'ExpressionAttributeValues': {':val_n_claimed_tokens': 10},
         'Key': {'user': 'abcABC123'},

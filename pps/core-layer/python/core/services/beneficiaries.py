@@ -192,7 +192,7 @@ class BeneficiariesService(ModelService):
     def set_reward_index(cls, authorizer: Authorizer, index: int):
         interface = cls.get_interface()
         updates = {'n_claimed_tokens': index}
-        conditions = "#attr_n_claimed_tokens > :val_n_claimed_tokens"
+        conditions = "#attr_n_claimed_tokens < :val_n_claimed_tokens"
         try:
             return interface.update(authorizer.sub, updates, None, conditions=conditions)
         except interface.client.exceptions.ConditionalCheckFailedException:
