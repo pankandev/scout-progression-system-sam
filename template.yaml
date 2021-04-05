@@ -234,7 +234,7 @@ Resources:
                 "cognito-identity.amazonaws.com:amr": authenticated
       Description: |
         Scout spirit authenticated Role
-      Path: scout-spirit/
+      Path: /scout-spirit/
       Policies:
         - PolicyName: ScoutSpiritAuthenticatedUserPolicy
           PolicyDocument:
@@ -266,7 +266,7 @@ Resources:
                 "cognito-identity.amazonaws.com:amr": unauthenticated
       Description: |
         Scout spirit authenticated Role
-      Path: scout-spirit/
+      Path: /scout-spirit/
       Policies:
         - PolicyName: ScoutSpiritAuthenticatedUserPolicy
           PolicyDocument:
