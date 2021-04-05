@@ -132,6 +132,16 @@ def test_get_active_task(ddb_stubber: Stubber):
     }
     response = {
         'Item': {
+            'user': {'S': 'abcABC1234'},
+            'unit': {'S': 'district::group::unit'},
+            'unit-user': {'S': 'district::group::unit::abcABC12345'},
+            'full-name': {'S': 'Name'},
+            'nickname': {'S': 'Name'},
+            'birthdate': {'S': '01-01-2001'},
+            'score': {'M': {}},
+            'n_tasks': {'M': {}},
+            'bought_items': {'M': {}},
+            'set_base_tasks': {'BOOL': False},
             'target': {
                 'M': {
                     'completed': {'BOOL': False},
@@ -314,9 +324,24 @@ def test_complete_task(ddb_stubber: Stubber):
 
     get_response = {
         'Item': {
+            'user': {'S': 'abcABC1234'},
+            'unit': {'S': 'district::group::unit'},
+            'unit-user': {'S': 'district::group::unit::abcABC12345'},
+            'full-name': {'S': 'Name'},
+            'nickname': {'S': 'Name'},
+            'birthdate': {'S': '01-01-2001'},
+            'score': {'M': {}},
+            'n_tasks': {'M': {}},
+            'bought_items': {'M': {}},
+            'set_base_tasks': {'BOOL': False},
             'target': {
                 'M': {
+                    'created': {'N': str(12345)},
+                    'completed': {'BOOL': False},
+                    'original-objective': {'S': 'Original Objective'},
                     'objective': {'S': 'puberty::corporality::2.1'},
+                    'personal-objective': {'S': 'Personal Objective'},
+                    'tasks': {'L': []}
                 }
             }
         }

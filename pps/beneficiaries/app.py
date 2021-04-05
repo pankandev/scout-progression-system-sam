@@ -6,7 +6,7 @@ from botocore.exceptions import ParamValidationError
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.router.router import Router
-from core.services.beneficiaries import BeneficiariesService
+from core.services.beneficiaries import BeneficiariesService, Beneficiary
 from core.services.users import UsersCognito
 from core.utils.consts import VALID_UNITS
 
@@ -33,12 +33,10 @@ def get_beneficiary(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You can not access data from this beneficiary")
 
     result = BeneficiariesService.get(event.params["sub"])
-    if result.item is None:
+    if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
-    process_beneficiary(result.item, event)
-
-    return JSONResponse(result.as_dict())
+    return JSONResponse(result.to_api_dict())
 
 
 def list_beneficiaries_group(event: HTTPEvent):
@@ -58,8 +56,7 @@ def list_beneficiaries_unit(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Unknown unit: {unit}")
 
     result = BeneficiariesService.query_unit(district, group, unit)
-    for obj in result.items:
-        process_beneficiary(obj, event)
+    result.items = [item.to_api_dict() for item in result.items]
     return JSONResponse(result.as_dict())
 
 

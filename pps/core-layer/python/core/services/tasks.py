@@ -6,9 +6,8 @@ from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
 from core.db.results import GetResult
-from core.services.beneficiaries import BeneficiariesService
 from core.services.objectives import ObjectivesService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardRarity, RewardProbability
+from core.services.rewards import RewardsService, RewardSet, RewardType, RewardRarity, RewardProbability
 from core.utils import join_key
 
 
@@ -104,6 +103,7 @@ class TasksService(ModelService):
     @classmethod
     def start_task(cls, authorizer: Authorizer, stage: str, area: str, subline: str, tasks: List[str],
                    description: str):
+        from core.services.beneficiaries import BeneficiariesService
         line_, subline_ = subline.split('.')
         objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
 
@@ -124,18 +124,24 @@ class TasksService(ModelService):
 
     @classmethod
     def get_active_task(cls, authorizer: Authorizer) -> Union[Task, None]:
-        return GetResult.from_item(BeneficiariesService.get(authorizer.sub, ["target"]).item["target"])
+        from core.services.beneficiaries import BeneficiariesService
+        beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
+        target: Task = beneficiary.target
+        return GetResult.from_item(target.to_dict())
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]) -> Union[Task, None]:
+        from core.services.beneficiaries import BeneficiariesService
         return BeneficiariesService.update_active_task(authorizer, description, tasks)["target"]
 
     @classmethod
     def dismiss_active_task(cls, authorizer: Authorizer):
+        from core.services.beneficiaries import BeneficiariesService
         return BeneficiariesService.clear_active_task(authorizer)["target"]
 
     @classmethod
     def complete_active_task(cls, authorizer: Authorizer):
+        from core.services.beneficiaries import BeneficiariesService
         old_active_task = BeneficiariesService.clear_active_task(authorizer,
                                                                  return_values=UpdateReturnValues.UPDATED_OLD,
                                                                  receive_score=True)["target"]
@@ -151,6 +157,7 @@ class TasksService(ModelService):
 
     @classmethod
     def initialize(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):
+        from core.services.beneficiaries import BeneficiariesService
         cls._add_objectives_as_completed(authorizer, objectives)
         BeneficiariesService.mark_as_initialized(authorizer=authorizer)
         return RewardsService.generate_reward_token(authorizer=authorizer,

@@ -9,6 +9,7 @@ from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
 from core.exceptions.invalid import InvalidException
 from core.services.rewards import RewardsService
+from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
 
@@ -23,7 +24,7 @@ class Beneficiary:
     nickname: str
     score: Dict[str, int]
     n_tasks: Dict[str, int]
-    target: Any
+    target: Union[Task, None]
     bought_items: Dict[int, str]
     set_base_tasks: Union[bool, None]
     generated_token_last: int
@@ -50,6 +51,9 @@ class Beneficiary:
 
     @staticmethod
     def from_db_map(beneficiary: dict):
+        if beneficiary is None:
+            return None
+
         from core.services.tasks import Task
 
         user_sub = beneficiary["user"]
@@ -113,9 +117,10 @@ class BeneficiariesService(ModelService):
         return join_key(nick, s_date).replace('::', '')
 
     @classmethod
-    def get(cls, sub: str, attributes: List[str] = None):
+    def get(cls, sub: str, attributes: List[str] = None) -> Beneficiary:
         interface = cls.get_interface()
-        return interface.get(sub, attributes=attributes)
+        result = interface.get(sub, attributes=attributes)
+        return Beneficiary.from_db_map(result.item)
 
     @classmethod
     def calculate_stage(cls, birth_date: datetime):
@@ -129,12 +134,15 @@ class BeneficiariesService(ModelService):
     @classmethod
     def query_unit(cls, district: str, group: str, unit: str):
         interface = cls.get_interface("ByGroup")
-        return interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')))
+        result = interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')))
+        result.items = [Beneficiary.from_db_map(item) for item in result.items]
+        return result
 
     @classmethod
-    def query_group(cls, district: str, group: str):
+    def query_group(cls, district: str, group: str) -> List[Beneficiary]:
         interface = cls.get_interface("ByGroup")
-        return interface.query(join_key(district, group))
+        return [Beneficiary.from_db_map(item) for item in
+                interface.query(join_key(district, group)).items]
 
     @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):
@@ -214,10 +222,10 @@ class BeneficiariesService(ModelService):
         interface = cls.get_interface()
         return interface \
             .update(
-            authorizer.sub,
-            add_to={'generated_token_last': 1},
-            return_values=UpdateReturnValues.UPDATED_NEW
-        )['Attributes']['generated_token_last']
+                authorizer.sub,
+                add_to={'generated_token_last': 1},
+                return_values=UpdateReturnValues.UPDATED_NEW
+            )['Attributes']['generated_token_last']
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
@@ -228,12 +236,12 @@ class BeneficiariesService(ModelService):
         updates = {'target': None}
         add_to = None
         if receive_score:
-            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective"]).item
+            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective"])
 
-            if beneficiary.get('target') is None:
+            if beneficiary.target is None:
                 return None
             score = 80
-            area = split_key(beneficiary['target']['objective'])[1]
+            area = split_key(beneficiary.target.objective_key)[1]
             add_to = {
                 f'score.{area}': score,
                 f'n_tasks.{area}': 1
