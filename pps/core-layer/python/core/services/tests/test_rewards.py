@@ -126,82 +126,66 @@ def test_claim_reward(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': {
-                                'S': 'abcABC123::REWARD::POINTS',
-                            },
-                            'timestamp': {
-                                'N': str(1577836800),
-                            },
-                            'log': {'S': 'Won a reward'},
-                            'data': {'M': {
+                            'tag': 'abcABC123::REWARD::POINTS',
+                            'timestamp': 1577836800,
+                            'log': 'Won a reward',
+                            'data': {
                                 'category': 'POINTS',
                                 'description': {
                                     'amount': 100
                                 },
                                 'rarity': 'COMMON',
                                 'release': 0
-                            }}
+                            }
                         }
                     }
                 },
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': {
-                                'S': 'abcABC123::REWARD::POINTS',
-                            },
-                            'timestamp': {
-                                'N': str(1577836801),
-                            },
-                            'log': {'S': 'Won a reward'},
-                            'data': {'M': {
+                            'tag': 'abcABC123::REWARD::POINTS',
+                            'timestamp': 1577836801,
+                            'log': 'Won a reward',
+                            'data': {
                                 'category': 'POINTS',
                                 'rarity': 'COMMON',
                                 'release': 0,
                                 'description': {
                                     'amount': 100
                                 }
-                            }}
+                            }
                         }
                     }
                 },
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': {
-                                'S': 'abcABC123::REWARD::ZONE',
-                            },
-                            'timestamp': {
-                                'N': str(1577836802),
-                            },
-                            'log': {'S': 'Won a reward'},
-                            'data': {'M': {
+                            'tag': 'abcABC123::REWARD::ZONE',
+                            'timestamp': 1577836802,
+                            'log': 'Won a reward',
+                            'data': {
                                 'category': 'ZONE',
                                 'rarity': 'RARE',
                                 'description': 'A description',
                                 'id': 12345,
                                 'release': 1,
-                            }}
+                            }
                         }
                     }
                 },
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': {
-                                'S': 'abcABC123::REWARD::AVATAR',
-                            },
-                            'timestamp': {
-                                'N': str(1577836803),
-                            },
-                            'log': {'S': 'Won a reward'},
-                            'data': {'M': {
+                            'tag': 'abcABC123::REWARD::AVATAR',
+                            'timestamp': 1577836803,
+                            'log': 'Won a reward',
+                            'data': {
                                 'category': 'AVATAR',
                                 'rarity': 'RARE',
                                 'id': 12345,
                                 'release': 1,
                                 'description': 'A description'
-                            }}
+                            }
                         }
                     }
                 }

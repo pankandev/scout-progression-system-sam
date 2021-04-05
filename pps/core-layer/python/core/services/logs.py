@@ -62,14 +62,10 @@ class LogsService(ModelService):
             {
                 'PutRequest': {
                     'Item': {
-                        'tag': {
-                            'S': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
-                        },
-                        'timestamp': {
-                            'N': str(log.timestamp),
-                        },
-                        'log': {'S': log.log},
-                        'data': {'M': log.data}
+                        'tag': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
+                        'timestamp': log.timestamp,
+                        'log': log.log,
+                        'data': log.data
                     }
                 }
             } for log in logs
