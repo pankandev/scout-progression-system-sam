@@ -23,8 +23,8 @@ def test_query_group(ddb_stubber: Stubber):
         'Items': [
             {
                 'user': {'S': 'abcABC123'},
-                'unit': {'S': 'district::group::unit'},
-                'unit-user': {'S': 'district::group::unit::abcABC123'},
+                'group': {'S': 'district::group'},
+                'unit-user': {'S': 'unit::abcABC123'},
                 'full-name': {'S': 'Name'},
                 'nickname': {'S': 'Name'},
                 'birthdate': {'S': '01-01-2001'},
@@ -35,8 +35,8 @@ def test_query_group(ddb_stubber: Stubber):
             },
             {
                 'user': {'S': 'abcABC1234'},
-                'unit': {'S': 'district::group::unit'},
-                'unit-user': {'S': 'district::group::unit::abcABC1234'},
+                'group': {'S': 'district::group'},
+                'unit-user': {'S': 'unit::abcABC1234'},
                 'full-name': {'S': 'Name'},
                 'nickname': {'S': 'Name'},
                 'birthdate': {'S': '01-01-2001'},
@@ -60,9 +60,9 @@ def test_query_unit(ddb_stubber: Stubber):
     response = {
         'Items': [
             {
-                'user': {'S': 'abcABC123'},
-                'unit': {'S': 'district::group::unit'},
-                'unit-user': {'S': 'district::group::unit::abcABC1235'},
+                'user': {'S': 'abcABC1234'},
+                'group': {'S': 'district::group'},
+                'unit-user': {'S': 'unit::abcABC1234'},
                 'full-name': {'S': 'Name'},
                 'nickname': {'S': 'Name'},
                 'birthdate': {'S': '01-01-2001'},
@@ -72,9 +72,9 @@ def test_query_unit(ddb_stubber: Stubber):
                 'set_base_tasks': {'BOOL': False},
             },
             {
-                'user': {'S': 'abcABC1234'},
-                'unit': {'S': 'district::group::unit'},
-                'unit-user': {'S': 'district::group::unit::abcABC12345'},
+                'user': {'S': 'abcABC12345'},
+                'group': {'S': 'district::group'},
+                'unit-user': {'S': 'unit::abcABC12345'},
                 'full-name': {'S': 'Name'},
                 'nickname': {'S': 'Name'},
                 'birthdate': {'S': '01-01-2001'},

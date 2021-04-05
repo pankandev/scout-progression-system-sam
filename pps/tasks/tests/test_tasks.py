@@ -133,8 +133,8 @@ def test_get_active_task(ddb_stubber: Stubber):
     response = {
         'Item': {
             'user': {'S': 'abcABC1234'},
-            'unit': {'S': 'district::group::unit'},
-            'unit-user': {'S': 'district::group::unit::abcABC12345'},
+            'group': {'S': 'district::group'},
+            'unit-user': {'S': 'unit::abcABC12345'},
             'full-name': {'S': 'Name'},
             'nickname': {'S': 'Name'},
             'birthdate': {'S': '01-01-2001'},
@@ -325,8 +325,8 @@ def test_complete_task(ddb_stubber: Stubber):
     get_response = {
         'Item': {
             'user': {'S': 'abcABC1234'},
-            'unit': {'S': 'district::group::unit'},
-            'unit-user': {'S': 'district::group::unit::abcABC12345'},
+            'group': {'S': 'district::group'},
+            'unit-user': {'S': 'unit::abcABC12345'},
             'full-name': {'S': 'Name'},
             'nickname': {'S': 'Name'},
             'birthdate': {'S': '01-01-2001'},

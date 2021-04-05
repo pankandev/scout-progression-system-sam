@@ -57,7 +57,7 @@ class Beneficiary:
         from core.services.tasks import Task
 
         user_sub = beneficiary["user"]
-        district, group, unit = beneficiary["unit"].split("::")
+        district, group = beneficiary["group"].split("::")
         unit = split_key(beneficiary["unit-user"])[0]
         full_name = beneficiary["full-name"]
         nickname = beneficiary["nickname"]
