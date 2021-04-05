@@ -224,7 +224,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - cognito-identity.amazonaws.com
+                - cognito-idp.amazonaws.com
             Action:
               - 'sts:AssumeRole'
             Condition:
@@ -256,7 +256,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - cognito-identity.amazonaws.com
+                - cognito-idp.amazonaws.com
             Action:
               - 'sts:AssumeRole'
             Condition:
