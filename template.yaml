@@ -226,7 +226,7 @@ Resources:
               Federated:
                 - cognito-identity.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - 'sts:AssumeRoleWithWebIdentity'
             Condition:
               "StringEquals":
                 "cognito-identity:amazonaws:com:aud": !Ref UsersIdentityPool
@@ -258,7 +258,7 @@ Resources:
               Federated:
                 - cognito-identity.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - 'sts:AssumeRoleWithWebIdentity'
             Condition:
               "StringEquals":
                 "cognito-identity.amazonaws:com:aud": !Ref UsersIdentityPool
