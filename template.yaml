@@ -184,6 +184,13 @@ Resources:
         - gender
         - birthdate
         - nickname
+  UsersIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: UsersIdentities
+      CognitoIdentityProviders:
+        - ClientId: !Ref UsersClient
+          ProviderName: !GetAtt UsersPool.ProviderName
   UsersScoutersGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
