@@ -192,8 +192,11 @@ class BeneficiariesService(ModelService):
     def set_reward_index(cls, authorizer: Authorizer, index: int):
         interface = cls.get_interface()
         updates = {'n_claimed_tokens': index}
-        conditions = "#attr_n_claimed_tokens < :val_n_claimed_tokens"
-        return interface.update(authorizer.sub, updates, None, conditions=conditions)
+        conditions = "#attr_n_claimed_tokens > :val_n_claimed_tokens"
+        try:
+            return interface.update(authorizer.sub, updates, None, conditions=conditions)
+        except interface.client.exceptions.ConditionalCheckFailedException:
+            raise InvalidException('This token has already been claimed')
 
     @classmethod
     def add_token_index(cls, authorizer: Authorizer) -> int:

@@ -294,6 +294,8 @@ class RewardsService(ModelService):
             raise ForbiddenException("The reward token has expired")
         if authorizer.sub != decoded["sub"]:
             raise ForbiddenException("This token does not belong to the claimer")
+        BeneficiariesService.set_reward_index(authorizer, decoded['index'])
+
         boxes = decoded["boxes"]
         probabilities: List[RewardProbability] = [RewardProbability.from_map(reward) for reward in decoded["static"]]
         if len(boxes) > 0:
@@ -309,7 +311,6 @@ class RewardsService(ModelService):
             Log(tag=join_key(authorizer.sub, LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
                 data=rewards[reward_i].to_api_map(), timestamp=now + reward_i)
             for reward_i in range(len(rewards))])
-        BeneficiariesService.set_reward_index(authorizer, decoded['index'])
         return rewards
 
     @classmethod

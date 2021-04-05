@@ -114,6 +114,25 @@ def test_claim_reward(ddb_stubber: Stubber):
 
     ddb_stubber.add_response('update_item', update_response, update_params)
 
+    update_response = {
+        'Attributes': {
+            'n_claimed_tokens': {'N': str(10)}
+        }
+    }
+
+    update_params = {
+        'ConditionExpression': '#attr_n_claimed_tokens > :val_n_claimed_tokens',
+        'ExpressionAttributeNames': {'#attr_n_claimed_tokens': 'n_claimed_tokens'},
+        'ExpressionAttributeValues': {':val_n_claimed_tokens': 10},
+        'Key': {'user': 'abcABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'SET #attr_n_claimed_tokens=:val_n_claimed_tokens'
+    }
+
+    ddb_stubber.add_response('update_item', update_response, update_params)
+
+
     for reward in static_rewards.rewards + box_rewards[0].rewards:
         if reward.type == RewardType.POINTS:
             continue
@@ -225,24 +244,6 @@ def test_claim_reward(ddb_stubber: Stubber):
     }
 
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
-
-    update_response = {
-        'Attributes': {
-            'n_claimed_tokens': {'N': str(10)}
-        }
-    }
-
-    update_params = {
-        'ConditionExpression': '#attr_n_claimed_tokens < :val_n_claimed_tokens',
-        'ExpressionAttributeNames': {'#attr_n_claimed_tokens': 'n_claimed_tokens'},
-        'ExpressionAttributeValues': {':val_n_claimed_tokens': 10},
-        'Key': {'user': 'abcABC123'},
-        'ReturnValues': 'UPDATED_NEW',
-        'TableName': 'beneficiaries',
-        'UpdateExpression': 'SET #attr_n_claimed_tokens=:val_n_claimed_tokens'
-    }
-
-    ddb_stubber.add_response('update_item', update_response, update_params)
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
     with patch('random.randint', lambda a, b: 0 if a < 0 else b):
