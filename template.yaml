@@ -177,6 +177,7 @@ Resources:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
       WriteAttributes:
         - name
         - middle_name
@@ -188,9 +189,15 @@ Resources:
     Type: AWS::Cognito::IdentityPool
     Properties:
       IdentityPoolName: UsersIdentities
+      AllowUnauthenticatedIdentities: true
       CognitoIdentityProviders:
         - ClientId: !Ref UsersClient
           ProviderName: !GetAtt UsersPool.ProviderName
+  UsersPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UsersClient
+      Domain: scout-spirit
   UsersScoutersGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
