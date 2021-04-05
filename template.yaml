@@ -196,7 +196,7 @@ Resources:
   UsersPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      UserPoolId: !Ref UsersClient
+      UserPoolId: !Ref UsersPool
       Domain: scout-spirit
   UsersScoutersGroup:
     Type: AWS::Cognito::UserPoolGroup
