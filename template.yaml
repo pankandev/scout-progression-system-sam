@@ -217,7 +217,7 @@ Resources:
   UsersAuthenticatedRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Cognito_ScoutSpiritAuth_Role
+      RoleName: scout-spirit-authenticated-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -249,7 +249,7 @@ Resources:
   UsersUnauthenticatedRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Cognito_ScoutSpiritAuth_Role
+      RoleName: scout-spirit-unauthenticated-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
