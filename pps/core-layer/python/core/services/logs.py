@@ -58,23 +58,25 @@ class LogsService(ModelService):
         for log in logs:
             log.timestamp = int(time.time() + count)
             count += 1
+        items = [
+            {
+                'PutRequest': {
+                    'Item': {
+                        'tag': {
+                            'S': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
+                        },
+                        'timestamp': {
+                            'N': str(log.timestamp),
+                        },
+                        'log': {'S': log.log},
+                        'data': {'M': log.data}
+                    }
+                }
+            } for log in logs
+        ]
+        print(items)
         cls.get_interface().client.batch_write_item(
             RequestItems={
-                'logs': [
-                    {
-                        'PutRequest': {
-                            'Item': {
-                                'tag': {
-                                    'S': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
-                                },
-                                'timestamp': {
-                                    'N': str(log.timestamp),
-                                },
-                                'log': {'S': log.log},
-                                'data': {'M': log.data}
-                            }
-                        }
-                    } for log in logs
-                ]
+                'logs': items
             }
         )

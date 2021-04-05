@@ -112,7 +112,13 @@ def claim_reward(event: HTTPEvent):
     token = body.get('token')
     if token is None:
         raise InvalidException('No reward token given')
-    rewards = RewardsService.claim_reward(event.authorizer, reward_token=token, box_index=body.get('box_index'),
+    box_index = body.get('box_index')
+    if box_index is not None:
+        try:
+            box_index = int(box_index)
+        except ValueError:
+            raise InvalidException('Box index must be an int')
+    rewards = RewardsService.claim_reward(event.authorizer, reward_token=token, box_index=box_index,
                                           release=1)
     return JSONResponse({'message': 'Claimed rewards!', 'rewards': [reward.to_api_map() for reward in rewards]})
 
