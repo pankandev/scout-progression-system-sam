@@ -173,8 +173,6 @@ Resources:
     Properties:
       ClientName: UsersClient
       UserPoolId: !Ref UsersPool
-      UsernameAttributes:
-        - email
       SupportedIdentityProviders:
         - COGNITO
       ExplicitAuthFlows:
@@ -183,6 +181,7 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_USER_SRP_AUTH
       WriteAttributes:
+        - email
         - name
         - middle_name
         - family_name
