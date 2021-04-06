@@ -326,12 +326,7 @@ def test_complete_task(ddb_stubber: Stubber):
             'set_base_tasks': {'BOOL': False},
             'target': {
                 'M': {
-                    'created': {'N': str(12345)},
-                    'completed': {'BOOL': False},
-                    'original-objective': {'S': 'Original Objective'},
                     'objective': {'S': 'puberty::corporality::2.1'},
-                    'personal-objective': {'S': 'Personal Objective'},
-                    'tasks': {'L': []}
                 }
             }
         }
