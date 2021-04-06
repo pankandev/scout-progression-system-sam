@@ -63,8 +63,8 @@ class Task:
 
     @staticmethod
     def from_db_dict(d: dict):
-        return Task(d.get("created"), d.get("completed"), d.get("objective"), d.get("original-objective"), d.get("personal-objective"),
-                    [Subtask.from_dict(c) for c in d.get("tasks", [])])
+        return Task(d.get("created"), d.get("completed"), d.get("objective"), d.get("original-objective"),
+                    d.get("personal-objective"), [Subtask.from_dict(c) for c in d.get("tasks", [])])
 
     def to_dict(self):
         return {

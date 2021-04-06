@@ -56,7 +56,7 @@ class LogsService(ModelService):
     def batch_create(cls, logs: List[Log]):
         count = 0
         for log in logs:
-            log.timestamp = int(time.time() + count)
+            log.timestamp = int(time.time() * 1000) + count
             count += 1
         items = [
             {
