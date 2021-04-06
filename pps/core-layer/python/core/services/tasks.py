@@ -1,11 +1,20 @@
+import json
 import math
+import os
 import time
+from datetime import timedelta, datetime, timezone
 from typing import List, Union
+
+import jwt
+from jwt.utils import get_int_from_datetime
+from schema import Schema, SchemaError
 
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
 from core.db.results import GetResult
+from core.exceptions.forbidden import ForbiddenException
+from core.exceptions.invalid import InvalidException
 from core.services.objectives import ObjectivesService
 from core.services.rewards import RewardsService, RewardSet, RewardType, RewardRarity, RewardProbability
 from core.utils import join_key
@@ -66,7 +75,7 @@ class Task:
         return Task(d.get("created"), d.get("completed"), d.get("objective"), d.get("original-objective"),
                     d.get("personal-objective"), [Subtask.from_dict(c) for c in d.get("tasks", [])])
 
-    def to_dict(self):
+    def to_db_dict(self):
         return {
             'completed': False,
             'created': int(time.time()),
@@ -78,6 +87,43 @@ class Task:
                 'description': task.description,
             } for task in self.tasks]
         }
+
+    def to_api_dict(self, authorizer: Authorizer = None):
+        data = {
+            'completed': False,
+            'created': int(time.time()),
+            'objective': self.objective_key,
+            'original-objective': self.original_objective,
+            'personal-objective': self.personal_objective,
+            'tasks': [{
+                'completed': False,
+                'description': task.description,
+            } for task in self.tasks],
+        }
+        if authorizer is not None:
+            data['token'] = self.generate_token(authorizer, duration=timedelta(days=1))
+        return data
+
+    def generate_token(self, authorizer: Authorizer, duration: timedelta = None):
+        return Task.generate_objective_token(self.objective_key, authorizer=authorizer, duration=duration)
+
+    @classmethod
+    def generate_objective_token(cls, objective_key: str, authorizer: Authorizer, duration: timedelta = None):
+        if duration is None:
+            duration = timedelta(days=1)
+        jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
+        with open(jwk_path, 'r') as f:
+            jwk = jwt.jwk_from_dict(json.load(f))
+        encoder = jwt.JWT()
+
+        now = datetime.now(timezone.utc)
+        payload = {
+            'sub': authorizer.sub,
+            "iat": get_int_from_datetime(now),
+            "exp": get_int_from_datetime(now + duration),
+            "objective": objective_key
+        }
+        return encoder.encode(payload, jwk)
 
 
 class TasksService(ModelService):
@@ -117,17 +163,38 @@ class TasksService(ModelService):
         )
 
         try:
-            BeneficiariesService.update(authorizer, active_task=task.to_dict())
+            BeneficiariesService.update(authorizer, active_task=task.to_db_dict())
         except BeneficiariesService.exceptions().ConditionalCheckFailedException:
             return None
         return task
 
     @classmethod
-    def get_active_task(cls, authorizer: Authorizer) -> Union[Task, None]:
+    def get_active_task(cls, authorizer: Authorizer) -> Union[GetResult, None]:
         from core.services.beneficiaries import BeneficiariesService
         beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
         target = beneficiary.target
-        return GetResult.from_item(target.to_dict() if target is not None else None)
+        if target is None:
+            return None
+        return GetResult.from_item(target.to_api_dict(authorizer=authorizer) if target is not None else None)
+
+    @classmethod
+    def get_task_token_objective(cls, token: str, authorizer: Authorizer) -> str:
+        jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
+        with open(jwk_path, 'r') as f:
+            jwk = jwt.jwk_from_dict(json.load(f))
+        decoded = jwt.JWT().decode(token, jwk)
+        try:
+            Schema({
+                "sub": str,
+                "objective": str,
+                "exp": int,
+                "iat": int
+            }).validate(decoded)
+        except SchemaError:
+            raise InvalidException("The given task token is not valid")
+        if authorizer.sub != decoded['sub']:
+            raise ForbiddenException("The given task token does not belong to this user")
+        return decoded['objective']
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]) -> Union[Task, None]:

@@ -4,7 +4,9 @@ from botocore.stub import Stubber
 from freezegun import freeze_time
 from schema import Schema
 
+from core.aws.event import Authorizer
 from core.services.logs import LogsService
+from core.services.tasks import Task
 from ..app import *
 
 
@@ -73,7 +75,7 @@ def test_query(ddb_stubber: Stubber):
 def test_create(ddb_stubber: Stubber):
     ddb_stubber.add_response('put_item', {}, {
         'Item': {
-            'tag': 'u-sub::PROGRESS::1234',
+            'tag': 'u-sub::PROGRESS::PUBERTY::CORPORALITY::1',
             'timestamp': 1577836800000,
             'log': 'A log!',
             'data': {'key': 1234}
@@ -81,27 +83,27 @@ def test_create(ddb_stubber: Stubber):
         'ReturnValues': 'NONE',
         'TableName': 'logs'
     })
+    authorizer_map = {
+        "claims": {"sub": "u-sub"}
+    }
     response = create_log(HTTPEvent({
         "pathParameters": {
             "sub": "u-sub",
-            "tag": "PROGRESS::1234",
+            "tag": "PROGRESS",
         },
         "requestContext": {
-            "authorizer": {
-                "claims": {
-                    "sub": "u-sub"
-                }
-            }
+            "authorizer": authorizer_map
         },
         "body": json.dumps({
             "log": "A log!",
-            "data": {'key': 1234}
+            "data": {'key': 1234},
+            "token": Task.generate_objective_token('puberty::corporality::1', Authorizer(authorizer_map))
         })
     }))
     assert response.status == 200
     Schema({
         'item': {
-            'tag': 'u-sub::PROGRESS::1234',
+            'tag': 'u-sub::PROGRESS::PUBERTY::CORPORALITY::1',
             'timestamp': 1577836800000,
             'log': 'A log!',
             'data': {'key': 1234}

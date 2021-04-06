@@ -98,7 +98,7 @@ class Beneficiary:
             "full-name": self.full_name,
             "nickname": self.nickname,
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
-            "target": self.target.to_dict() if self.target is not None else None,
+            "target": self.target.to_db_dict() if self.target is not None else None,
             "completed": None,
             "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},

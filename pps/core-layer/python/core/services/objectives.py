@@ -9,14 +9,14 @@ class ObjectivesService:
     @staticmethod
     def get_stage_objectives(stage):
         this_path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(this_path, '../common/objectives', f'{stage}.json')) as f:
+        with open(os.path.join(this_path, '../common/objectives', f'{stage}.json'), encoding='utf-8') as f:
             objectives = json.load(f)
         return objectives
 
     @staticmethod
     def get_score_configuration():
         this_path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(this_path, '../common/', f'score.json')) as f:
+        with open(os.path.join(this_path, '../common/', f'score.json'), encoding='utf-8') as f:
             conf = json.load(f)
         return conf
 

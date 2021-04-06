@@ -124,6 +124,7 @@ def test_get_user_task(ddb_stubber: Stubber):
     ddb_stubber.assert_no_pending_responses()
 
 
+@freeze_time('2020-01-01')
 def test_get_active_task(ddb_stubber: Stubber):
     params = {
         'TableName': 'beneficiaries',
@@ -154,7 +155,7 @@ def test_get_active_task(ddb_stubber: Stubber):
         }
     }
     ddb_stubber.add_response('get_item', response, params)
-    get_user_active_task(HTTPEvent({
+    response = get_user_active_task(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
             "stage": 'puberty',
@@ -168,6 +169,33 @@ def test_get_active_task(ddb_stubber: Stubber):
         }
     }))
     ddb_stubber.assert_no_pending_responses()
+
+    assert response.status == 200
+    Schema({
+        'completed': False,
+        'created': 1577836800,
+        'objective': 'puberty::corporality::2.3',
+        'original-objective': 'Trato de superar las dificultades físicas propias de mi crecimiento.',
+        'personal-objective': 'A new task',
+        'tasks': [
+            {
+                'completed': False,
+                'description': 'Sub-task 1'
+            },
+            {
+                'completed': False,
+                'description': 'Sub-task 2'
+            }
+        ],
+        'token': str
+    }).validate(response.body)
+    decoded = jwt.JWT().decode(response.body['token'], do_verify=False)
+    assert Schema({
+        'sub': 'user-sub',
+        'iat': 1577836800,
+        'exp': 1577836800 + 1 * 24 * 60 * 60,
+        'objective': 'puberty::corporality::2.3'
+    }).validate(decoded)
 
 
 def test_start_task(ddb_stubber: Stubber):

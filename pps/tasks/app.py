@@ -63,7 +63,7 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
     result = TasksService.get_active_task(event.authorizer)
-    if result.item is None:
+    if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active tasks")
     return JSONResponse(result.as_dict())
 
