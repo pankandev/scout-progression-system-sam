@@ -36,12 +36,24 @@ class Log:
                    data=log_map.get("data"))
 
     def to_map(self):
-        return {
+        data = {
             "tag": self.tag,
             "timestamp": self.timestamp,
             "log": self.log,
-            "data": self.data
         }
+        if self.data is not None:
+            data['data'] = self.data
+        return data
+
+    def to_db_map(self):
+        data = {
+            'tag': self.tag.name if isinstance(self.tag, LogTag) else self.tag,
+            'timestamp': self.timestamp,
+            'log': self.log
+        }
+        if self.data is not None:
+            data['data'] = self.data
+        return data
 
 
 class LogsService(ModelService):
@@ -57,21 +69,20 @@ class LogsService(ModelService):
     def query_tag(cls, tag: str) -> List[Log]:
         return [Log.from_map(x) for x in cls.get_interface().query(tag).items]
 
+    @staticmethod
+    def _get_current_timestamp() -> int:
+        return int(time.time() * 1000)
+
     @classmethod
     def batch_create(cls, logs: List[Log]):
         count = 0
         for log in logs:
-            log.timestamp = int(time.time() * 1000) + count
+            log.timestamp = cls._get_current_timestamp() + count
             count += 1
         items = [
             {
                 'PutRequest': {
-                    'Item': {
-                        'tag': log.tag.name if isinstance(log.tag, LogTag) else log.tag,
-                        'timestamp': log.timestamp,
-                        'log': log.log,
-                        'data': log.data
-                    }
+                    'Item': log.to_db_map()
                 }
             } for log in logs
         ]
@@ -80,3 +91,9 @@ class LogsService(ModelService):
                 'logs': items
             }
         )
+
+    @classmethod
+    def create(cls, sub: str, tag: str, log_text: str, data: Any) -> Log:
+        log = Log(tag=join_key(sub, tag.upper()), log=log_text, data=data, timestamp=cls._get_current_timestamp())
+        cls.get_interface().create(log.tag, log.to_db_map(), log.timestamp)
+        return log
