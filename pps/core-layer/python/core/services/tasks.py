@@ -126,8 +126,8 @@ class TasksService(ModelService):
     def get_active_task(cls, authorizer: Authorizer) -> Union[Task, None]:
         from core.services.beneficiaries import BeneficiariesService
         beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
-        target: Task = beneficiary.target
-        return GetResult.from_item(target.to_dict())
+        target = beneficiary.target
+        return GetResult.from_item(target.to_dict() if target is not None else None)
 
     @classmethod
     def update_active_task(cls, authorizer: Authorizer, description: str, tasks: List[str]) -> Union[Task, None]:
