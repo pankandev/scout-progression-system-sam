@@ -62,13 +62,13 @@ class Beneficiary:
         full_name = beneficiary["full-name"]
         nickname = beneficiary["nickname"]
         birthdate = datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
-        score = {area: beneficiary["score"].get(area, 0) for area in VALID_AREAS}
-        n_tasks = {area: beneficiary["n_tasks"].get(area, 0) for area in VALID_AREAS}
+        score = {area: int(beneficiary["score"].get(area, 0)) for area in VALID_AREAS}
+        n_tasks = {area: int(beneficiary["n_tasks"].get(area, 0)) for area in VALID_AREAS}
         target = Task.from_db_dict(beneficiary["target"]) if beneficiary.get("target") is not None else None
         bought_items = beneficiary["bought_items"]
         set_base_tasks = beneficiary["set_base_tasks"]
-        generated_token_last = beneficiary.get("generated_token_last", -1)
-        n_claimed_tokens = beneficiary.get("n_claimed_tokens", -1)
+        generated_token_last = int(beneficiary.get("generated_token_last", -1))
+        n_claimed_tokens = int(beneficiary.get("n_claimed_tokens", -1))
 
         return Beneficiary(user_sub=user_sub, full_name=full_name, nickname=nickname, district=district, group=group,
                            unit=unit, score=score, n_tasks=n_tasks, birthdate=birthdate, target=target,
