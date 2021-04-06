@@ -41,8 +41,8 @@ class Beneficiary:
         self.birthdate = birthdate
         self.full_name = full_name
         self.nickname = nickname
-        self.score = {area: score.get(area, 0) for area in VALID_AREAS}
-        self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS}
+        self.score = {area: score.get(area, 0) for area in VALID_AREAS} if score is not None else None
+        self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS} if n_tasks is not None else None
         self.target = target
         self.bought_items = bought_items
         self.set_base_tasks = set_base_tasks
@@ -56,17 +56,32 @@ class Beneficiary:
 
         from core.services.tasks import Task
 
-        user_sub = beneficiary["user"]
-        district, group = beneficiary["group"].split("::")
-        unit = split_key(beneficiary["unit-user"])[0]
-        full_name = beneficiary["full-name"]
-        nickname = beneficiary["nickname"]
-        birthdate = datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
-        score = {area: int(beneficiary["score"].get(area, 0)) for area in VALID_AREAS}
-        n_tasks = {area: int(beneficiary["n_tasks"].get(area, 0)) for area in VALID_AREAS}
-        target = Task.from_db_dict(beneficiary["target"]) if beneficiary.get("target") is not None else None
-        bought_items = beneficiary["bought_items"]
-        set_base_tasks = beneficiary["set_base_tasks"]
+        user_sub = beneficiary.get("user")
+
+        district_group = beneficiary.get("group")
+        district, group = district_group.split("::") if district_group is not None else None, None
+
+        unit_user = beneficiary.get("unit-user")
+        unit = split_key(unit_user)[0] if unit_user is not None else None
+
+        full_name = beneficiary.get("full-name")
+        nickname = beneficiary.get("nickname")
+
+        raw_birthdate = beneficiary.get("birthdate")
+        birthdate = datetime.strptime(raw_birthdate, "%d-%m-%Y") if raw_birthdate is not None else None
+
+        score = beneficiary.get("score")
+        score = {area: int(score.get(area, 0)) for area in VALID_AREAS} if score is not None else None
+
+        n_tasks = beneficiary.get("n_tasks")
+        n_tasks = {area: int(n_tasks.get(area, 0)) for area in VALID_AREAS} if n_tasks is not None else None
+
+        target = beneficiary.get("target")
+        target = Task.from_db_dict(target) if target is not None else None
+
+        bought_items = beneficiary.get("bought_items")
+        set_base_tasks = beneficiary.get("set_base_tasks")
+
         generated_token_last = int(beneficiary.get("generated_token_last", -1))
         n_claimed_tokens = int(beneficiary.get("n_claimed_tokens", -1))
 

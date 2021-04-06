@@ -132,16 +132,6 @@ def test_get_active_task(ddb_stubber: Stubber):
     }
     response = {
         'Item': {
-            'user': {'S': 'abcABC1234'},
-            'group': {'S': 'district::group'},
-            'unit-user': {'S': 'unit::abcABC12345'},
-            'full-name': {'S': 'Name'},
-            'nickname': {'S': 'Name'},
-            'birthdate': {'S': '01-01-2001'},
-            'score': {'M': {}},
-            'n_tasks': {'M': {}},
-            'bought_items': {'M': {}},
-            'set_base_tasks': {'BOOL': False},
             'target': {
                 'M': {
                     'completed': {'BOOL': False},
