@@ -59,7 +59,7 @@ class Beneficiary:
         user_sub = beneficiary.get("user")
 
         district_group = beneficiary.get("group")
-        district, group = district_group.split("::") if district_group is not None else None, None
+        district, group = district_group.split("::") if district_group is not None else (None, None)
 
         unit_user = beneficiary.get("unit-user")
         unit = split_key(unit_user)[0] if unit_user is not None else None
