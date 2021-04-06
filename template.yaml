@@ -812,16 +812,16 @@ Resources:
             TableName:
               !Ref LogsTable
       Events:
-        ListUserLogs:
+        CreateUserLog:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/logs/
-            Method: get
+            Path: /api/users/{sub}/logs/{tag}/
+            Method: post
             RestApiId: !Ref PPSAPI
         ListUserLogsWithTag:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/logs/{tag}/
+            Path: /api/users/{sub}/logs/{tag}/
             Method: get
             RestApiId: !Ref PPSAPI
   PinpointApp:

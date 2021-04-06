@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 
 from core import ModelService
 from core.exceptions.invalid import InvalidException
+from core.utils import join_key
 
 
 class LogTag(Enum):
@@ -32,7 +33,7 @@ class Log:
     @staticmethod
     def from_map(log_map: Dict[str, Any]):
         return Log(tag=log_map["tag"], timestamp=log_map["timestamp"], log=log_map["log"],
-                   data=log_map["data"])
+                   data=log_map.get("data"))
 
     def to_map(self):
         return {
@@ -49,7 +50,11 @@ class LogsService(ModelService):
     __sort_key__ = "timestamp"
 
     @classmethod
-    def query(cls, tag: str) -> List[Log]:
+    def query(cls, user_sub: str, tag: str) -> List[Log]:
+        return cls.query_tag(join_key(user_sub, tag))
+
+    @classmethod
+    def query_tag(cls, tag: str) -> List[Log]:
         return [Log.from_map(x) for x in cls.get_interface().query(tag).items]
 
     @classmethod

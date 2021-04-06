@@ -1,5 +1,6 @@
 import abc
 from decimal import Decimal
+from typing import List
 
 from .capacity import ConsumedCapacity
 
@@ -29,7 +30,7 @@ class QueryResult(Result):
     def __init__(self, result: dict):
         uncleaned_items = result.get('Items')
         self.items = [clean_item(item) for item in uncleaned_items] if uncleaned_items is not None else None
-        self.count = result.get('Count'),
+        self.count = result.get('Count')
         self.scanned_count = result.get('ScannedCount')
         self.last_evaluated_key = result.get('LastEvaluatedKey')
         self.consumed_capacity = ConsumedCapacity.from_dict(result.get('ConsumedCapacity'))
@@ -40,6 +41,14 @@ class QueryResult(Result):
             "count": self.count,
             "last_key": self.last_evaluated_key
         }
+
+    @staticmethod
+    def from_list(items: List[dict], last_evaluated_key=None):
+        return QueryResult({
+            "Items": items,
+            "Count": len(items),
+            "LastEvaluatedKey": last_evaluated_key
+        })
 
 
 class GetResult(Result):

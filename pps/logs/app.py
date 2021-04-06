@@ -1,31 +1,34 @@
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
-from core.services.tasks import TasksService
+from core.db.results import QueryResult
+from core.exceptions.forbidden import ForbiddenException
+from core.router.router import Router
+from core.services.logs import LogsService
+from core.utils import join_key
 
 
-def get_handler(event: HTTPEvent):
-    if event.resource.split('/')[-1] == 'tasks':
-        # get beneficiary tasks
-        sub = event.params['sub']
-        if event.authorizer.sub != sub:
-            return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-        return TasksService.query(event.authorizer)
+def query_logs(event: HTTPEvent):
+    user_sub = event.params['sub']
+    tag = event.params['tag']
+
+    if not event.authorizer.is_scouter and event.authorizer.sub != user_sub:
+        raise ForbiddenException("Only an scouter and the same user can get these logs")
+
+    logs = LogsService.query(user_sub, tag)
+    return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
+
+
+def create_log(event: HTTPEvent):
     return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
 
 
-def post_handler(event: HTTPEvent):
-    if event.resource.split('/')[-1] == 'tasks':
-        # create new task
-        sub = event.params['sub']
-        if event.authorizer.sub != sub:
-            return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-        tasks = TasksService.query(event.authorizer)
+router = Router()
 
-    return JSONResponse.generate_error(HTTPError.UNKNOWN_RESOURCE, f"Unknown resource {event.resource}")
+router.get("/api/users/{sub}/logs/{tag}/", query_logs)
+router.post("/api/users/{sub}/logs/{tag}/", create_log)
 
 
 def handler(event: dict, _) -> dict:
     event = HTTPEvent(event)
-    if event.method == "GET":
-        response = get_handler(event)
+    response = router.route(event)
     return response.as_dict()

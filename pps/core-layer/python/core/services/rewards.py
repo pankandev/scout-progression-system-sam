@@ -315,5 +315,5 @@ class RewardsService(ModelService):
 
     @classmethod
     def get_user_rewards(cls, authorizer: Authorizer, category: RewardType):
-        tag = join_key(authorizer.sub, LogTag.REWARD.name, category.name)
-        return LogsService.query(tag)
+        tag = join_key(LogTag.REWARD.name, category.name)
+        return LogsService.query(authorizer.sub, tag)
