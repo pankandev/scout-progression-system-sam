@@ -31,11 +31,11 @@ def test_reward_token(ddb_stubber: Stubber):
     })
 
     static_rewards = RewardSet(rewards=[
-        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
+        RewardProbability(category=RewardType.POINTS, rarity=RewardRarity.COMMON),
     ])
     box_rewards = [RewardSet(rewards=[
-        RewardProbability(reward_type=RewardType.ZONE, rarity=RewardRarity.RARE),
-        RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
+        RewardProbability(category=RewardType.ZONE, rarity=RewardRarity.RARE),
+        RewardProbability(category=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
 
     update_params = {
@@ -89,12 +89,12 @@ def test_claim_reward(ddb_stubber: Stubber):
         }
     })
     static_rewards = RewardSet(rewards=[
-        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
+        RewardProbability(category=RewardType.POINTS, rarity=RewardRarity.COMMON),
     ])
     box_rewards = [RewardSet(rewards=[
-        RewardProbability(reward_type=RewardType.POINTS, rarity=RewardRarity.COMMON),
-        RewardProbability(reward_type=RewardType.ZONE, rarity=RewardRarity.RARE),
-        RewardProbability(reward_type=RewardType.AVATAR, rarity=RewardRarity.RARE),
+        RewardProbability(category=RewardType.POINTS, rarity=RewardRarity.COMMON),
+        RewardProbability(category=RewardType.ZONE, rarity=RewardRarity.RARE),
+        RewardProbability(category=RewardType.AVATAR, rarity=RewardRarity.RARE),
     ])]
 
     update_response = {

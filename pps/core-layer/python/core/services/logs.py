@@ -97,3 +97,10 @@ class LogsService(ModelService):
         log = Log(tag=join_key(sub, tag.upper()), log=log_text, data=data, timestamp=cls._get_current_timestamp())
         cls.get_interface().create(log.tag, log.to_db_map(), log.timestamp)
         return log
+
+    @classmethod
+    def get_last_log_with_tag(cls, sub: str, tag: str) -> Log:
+        logs = cls.get_interface().query(join_key(sub, tag.upper()), limit=1, scan_forward=False).items
+        if len(logs) > 0:
+            return Log.from_map(logs[0])
+        return None

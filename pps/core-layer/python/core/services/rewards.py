@@ -139,8 +139,8 @@ class RewardProbability:
     type: RewardType
     rarity: RewardRarity
 
-    def __init__(self, reward_type: RewardType, rarity: RewardRarity):
-        self.type = reward_type
+    def __init__(self, category: RewardType, rarity: RewardRarity):
+        self.type = category
         self.rarity = rarity
 
     def to_map(self) -> dict:
@@ -152,7 +152,7 @@ class RewardProbability:
     @classmethod
     def from_map(cls, reward_map: Dict[str, Any]):
         return RewardProbability(
-            reward_type=RewardType.from_value(reward_map["type"]),
+            category=RewardType.from_value(reward_map["type"]),
             rarity=RewardRarity.from_name(reward_map["rarity"])
         )
 
@@ -317,3 +317,105 @@ class RewardsService(ModelService):
     def get_user_rewards(cls, authorizer: Authorizer, category: RewardType):
         tag = join_key(LogTag.REWARD.name, category.name)
         return LogsService.query(authorizer.sub, tag)
+
+
+REWARDS_BY_REASON = {
+    'COMPLETE_OBJECTIVE': {
+        'static': RewardSet(rewards=[
+            RewardProbability(category=RewardType.POINTS,
+                              rarity=RewardRarity.RARE),
+            RewardProbability(category=RewardType.NEEDS,
+                              rarity=RewardRarity.RARE),
+        ]),
+        'boxes': [
+            RewardSet(rewards=[
+                RewardProbability(
+                    category=RewardType.ZONE,
+                    rarity=RewardRarity.RARE
+                )
+            ]),
+            RewardSet(rewards=[
+                RewardProbability(
+                    category=RewardType.DECORATION,
+                    rarity=RewardRarity.RARE
+                )
+            ]),
+            RewardSet(rewards=[
+                RewardProbability(
+                    category=RewardType.AVATAR,
+                    rarity=RewardRarity.RARE
+                )
+            ]),
+        ]
+    },
+    'PROGRESS_LOG': {
+        'static': RewardSet(
+            rewards=[
+                RewardProbability(
+                    category=RewardType.NEEDS,
+                    rarity=RewardRarity.COMMON
+                ),
+                RewardProbability(
+                    category=RewardType.POINTS,
+                    rarity=RewardRarity.COMMON
+                )
+            ]
+        ),
+        'boxes': [
+            RewardSet(
+                rewards=[
+                    RewardProbability(
+                        category=RewardType.AVATAR,
+                        rarity=RewardRarity.COMMON
+                    )
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(
+                        category=RewardType.AVATAR,
+                        rarity=RewardRarity.COMMON
+                    )
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(
+                        category=RewardType.AVATAR,
+                        rarity=RewardRarity.RARE
+                    )
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(
+                        category=RewardType.DECORATION,
+                        rarity=RewardRarity.COMMON
+                    )
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(
+                        category=RewardType.ZONE,
+                        rarity=RewardRarity.COMMON
+                    )
+                ]
+            )
+        ]
+    }
+}
+
+
+class RewardReason(Enum):
+    PROGRESS_LOG = 'PROGRESS_LOG'
+    COMPLETE_OBJECTIVE = 'COMPLETE_OBJECTIVE'
+
+
+class RewardsFactory:
+    @staticmethod
+    def get_reward_token_by_reason(authorizer: Authorizer, reason: RewardReason):
+        rewards = REWARDS_BY_REASON[reason.name]
+        token = RewardsService.generate_reward_token(authorizer=authorizer, static=rewards['static'],
+                                                     boxes=rewards['boxes'])
+        return token

@@ -51,10 +51,12 @@ class ModelIndex:
                                      raise_attribute_equals=raise_attribute_equals)
         return GetResult({'Item': add_result})
 
-    def query(self, partition_key, sort_key: Tuple[Operator, Any] = None, limit=None, start_key=None, attributes=None):
+    def query(self, partition_key, sort_key: Tuple[Operator, Any] = None, limit=None, start_key=None, attributes=None,
+              scan_forward: bool = None):
         self.generate_key(partition_key, sort_key, False)
         return self._model.query((self.partition, partition_key), None if sort_key is None else (self.sort, *sort_key),
-                                 limit=limit, start_key=start_key, attributes=attributes, index=self.index_name)
+                                 limit=limit, start_key=start_key, attributes=attributes, index=self.index_name,
+                                 scan_forward=scan_forward)
 
     def get(self, partition_key, sort_key=None, attributes: List[str] = None):
         key = self.generate_key(partition_key, sort_key)

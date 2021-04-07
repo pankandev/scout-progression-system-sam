@@ -177,6 +177,7 @@ class AbstractModel(abc.ABC):
               start_key: DynamoDBKey = None,
               attributes: List[str] = None,
               index: str = None,
+              scan_forward: bool = None
               ) -> QueryResult:
         """
         List items from a database
@@ -212,7 +213,7 @@ class AbstractModel(abc.ABC):
         table = cls.get_table()
         result = pass_not_none_arguments(table.query, Limit=limit, ProjectionExpression=projection, IndexName=index,
                                          ExclusiveStartKey=start_key, KeyConditionExpression=key_conditions,
-                                         ExpressionAttributeNames=attr_names)
+                                         ExpressionAttributeNames=attr_names, ScanIndexForward=scan_forward)
         return QueryResult(result)
 
     @classmethod

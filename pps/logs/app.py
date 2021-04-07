@@ -1,4 +1,5 @@
 import json
+import time
 
 from schema import Schema, SchemaError, Optional
 
@@ -8,6 +9,8 @@ from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
 from core.router.router import Router
 from core.services.logs import LogsService
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
+    RewardsFactory, RewardReason
 from core.services.tasks import TasksService
 from core.utils.key import split_key, join_key
 
@@ -64,7 +67,16 @@ def create_log(event: HTTPEvent):
         tag = join_key("PROGRESS", objective)
 
     log = LogsService.create(user_sub, tag, log_text=log, data=body.get('data'))
-    return JSONResponse(body={'item': log.to_map()})
+    response_body = {'item': log.to_map()}
+
+    if parent_tag == 'PROGRESS':
+        last_progress_log = LogsService.get_last_log_with_tag(event.authorizer.sub, tag)
+        if last_progress_log is not None and int(
+                time.time() * 1000
+        ) - last_progress_log.timestamp > 24 * 60 * 60 * 1000:
+            response_body['token'] = RewardsFactory.get_reward_token_by_reason(authorizer=event.authorizer,
+                                                                               reason=RewardReason.PROGRESS_LOG)
+    return JSONResponse(body=response_body)
 
 
 router = Router()

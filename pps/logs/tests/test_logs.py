@@ -83,6 +83,28 @@ def test_create(ddb_stubber: Stubber):
         'ReturnValues': 'NONE',
         'TableName': 'logs'
     })
+    ddb_stubber.add_response('query', {
+        'Items': [
+            {
+                'tag': {'S': 'u-sub::PROGRESS::PUBERTY::CORPORALITY::1'},
+                'timestamp': {'N': str(1577836800000 - 24 * 60 * 60 * 1000 - 1)},
+                'log': {'S': 'A log!'}
+            }
+        ]
+    }, {'TableName': 'logs',
+        'ScanIndexForward': False,
+        'Limit': 1,
+        'KeyConditionExpression': Key('tag').eq('u-sub::PROGRESS::PUBERTY::CORPORALITY::1')
+        })
+    ddb_stubber.add_response('update_item', {
+        'Attributes': {'generated_token_last': {'S': '0'}}
+    }, {'ExpressionAttributeNames': {'#attr_generated_token_last': 'generated_token_last'},
+        'ExpressionAttributeValues': {':val_generated_token_last': 1},
+        'Key': {'user': 'u-sub'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
+        })
     authorizer_map = {
         "claims": {"sub": "u-sub"}
     }
@@ -107,7 +129,8 @@ def test_create(ddb_stubber: Stubber):
             'timestamp': 1577836800000,
             'log': 'A log!',
             'data': {'key': 1234}
-        }
+        },
+        'token': str
     }).validate(response.body)
 
     ddb_stubber.assert_no_pending_responses()
