@@ -33,13 +33,13 @@ def query_logs(event: HTTPEvent):
 
 
 def create_log(event: HTTPEvent):
-    user_sub = event.params['sub']
-    tag = event.params['tag']
+    user_sub: str = event.params['sub']
+    tag: str = event.params['tag']
 
     if event.authorizer.sub != user_sub:
         raise ForbiddenException("Only the same user can create logs")
     parent_tag = split_key(tag)[0]
-    if parent_tag not in USER_VALID_TAGS:
+    if parent_tag.upper() not in USER_VALID_TAGS:
         raise ForbiddenException(f"A user can only create logs with the following tags: {USER_VALID_TAGS}")
 
     body = event.json
