@@ -206,14 +206,15 @@ class TasksService(ModelService):
     @classmethod
     def dismiss_active_task(cls, authorizer: Authorizer):
         from core.services.beneficiaries import BeneficiariesService
-        return BeneficiariesService.clear_active_task(authorizer)["target"]
+        return BeneficiariesService.clear_active_task(authorizer, return_values=UpdateReturnValues.UPDATED_OLD).get(
+            "target")
 
     @classmethod
     def complete_active_task(cls, authorizer: Authorizer):
         from core.services.beneficiaries import BeneficiariesService
         old_active_task = BeneficiariesService.clear_active_task(authorizer,
                                                                  return_values=UpdateReturnValues.UPDATED_OLD,
-                                                                 receive_score=True)["target"]
+                                                                 receive_score=True).get("target")
         if old_active_task is None:
             return None
 
