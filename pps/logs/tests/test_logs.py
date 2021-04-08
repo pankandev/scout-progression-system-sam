@@ -35,7 +35,9 @@ def test_query(ddb_stubber: Stubber):
         ]
     }, {
                                  'TableName': 'logs',
-                                 'KeyConditionExpression': Key('tag').eq('u-sub::A-TAG')
+                                 'KeyConditionExpression': Key('tag').eq('u-sub::A-TAG'),
+                                 'Limit': 25,
+                                 'ScanIndexForward': False
                              })
     response = query_logs(HTTPEvent({
         "pathParameters": {

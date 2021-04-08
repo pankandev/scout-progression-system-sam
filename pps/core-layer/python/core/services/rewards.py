@@ -316,7 +316,7 @@ class RewardsService(ModelService):
     @classmethod
     def get_user_rewards(cls, authorizer: Authorizer, category: RewardType):
         tag = join_key(LogTag.REWARD.name, category.name)
-        return LogsService.query(authorizer.sub, tag)
+        return LogsService.query(authorizer.sub, tag, limit=None)
 
 
 REWARDS_BY_REASON = {

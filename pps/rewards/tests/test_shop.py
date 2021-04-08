@@ -189,6 +189,7 @@ def test_get_my_rewards(ddb_stubber: Stubber):
     query_params = {
         'TableName': 'logs',
         'KeyConditionExpression': Key('tag').eq('u-sub::REWARD::AVATAR'),
+        'ScanIndexForward': False
     }
     ddb_stubber.add_response('query', query_response, query_params)
     response = get_my_rewards(HTTPEvent({

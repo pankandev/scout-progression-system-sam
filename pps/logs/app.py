@@ -24,7 +24,11 @@ def query_logs(event: HTTPEvent):
     if not event.authorizer.is_scouter and event.authorizer.sub != user_sub:
         raise ForbiddenException("Only an scouter and the same user can get these logs")
 
-    logs = LogsService.query(user_sub, tag)
+    limit = event.queryParams.get('limit', 25)
+    if not isinstance(limit, int) or limit > 100:
+        raise InvalidException("Limit must be an integer and lower or equal than 100")
+
+    logs = LogsService.query(user_sub, tag, limit=limit)
     return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
 
 
