@@ -34,12 +34,12 @@ def query_logs(event: HTTPEvent):
 
 def create_log(event: HTTPEvent):
     user_sub: str = event.params['sub']
-    tag: str = event.params['tag']
+    tag: str = event.params['tag'].upper()
 
     if event.authorizer.sub != user_sub:
         raise ForbiddenException("Only the same user can create logs")
     parent_tag = split_key(tag)[0]
-    if parent_tag.upper() not in USER_VALID_TAGS:
+    if parent_tag not in USER_VALID_TAGS:
         raise ForbiddenException(f"A user can only create logs with the following tags: {USER_VALID_TAGS}")
 
     body = event.json
@@ -75,7 +75,7 @@ def create_log(event: HTTPEvent):
 
     if parent_tag == 'PROGRESS':
         last_progress_log = LogsService.get_last_log_with_tag(event.authorizer.sub, tag)
-        if last_progress_log is not None and int(
+        if last_progress_log is None or int(
                 time.time() * 1000
         ) - last_progress_log.timestamp > 24 * 60 * 60 * 1000:
             response_body['token'] = RewardsFactory.get_reward_token_by_reason(authorizer=event.authorizer,
