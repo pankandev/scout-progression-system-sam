@@ -75,16 +75,6 @@ def test_query(ddb_stubber: Stubber):
 
 @freeze_time('2020-01-01')
 def test_create(ddb_stubber: Stubber):
-    ddb_stubber.add_response('put_item', {}, {
-        'Item': {
-            'tag': 'u-sub::PROGRESS::PUBERTY::CORPORALITY::1',
-            'timestamp': 1577836800000,
-            'log': 'A log!',
-            'data': {'key': 1234}
-        },
-        'ReturnValues': 'NONE',
-        'TableName': 'logs'
-    })
     ddb_stubber.add_response('query', {
         'Items': [
             {
@@ -107,6 +97,17 @@ def test_create(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
         })
+    ddb_stubber.add_response('put_item', {}, {
+        'Item': {
+            'tag': 'u-sub::PROGRESS::PUBERTY::CORPORALITY::1',
+            'timestamp': 1577836800000,
+            'log': 'A log!',
+            'data': {'key': 1234}
+        },
+        'ReturnValues': 'NONE',
+        'TableName': 'logs'
+    })
+
     authorizer_map = {
         "claims": {"sub": "u-sub"}
     }

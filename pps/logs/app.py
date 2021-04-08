@@ -70,9 +70,7 @@ def create_log(event: HTTPEvent):
         objective = TasksService.get_task_token_objective(body['token'], authorizer=event.authorizer)
         tag = join_key("PROGRESS", objective)
 
-    log = LogsService.create(user_sub, tag, log_text=log, data=body.get('data'))
-    response_body = {'item': log.to_map()}
-
+    response_body = {}
     if parent_tag == 'PROGRESS':
         last_progress_log = LogsService.get_last_log_with_tag(event.authorizer.sub, tag)
         if last_progress_log is None or int(
@@ -80,6 +78,10 @@ def create_log(event: HTTPEvent):
         ) - last_progress_log.timestamp > 24 * 60 * 60 * 1000:
             response_body['token'] = RewardsFactory.get_reward_token_by_reason(authorizer=event.authorizer,
                                                                                reason=RewardReason.PROGRESS_LOG)
+
+    log = LogsService.create(user_sub, tag, log_text=log, data=body.get('data'))
+    response_body['item'] = log.to_map()
+
     return JSONResponse(body=response_body)
 
 
