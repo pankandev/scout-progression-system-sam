@@ -1,4 +1,5 @@
 import json
+import time
 from typing import List
 
 from schema import Schema, SchemaError
@@ -7,8 +8,10 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
+from core.services.logs import LogsService
 from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity
 from core.services.tasks import TasksService, ObjectiveKey
+from core.utils import join_key
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 
 
@@ -65,6 +68,11 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     result = TasksService.get_active_task(event.authorizer)
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active tasks")
+    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key("PROGRESS", result.item['objective']))
+    result.item['eligible_for_progress_reward'] = last_task_log is None or int(
+            time.time() * 1000
+    ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
+
     return JSONResponse(result.as_dict())
 
 

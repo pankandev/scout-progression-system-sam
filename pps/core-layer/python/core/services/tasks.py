@@ -176,7 +176,8 @@ class TasksService(ModelService):
         target = beneficiary.target
         if target is None:
             return None
-        return GetResult.from_item(target.to_api_dict(authorizer=authorizer) if target is not None else None)
+        target_dict = target.to_api_dict(authorizer=authorizer) if target is not None else None
+        return GetResult.from_item(target_dict)
 
     @classmethod
     def get_task_token_objective(cls, token: str, authorizer: Authorizer) -> str:

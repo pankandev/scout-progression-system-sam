@@ -155,6 +155,20 @@ def test_get_active_task(ddb_stubber: Stubber):
         }
     }
     ddb_stubber.add_response('get_item', response, params)
+    ddb_stubber.add_response('query', {
+        'Items': [
+            {
+                'tag': {'S': 'user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'},
+                'timestamp': {'N': str(int(time.time()) * 1000 - 24 * 60 * 60 * 1000 - 1)},
+                'log': {'S': 'A log!'},
+            }
+        ]
+    }, {
+        'KeyConditionExpression': Key('tag').eq('user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'),
+        'Limit': 1,
+        'ScanIndexForward': False,
+        'TableName': 'logs'
+    })
     response = get_user_active_task(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
@@ -187,6 +201,7 @@ def test_get_active_task(ddb_stubber: Stubber):
                 'description': 'Sub-task 2'
             }
         ],
+        'eligible_for_progress_reward': True,
         'token': str
     }).validate(response.body)
     decoded = jwt.JWT().decode(response.body['token'], do_verify=False)
