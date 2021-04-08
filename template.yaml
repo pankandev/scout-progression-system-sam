@@ -735,6 +735,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref TasksTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref LogsTable
       Events:
         InitializeUserTasks:
           Type: Api
