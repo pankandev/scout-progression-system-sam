@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime, timezone
 
 from schema import Schema, SchemaError, Optional
 
@@ -72,10 +73,9 @@ def create_log(event: HTTPEvent):
 
     response_body = {}
     if parent_tag == 'PROGRESS':
+        now = int(datetime.now(timezone.utc).timestamp() * 1000)
         last_progress_log = LogsService.get_last_log_with_tag(event.authorizer.sub, tag)
-        if last_progress_log is None or int(
-                time.time() * 1000
-        ) - last_progress_log.timestamp > 24 * 60 * 60 * 1000:
+        if last_progress_log is None or now - last_progress_log.timestamp > 24 * 60 * 60 * 1000:
             response_body['token'] = RewardsFactory.get_reward_token_by_reason(authorizer=event.authorizer,
                                                                                reason=RewardReason.PROGRESS_LOG)
 
