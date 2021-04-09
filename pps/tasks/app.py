@@ -9,7 +9,8 @@ from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
+    RewardsFactory, RewardReason
 from core.services.tasks import TasksService, ObjectiveKey
 from core.utils import join_key
 from core.utils.consts import VALID_STAGES, VALID_AREAS
@@ -145,33 +146,9 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
         {
             'message': 'Completed task',
             'task': completed_task,
-            'reward': RewardsService.generate_reward_token(
+            'reward': RewardsFactory.get_reward_token_by_reason(
                 authorizer=event.authorizer,
-                static=RewardSet(rewards=[
-                    RewardProbability(RewardType.NEEDS, RewardRarity.RARE),
-                    RewardProbability(RewardType.ZONE, RewardRarity.RARE),
-                    RewardProbability(RewardType.POINTS, RewardRarity.RARE),
-                ]),
-                boxes=[
-                    RewardSet(
-                        rewards=[
-                            RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
-                            RewardProbability(RewardType.DECORATION, RewardRarity.COMMON),
-                        ]
-                    ),
-                    RewardSet(
-                        rewards=[
-                            RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
-                            RewardProbability(RewardType.AVATAR, RewardRarity.COMMON),
-                        ]
-                    ),
-                    RewardSet(
-                        rewards=[
-                            RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
-                            RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
-                        ]
-                    ),
-                ]
+                reason=RewardReason.COMPLETE_OBJECTIVE
             ),
         }
     )
@@ -197,11 +174,13 @@ def initialize_tasks(event: HTTPEvent) -> JSONResponse:
 
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
+
     body = event.json
     if 'objectives' not in body:
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "No objectives found")
     if not isinstance(body['objectives'], list):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Objectives must be a list of objects")
+
     objectives: List[ObjectiveKey] = []
     for obj in body['objectives']:
         if not isinstance(obj, dict):

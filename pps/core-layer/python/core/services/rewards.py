@@ -319,8 +319,14 @@ class RewardsService(ModelService):
         return LogsService.query(authorizer.sub, tag, limit=None)
 
 
+class RewardReason(Enum):
+    PROGRESS_LOG = 'PROGRESS_LOG'
+    COMPLETE_OBJECTIVE = 'COMPLETE_OBJECTIVE'
+    INITIALIZE = 'INITIALIZE'
+
+
 REWARDS_BY_REASON = {
-    'COMPLETE_OBJECTIVE': {
+    RewardReason.INITIALIZE: {
         'static': RewardSet(rewards=[
             RewardProbability(category=RewardType.POINTS,
                               rarity=RewardRarity.RARE),
@@ -348,7 +354,7 @@ REWARDS_BY_REASON = {
             ]),
         ]
     },
-    'PROGRESS_LOG': {
+    RewardReason.PROGRESS_LOG: {
         'static': RewardSet(
             rewards=[
                 RewardProbability(
@@ -403,19 +409,41 @@ REWARDS_BY_REASON = {
                 ]
             )
         ]
+    },
+    RewardReason.COMPLETE_OBJECTIVE: {
+        'static': RewardSet(rewards=[
+            RewardProbability(RewardType.NEEDS, RewardRarity.RARE),
+            RewardProbability(RewardType.ZONE, RewardRarity.RARE),
+            RewardProbability(RewardType.POINTS, RewardRarity.RARE),
+        ]),
+        'boxes': [
+            RewardSet(
+                rewards=[
+                    RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
+                    RewardProbability(RewardType.DECORATION, RewardRarity.COMMON),
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
+                    RewardProbability(RewardType.AVATAR, RewardRarity.COMMON),
+                ]
+            ),
+            RewardSet(
+                rewards=[
+                    RewardProbability(RewardType.DECORATION, RewardRarity.RARE),
+                    RewardProbability(RewardType.AVATAR, RewardRarity.RARE),
+                ]
+            ),
+        ]
     }
 }
-
-
-class RewardReason(Enum):
-    PROGRESS_LOG = 'PROGRESS_LOG'
-    COMPLETE_OBJECTIVE = 'COMPLETE_OBJECTIVE'
 
 
 class RewardsFactory:
     @staticmethod
     def get_reward_token_by_reason(authorizer: Authorizer, reason: RewardReason):
-        rewards = REWARDS_BY_REASON[reason.name]
+        rewards = REWARDS_BY_REASON[reason]
         token = RewardsService.generate_reward_token(authorizer=authorizer, static=rewards['static'],
                                                      boxes=rewards['boxes'])
         return token
