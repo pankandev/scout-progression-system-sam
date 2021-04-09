@@ -251,15 +251,15 @@ class TasksService(ModelService):
                     {
                         'PutRequest': {
                             'Item': {
-                                'completed': {'BOOL': True, },
-                                'created': {'N': now, },
-                                'objective': {'S': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'), },
-                                'original-objective': {
-                                    'S': ObjectivesService.get(authorizer.stage, key.area, key.line, key.subline), },
-                                'personal-objective': {'NULL': True},
-                                'score': {'N': 0},
-                                'tasks': {'NULL': True},
-                                'user': {'S': authorizer.sub}
+                                'completed': True,
+                                'created': now,
+                                'objective': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'),
+                                'original-objective': ObjectivesService.get(authorizer.stage, key.area, key.line,
+                                                                            key.subline),
+                                'personal-objective': True,
+                                'score': 0,
+                                'tasks': True,
+                                'user': authorizer.sub
                             },
                         }
                     } for key in chunk]

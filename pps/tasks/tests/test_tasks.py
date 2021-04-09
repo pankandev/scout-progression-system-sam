@@ -164,11 +164,12 @@ def test_get_active_task(ddb_stubber: Stubber):
             }
         ]
     }, {
-        'KeyConditionExpression': Key('tag').eq('user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'),
-        'Limit': 1,
-        'ScanIndexForward': False,
-        'TableName': 'logs'
-    })
+                                 'KeyConditionExpression': Key('tag').eq(
+                                     'user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'),
+                                 'Limit': 1,
+                                 'ScanIndexForward': False,
+                                 'TableName': 'logs'
+                             })
     response = get_user_active_task(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
@@ -544,30 +545,28 @@ def test_initialize(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'completed': {'BOOL': True, },
-                            'created': {'N': now, },
-                            'objective': {'S': 'prepuberty::corporality::1.1'},
-                            'original-objective': {
-                                'S': 'Participo en actividades que me ayudan a mantener mi cuerpo fuerte y sano.'},
-                            'personal-objective': {'NULL': True},
-                            'score': {'N': 0},
-                            'tasks': {'NULL': True},
-                            'user': {'S': user_sub}
+                            'completed': True,
+                            'created': now,
+                            'objective': 'prepuberty::corporality::1.1',
+                            'original-objective': 'Participo en actividades que me ayudan a mantener mi cuerpo fuerte y sano.',
+                            'personal-objective': True,
+                            'score': 0,
+                            'tasks': True,
+                            'user': user_sub
                         },
                     }
                 },
                 {
                     'PutRequest': {
                         'Item': {
-                            'completed': {'BOOL': True, },
-                            'created': {'N': now, },
-                            'objective': {'S': 'prepuberty::character::2.3'},
-                            'original-objective': {
-                                'S': 'Me ofrezco para ayudar en mi patrulla y en mi casa.'},
-                            'personal-objective': {'NULL': True},
-                            'score': {'N': 0},
-                            'tasks': {'NULL': True},
-                            'user': {'S': user_sub}
+                            'completed': True,
+                            'created': now,
+                            'objective': 'prepuberty::character::2.3',
+                            'original-objective': 'Me ofrezco para ayudar en mi patrulla y en mi casa.',
+                            'personal-objective': True,
+                            'score': 0,
+                            'tasks': True,
+                            'user': user_sub
                         },
                     }
                 },
