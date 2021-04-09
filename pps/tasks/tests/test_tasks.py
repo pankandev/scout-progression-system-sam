@@ -578,7 +578,7 @@ def test_initialize(ddb_stubber: Stubber):
     ben_params = {
         'ConditionExpression': Attr('set_base_tasks').eq(None),
         'ExpressionAttributeNames': {'#attr_set_base_tasks': 'set_base_tasks'},
-        'ExpressionAttributeValues': {':val_set_base_tasks': False},
+        'ExpressionAttributeValues': {':val_set_base_tasks': True},
         'Key': {'user': 'userABC123'},
         'ReturnValues': 'UPDATED_NEW',
         'TableName': 'beneficiaries',

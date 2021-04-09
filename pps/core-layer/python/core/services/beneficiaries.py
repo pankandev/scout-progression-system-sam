@@ -116,7 +116,8 @@ class Beneficiary:
             "full-name": self.full_name,
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
-            "last_claimed_token": self.n_claimed_tokens
+            "last_claimed_token": self.n_claimed_tokens,
+            "set_base_tasks": self.set_base_tasks,
         }
 
 
@@ -282,7 +283,7 @@ class BeneficiariesService(ModelService):
     def mark_as_initialized(cls, authorizer: Authorizer):
         interface = cls.get_interface()
         updates = {
-            'set_base_tasks': False,
+            'set_base_tasks': True,
         }
         try:
             return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
