@@ -79,7 +79,7 @@ class Task:
     def to_db_dict(self):
         return {
             'completed': False,
-            'created': int(time.time()),
+            'created': self.created,
             'objective': self.objective_key,
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
@@ -154,8 +154,9 @@ class TasksService(ModelService):
         line_, subline_ = subline.split('.')
         objective = ObjectivesService.get(stage, area, int(line_), int(subline_))
 
+        now = datetime.now(timezone.utc)
         task = Task(
-            created=int(time.time()),
+            created=int(now.timestamp() * 1000),
             completed=False,
             objective_key=join_key(stage, area, subline),
             original_objective=objective,

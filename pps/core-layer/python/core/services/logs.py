@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, Any, List
 
@@ -71,7 +72,8 @@ class LogsService(ModelService):
 
     @staticmethod
     def _get_current_timestamp() -> int:
-        return int(time.time() * 1000)
+        now = datetime.now(timezone.utc)
+        return int(now.timestamp() * 1000)
 
     @classmethod
     def batch_create(cls, logs: List[Log]):

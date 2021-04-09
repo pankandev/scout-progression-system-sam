@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -213,8 +213,10 @@ def test_get_active_task(ddb_stubber: Stubber):
     }).validate(decoded)
 
 
+@freeze_time("2020-01-01")
 def test_start_task(ddb_stubber: Stubber):
-    now = int(time.time())
+    now = datetime.now(timezone.utc)
+    now = int(now.timestamp() * 1000)
 
     params = {
         'TableName': 'beneficiaries',
