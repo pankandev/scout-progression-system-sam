@@ -518,8 +518,9 @@ def test_complete_task(ddb_stubber: Stubber):
     ddb_stubber.assert_no_pending_responses()
 
 
+@freeze_time("2020-01-01")
 def test_initialize(ddb_stubber: Stubber):
-    now = time.time()
+    now = 1577836800000
     user_sub = 'userABC123'
 
     update_response = {
@@ -544,7 +545,7 @@ def test_initialize(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'completed': {'BOOL': True, },
-                            'created': {'N': int(now), },
+                            'created': {'N': now, },
                             'objective': {'S': 'prepuberty::corporality::1.1'},
                             'original-objective': {
                                 'S': 'Participo en actividades que me ayudan a mantener mi cuerpo fuerte y sano.'},
@@ -559,7 +560,7 @@ def test_initialize(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'completed': {'BOOL': True, },
-                            'created': {'N': int(now), },
+                            'created': {'N': now, },
                             'objective': {'S': 'prepuberty::character::2.3'},
                             'original-objective': {
                                 'S': 'Me ofrezco para ayudar en mi patrulla y en mi casa.'},

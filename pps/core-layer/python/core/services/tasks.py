@@ -238,7 +238,8 @@ class TasksService(ModelService):
         # noinspection PyProtectedMember
         model = cls.get_interface()._model
         client = model.get_table().meta.client
-        now = int(time.time())
+        now = datetime.now(timezone.utc)
+        now = int(now.timestamp() * 1000)
         n_chunks = math.ceil(len(objectives) / 25)
         # do batch writes in chunks of 25 to avoid errors
         for i_chunk in range(n_chunks):
