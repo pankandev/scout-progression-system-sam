@@ -32,7 +32,7 @@ class Log:
 
     @staticmethod
     def from_map(log_map: Dict[str, Any]):
-        return Log(tag=log_map["tag"], timestamp=log_map["timestamp"], log=log_map["log"],
+        return Log(tag=log_map["tag"], timestamp=int(log_map["timestamp"]), log=log_map["log"],
                    data=log_map.get("data"))
 
     def to_map(self):
