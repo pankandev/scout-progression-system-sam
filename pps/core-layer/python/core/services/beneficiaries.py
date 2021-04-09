@@ -31,7 +31,7 @@ class Beneficiary:
     n_claimed_tokens: int
 
     def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
-                 score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Any,
+                 score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Union[Task, None],
                  bought_items: Dict[int, str], set_base_tasks: Union[bool, None], generated_token_last: int = -1,
                  n_claimed_tokens: int = -1):
         self.user_sub = user_sub

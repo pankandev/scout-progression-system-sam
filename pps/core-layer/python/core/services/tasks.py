@@ -39,7 +39,7 @@ class Subtask:
     description: str
     completed: bool
 
-    def __init__(self, description: str, completed: str):
+    def __init__(self, description: str, completed: bool):
         self.description = description
         self.completed = completed
 
@@ -84,7 +84,7 @@ class Task:
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
             'tasks': [{
-                'completed': False,
+                'completed': task.completed,
                 'description': task.description,
             } for task in self.tasks]
         }
@@ -97,7 +97,7 @@ class Task:
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
             'tasks': [{
-                'completed': False,
+                'completed': task.completed,
                 'description': task.description,
             } for task in self.tasks],
         }
