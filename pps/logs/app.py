@@ -28,7 +28,7 @@ def query_logs(event: HTTPEvent):
     if not isinstance(limit, int) or limit > 100:
         raise InvalidException("Limit must be an integer and lower or equal than 100")
 
-    logs = LogsService.query(user_sub, tag, limit=limit)
+    logs = LogsService.query(user_sub, tag.upper(), limit=limit)
     return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
 
 
