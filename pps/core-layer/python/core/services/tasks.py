@@ -143,7 +143,8 @@ class TasksService(ModelService):
         args = [arg for arg in (stage, area) if arg is not None]
         sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
         return interface.query(partition_key=authorizer.sub, sort_key=sort_key,
-                               attributes=['objective-description', 'completed', 'tasks'])
+                               attributes=['objective', 'original-objective', 'personal-objective', 'completed',
+                                           'tasks', 'user'])
 
     """Active Task methods"""
 

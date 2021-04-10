@@ -80,7 +80,7 @@ class Beneficiary:
         target = Task.from_db_dict(target) if target is not None else None
 
         bought_items = beneficiary.get("bought_items")
-        set_base_tasks = beneficiary.get("set_base_tasks")
+        set_base_tasks = beneficiary.get("set_base_tasks", False)
 
         generated_token_last = int(beneficiary.get("generated_token_last", -1))
         n_claimed_tokens = int(beneficiary.get("n_claimed_tokens", -1))
@@ -173,7 +173,7 @@ class BeneficiariesService(ModelService):
             nickname=authorizer.nickname,
             birthdate=authorizer.birth_date,
             target=None,
-            set_base_tasks=None,
+            set_base_tasks=False,
             score={area: 0 for area in VALID_AREAS},
             n_tasks={area: 0 for area in VALID_AREAS},
             bought_items={}

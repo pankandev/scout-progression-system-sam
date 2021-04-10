@@ -27,10 +27,15 @@ def test_list_user_tasks(ddb_stubber: Stubber):
     params = {
         'KeyConditionExpression': Key('user').eq('user-sub'),
         'TableName': 'tasks',
-        'ProjectionExpression': '#attr_objective_description, #attr_completed, #attr_tasks',
+        'ProjectionExpression': '#attr_objective, #attr_original_objective, '
+                                '#attr_personal_objective, #attr_completed, '
+                                '#attr_tasks, #attr_user',
         'ExpressionAttributeNames': {'#attr_completed': 'completed',
-                                     '#attr_objective_description': 'objective-description',
-                                     '#attr_tasks': 'tasks'},
+                                     '#attr_objective': 'objective',
+                                     '#attr_original_objective': 'original-objective',
+                                     '#attr_personal_objective': 'personal-objective',
+                                     '#attr_tasks': 'tasks',
+                                     '#attr_user': 'user'},
     }
     response = {}
     ddb_stubber.add_response('query', response, params)
@@ -49,10 +54,15 @@ def test_list_user_stage_tasks(ddb_stubber: Stubber):
     params = {
         'KeyConditionExpression': Key('user').eq('user-sub') & Key('objective').begins_with('puberty::'),
         'TableName': 'tasks',
-        'ProjectionExpression': '#attr_objective_description, #attr_completed, #attr_tasks',
+        'ProjectionExpression': '#attr_objective, #attr_original_objective, '
+                                '#attr_personal_objective, #attr_completed, '
+                                '#attr_tasks, #attr_user',
         'ExpressionAttributeNames': {'#attr_completed': 'completed',
-                                     '#attr_objective_description': 'objective-description',
-                                     '#attr_tasks': 'tasks'},
+                                     '#attr_objective': 'objective',
+                                     '#attr_original_objective': 'original-objective',
+                                     '#attr_personal_objective': 'personal-objective',
+                                     '#attr_tasks': 'tasks',
+                                     '#attr_user': 'user'},
     }
     response = {}
     ddb_stubber.add_response('query', response, params)
@@ -76,10 +86,15 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
     params = {
         'KeyConditionExpression': Key('user').eq('user-sub') & Key('objective').begins_with('puberty::an-area::'),
         'TableName': 'tasks',
-        'ProjectionExpression': '#attr_objective_description, #attr_completed, #attr_tasks',
+        'ProjectionExpression': '#attr_objective, #attr_original_objective, '
+                                '#attr_personal_objective, #attr_completed, '
+                                '#attr_tasks, #attr_user',
         'ExpressionAttributeNames': {'#attr_completed': 'completed',
-                                     '#attr_objective_description': 'objective-description',
-                                     '#attr_tasks': 'tasks'},
+                                     '#attr_objective': 'objective',
+                                     '#attr_original_objective': 'original-objective',
+                                     '#attr_personal_objective': 'personal-objective',
+                                     '#attr_tasks': 'tasks',
+                                     '#attr_user': 'user'},
     }
     response = {}
     ddb_stubber.add_response('query', response, params)
