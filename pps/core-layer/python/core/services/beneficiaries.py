@@ -287,6 +287,6 @@ class BeneficiariesService(ModelService):
         }
         try:
             return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
-                                    conditions=Attr('set_base_tasks').eq(None))
+                                    conditions=Attr('set_base_tasks').eq(False))
         except interface.client.exceptions.ConditionalCheckFailedException:
             raise InvalidException('Beneficiary already initialized')

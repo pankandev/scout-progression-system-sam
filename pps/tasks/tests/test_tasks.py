@@ -591,7 +591,7 @@ def test_initialize(ddb_stubber: Stubber):
     batch_response = {}
 
     ben_params = {
-        'ConditionExpression': Attr('set_base_tasks').eq(None),
+        'ConditionExpression': Attr('set_base_tasks').eq(False),
         'ExpressionAttributeNames': {'#attr_set_base_tasks': 'set_base_tasks'},
         'ExpressionAttributeValues': {':val_set_base_tasks': True},
         'Key': {'user': 'userABC123'},
