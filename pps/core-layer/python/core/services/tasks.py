@@ -257,9 +257,9 @@ class TasksService(ModelService):
                                 'objective': join_key(authorizer.stage, key.area, f'{key.line}.{key.subline}'),
                                 'original-objective': ObjectivesService.get(authorizer.stage, key.area, key.line,
                                                                             key.subline),
-                                'personal-objective': True,
+                                'personal-objective': None,
                                 'score': 0,
-                                'tasks': True,
+                                'tasks': [],
                                 'user': authorizer.sub
                             },
                         }
