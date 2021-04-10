@@ -564,9 +564,9 @@ def test_initialize(ddb_stubber: Stubber):
                             'created': now,
                             'objective': 'prepuberty::corporality::1.1',
                             'original-objective': 'Participo en actividades que me ayudan a mantener mi cuerpo fuerte y sano.',
-                            'personal-objective': True,
+                            'personal-objective': None,
                             'score': 0,
-                            'tasks': True,
+                            'tasks': [],
                             'user': user_sub
                         },
                     }
@@ -578,9 +578,9 @@ def test_initialize(ddb_stubber: Stubber):
                             'created': now,
                             'objective': 'prepuberty::character::2.3',
                             'original-objective': 'Me ofrezco para ayudar en mi patrulla y en mi casa.',
-                            'personal-objective': True,
+                            'personal-objective': None,
                             'score': 0,
-                            'tasks': True,
+                            'tasks': [],
                             'user': user_sub
                         },
                     }
