@@ -1,4 +1,3 @@
-import json
 import time
 from typing import List
 
@@ -9,8 +8,7 @@ from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
-    RewardsFactory, RewardReason
+from core.services.rewards import RewardsFactory, RewardReason
 from core.services.tasks import TasksService, ObjectiveKey
 from core.utils import join_key
 from core.utils.consts import VALID_STAGES, VALID_AREAS

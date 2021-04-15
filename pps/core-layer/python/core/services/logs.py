@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 from core import ModelService
 from core.exceptions.invalid import InvalidException
 from core.utils import join_key
+from core.utils.key import split_key
 
 
 class LogTag(Enum):
@@ -17,6 +18,15 @@ class LogTag(Enum):
             if value == member.value:
                 return member
         raise InvalidException(f"Unknown log tag: {value}")
+
+
+class LogKey:
+    tag: str
+    timestamp: int
+
+    def __init__(self, tag: str, timestamp: int):
+        self.tag = tag
+        self.timestamp = timestamp
 
 
 class Log:
@@ -31,9 +41,13 @@ class Log:
         self.log = log
         self.data = data
 
+    @property
+    def sub(self):
+        return split_key(self.tag)[0]
+
     @staticmethod
     def from_map(log_map: Dict[str, Any]):
-        return Log(tag=log_map["tag"], timestamp=int(log_map["timestamp"]), log=log_map["log"],
+        return Log(tag=log_map.get("tag"), timestamp=int(log_map.get("timestamp")), log=log_map.get("log"),
                    data=log_map.get("data"))
 
     def to_map(self):
@@ -106,3 +120,22 @@ class LogsService(ModelService):
         if len(logs) > 0:
             return Log.from_map(logs[0])
         return None
+
+    @classmethod
+    def batch_get(cls, keys: List[LogKey], attributes: List[str] = None) -> List[Log]:
+        items = {
+            'Keys': [{
+                'tag': {'S': key.tag},
+                'timestamp': {'N': str(key.timestamp)}
+            } for key in keys],
+        }
+        if attributes is not None:
+            items['AttributesToGet'] = attributes
+
+        response = cls.get_interface().client.batch_get_item(
+            RequestItems={
+                'logs': items
+            }
+        )
+        logs: List[dict] = response['Responses']['logs']
+        return [Log.from_map(x) for x in logs]

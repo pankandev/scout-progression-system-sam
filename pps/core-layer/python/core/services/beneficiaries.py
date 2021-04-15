@@ -3,11 +3,14 @@ from typing import List, Dict, Any, Union
 
 import botocore
 from boto3.dynamodb.conditions import Attr
+from schema import Schema, Or
 
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
 from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
+from core.services.logs import LogsService, LogKey
 from core.services.rewards import RewardsService
 from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
@@ -238,10 +241,10 @@ class BeneficiariesService(ModelService):
         interface = cls.get_interface()
         return interface \
             .update(
-                authorizer.sub,
-                add_to={'generated_token_last': 1},
-                return_values=UpdateReturnValues.UPDATED_NEW
-            )['Attributes']['generated_token_last']
+            authorizer.sub,
+            add_to={'generated_token_last': 1},
+            return_values=UpdateReturnValues.UPDATED_NEW
+        )['Attributes']['generated_token_last']
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
@@ -290,3 +293,45 @@ class BeneficiariesService(ModelService):
                                     conditions=Attr('set_base_tasks').eq(False))
         except interface.client.exceptions.ConditionalCheckFailedException:
             raise InvalidException('Beneficiary already initialized')
+
+    @classmethod
+    def get_avatar(cls, user_sub: str):
+        interface = cls.get_interface()
+        avatar = interface.get(user_sub, attributes=['avatar']).item.get('avatar', {})
+        return {
+            'left_eye': avatar.get('left_eye'),
+            'right_eye': avatar.get('right_eye'),
+            "mouth": avatar.get('mouth'),
+            "top": avatar.get('top'),
+            "bottom": avatar.get('bottom')
+        }
+
+    @classmethod
+    def update_avatar(cls, user_sub: str, avatar: dict):
+        interface = cls.get_interface()
+
+        item_schema = Or(int, None)
+        Schema({
+            'left_eye': item_schema,
+            'right_eye': item_schema,
+            'mouth': item_schema,
+            'top': item_schema,
+            'bottom': item_schema
+        }).validate(avatar)
+        try:
+            logs = LogsService.batch_get(
+                [LogKey(tag=join_key(user_sub, 'REWARD::AVATAR'), timestamp=timestamp) for timestamp in
+                 set(avatar.values()) if timestamp is not None], attributes=['description', 'timestamp'])
+        except interface.client.exceptions.ResourceNotFoundException:
+            raise NotFoundException("Avatar part not found")
+
+        avatar_parts = {log.timestamp: log.data['description'] for log in logs}
+        new_avatar = {
+            'left_eye': avatar_parts.get(avatar.get('left_eye')),
+            'right_eye': avatar_parts.get(avatar.get('right_eye')),
+            "mouth": avatar_parts.get(avatar.get('mouth')),
+            "top": avatar_parts.get(avatar.get('top')),
+            "bottom": avatar_parts.get(avatar.get('bottom'))
+        }
+        interface.update(user_sub, updates={'avatar': new_avatar})
+        return new_avatar

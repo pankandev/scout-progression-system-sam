@@ -1,5 +1,4 @@
 import json
-import time
 from datetime import datetime, timezone
 
 from schema import Schema, SchemaError, Optional
@@ -10,8 +9,7 @@ from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
 from core.router.router import Router
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
-    RewardsFactory, RewardReason
+from core.services.rewards import RewardsFactory, RewardReason
 from core.services.tasks import TasksService
 from core.utils.key import split_key, join_key
 

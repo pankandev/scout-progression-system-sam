@@ -1,3 +1,5 @@
+from schema import SchemaError
+
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.forbidden import ForbiddenException
@@ -38,6 +40,8 @@ class Router:
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, e.message)
         except UnauthorizedException as e:
             return JSONResponse.generate_error(HTTPError.UNAUTHORIZED, e.message)
+        except SchemaError as e:
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Bad schema: {e.errors}")
 
     def post(self, resource: str, fun):
         self._add_route_method("POST", resource, fun)

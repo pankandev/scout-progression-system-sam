@@ -656,13 +656,13 @@ Resources:
         GetAvatar:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/avatar/
+            Path: /api/beneficiaries/{sub}/avatar/
             Method: get
             RestApiId: !Ref PPSAPI
         UpdateAvatar:
           Type: Api
           Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/avatar/
+            Path: /api/beneficiaries/{sub}/avatar/
             Method: put
             RestApiId: !Ref PPSAPI
   RewardsFunction:
