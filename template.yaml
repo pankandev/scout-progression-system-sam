@@ -631,9 +631,15 @@ Resources:
       Layers:
         - !Ref PPSCore
       Policies:
-        S3CrudPolicy:
-          BucketName:
-            !Ref S3BucketGallery
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref LogsTable
+        - S3CrudPolicy:
+            BucketName:
+              !Ref S3BucketGallery
       Events:
         GetGalleryPictures:
           Type: Api
