@@ -38,7 +38,8 @@ def test_get_avatar(ddb_stubber: Stubber):
         'left_eye': None,
         'mouth': None,
         'right_eye': None,
-        'top': None
+        'top': None,
+        'neckerchief': None
     }).validate(response.body)
 
 
@@ -109,7 +110,9 @@ def test_update_avatar(ddb_stubber: Stubber):
                                                   'left_eye': {'description': {}},
                                                   'mouth': {'description': {}},
                                                   'right_eye': {'description': {}},
-                                                  'top': None}},
+                                                  'top': None,
+                                                  'neckerchief': None
+                                                  }},
                               'Key': {'user': 'user-sub'},
                               'ReturnValues': 'UPDATED_NEW',
                               'TableName': 'beneficiaries',
@@ -130,6 +133,7 @@ def test_update_avatar(ddb_stubber: Stubber):
             'mouth': 2,
             'top': None,
             'bottom': 4,
+            'neckerchief': None
         })
     }))
     assert response.status == 200

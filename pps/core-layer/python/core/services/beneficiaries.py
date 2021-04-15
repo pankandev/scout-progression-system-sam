@@ -303,7 +303,8 @@ class BeneficiariesService(ModelService):
             'right_eye': avatar.get('right_eye'),
             "mouth": avatar.get('mouth'),
             "top": avatar.get('top'),
-            "bottom": avatar.get('bottom')
+            "bottom": avatar.get('bottom'),
+            'neckerchief': avatar.get('neckerchief')
         }
 
     @classmethod
@@ -316,7 +317,8 @@ class BeneficiariesService(ModelService):
             'right_eye': item_schema,
             'mouth': item_schema,
             'top': item_schema,
-            'bottom': item_schema
+            'bottom': item_schema,
+            'neckerchief': item_schema
         }).validate(avatar)
         try:
             logs = LogsService.batch_get(
@@ -331,7 +333,8 @@ class BeneficiariesService(ModelService):
             'right_eye': avatar_parts.get(avatar.get('right_eye')),
             "mouth": avatar_parts.get(avatar.get('mouth')),
             "top": avatar_parts.get(avatar.get('top')),
-            "bottom": avatar_parts.get(avatar.get('bottom'))
+            "bottom": avatar_parts.get(avatar.get('bottom')),
+            "neckerchief": avatar_parts.get(avatar.get('neckerchief'))
         }
         interface.update(user_sub, updates={'avatar': new_avatar})
         return new_avatar
