@@ -320,12 +320,16 @@ class BeneficiariesService(ModelService):
             'bottom': item_schema,
             'neckerchief': item_schema
         }).validate(avatar)
-        try:
-            logs = LogsService.batch_get(
-                [LogKey(tag=join_key(user_sub, 'REWARD::AVATAR'), timestamp=timestamp) for timestamp in
-                 set(avatar.values()) if timestamp is not None], attributes=['description', 'timestamp'])
-        except interface.client.exceptions.ResourceNotFoundException:
-            raise NotFoundException("Avatar part not found")
+        timestamps = [timestamp for timestamp in set(avatar.values()) if timestamp is not None]
+        if len(timestamps) > 0:
+            try:
+                logs = LogsService.batch_get(
+                    [LogKey(tag=join_key(user_sub, 'REWARD::AVATAR'), timestamp=timestamp) for timestamp in timestamps],
+                    attributes=['description', 'timestamp'])
+            except interface.client.exceptions.ResourceNotFoundException:
+                raise NotFoundException("Avatar part not found")
+        else:
+            logs = []
 
         avatar_parts = {log.timestamp: log.data['description'] for log in logs}
         new_avatar = {
