@@ -61,7 +61,7 @@ def test_update_avatar(ddb_stubber: Stubber):
                         'timestamp': {'N': str(4)}
                     },
                 ],
-                'AttributesToGet': ['description', 'timestamp'],
+                'AttributesToGet': ['data', 'timestamp'],
             }
         }
     }

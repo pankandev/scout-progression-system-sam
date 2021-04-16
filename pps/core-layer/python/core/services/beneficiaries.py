@@ -325,7 +325,7 @@ class BeneficiariesService(ModelService):
             try:
                 logs = LogsService.batch_get(
                     [LogKey(tag=join_key(user_sub, 'REWARD::AVATAR'), timestamp=timestamp) for timestamp in timestamps],
-                    attributes=['description', 'timestamp'])
+                    attributes=['data', 'timestamp'])
             except interface.client.exceptions.ResourceNotFoundException:
                 raise NotFoundException("Avatar part not found")
         else:
