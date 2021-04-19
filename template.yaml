@@ -927,7 +927,7 @@ Resources:
             Resource:
               - !Sub
                 - arn:aws:s3:::${BucketName}/${UserId}/public/*
-                - BucketName: !Ref S3BucketGallery,
+                - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
   S3BucketGalleryUpdatePolicy:
     Type: AWS::IAM::Policy
@@ -945,15 +945,15 @@ Resources:
             Resource:
               - !Sub
                 - arn:aws:s3:::${BucketName}/${UserId}/public/world/*.json
-                - BucketName: !Ref S3BucketGallery,
+                - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
               - !Sub
                 - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.png
-                - BucketName: !Ref S3BucketGallery,
+                - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
               - !Sub
                 - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.jpg
-                - BucketName: !Ref S3BucketGallery,
+                - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
 
 Outputs:
@@ -981,3 +981,6 @@ Outputs:
   ScoutersFunctionIamRole:
     Description: "Implicit IAM Role created for the scouters service"
     Value: !GetAtt ScoutersFunctionRole.Arn
+  GalleryBucket:
+    Description: "Implicit IAM Role created for the districts service"
+    Value: !GetAtt S3BucketGallery.Arn
