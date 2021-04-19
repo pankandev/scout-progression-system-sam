@@ -11,7 +11,7 @@ from core.db.model import Operator, UpdateReturnValues
 from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, LogKey
-from core.services.rewards import RewardsService
+from core.services.rewards import RewardsService, Reward
 from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
@@ -325,13 +325,14 @@ class BeneficiariesService(ModelService):
             logs = LogsService.batch_get(
                 [LogKey(sub=user_sub, tag=join_key('REWARD', 'AVATAR', part_id)) for part_id in
                  parts_ids],
-                attributes=['data', 'timestamp'])
+                attributes=['data', 'tag'])
             if len(logs) != len(parts_ids):
                 raise NotFoundException("An avatar part was not found")
         else:
             logs = []
 
-        avatar_parts = {log.timestamp: log.data['description'] for log in logs}
+        avatar_parts = {int(split_key(log.tag)[-1]): Reward.from_api_map(log.data).to_api_map() for log in logs}
+        print(avatar_parts)
         new_avatar = {
             'left_eye': avatar_parts.get(avatar.get('left_eye')),
             'right_eye': avatar_parts.get(avatar.get('right_eye')),
@@ -342,3 +343,7 @@ class BeneficiariesService(ModelService):
         }
         interface.update(user_sub, updates={'avatar': new_avatar})
         return new_avatar
+
+    @staticmethod
+    def clean_reward_log(tag: str):
+        pass

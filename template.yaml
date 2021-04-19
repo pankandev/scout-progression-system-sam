@@ -372,8 +372,6 @@ Resources:
           AttributeType: S
         - AttributeName: tag
           AttributeType: S
-        - AttributeName: timestamp
-          AttributeType: N
       KeySchema:
         - AttributeName: user
           KeyType: HASH
@@ -382,15 +380,6 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      LocalSecondaryIndex:
-        IndexName: ByTimestamp
-        KeySchema:
-          - AttributeName: user
-            KeyType: HASH
-          - AttributeName: timestamp
-            KeyType: RANGE
-        Projection:
-          Projection
       TableName: logs
     Type: AWS::DynamoDB::Table
   DistrictsTable:

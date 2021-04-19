@@ -71,14 +71,14 @@ class Reward:
     def to_api_map(self) -> dict:
         m = {
             "category": self.type.value,
-            "release": self.release,
+            "release": int(self.release) if self.release is not None else None,
             "rarity": self.rarity.name,
             "description": self.description,
         }
         if self.id is not None:
-            m["id"] = self.id
+            m["id"] = int(self.id)
         if self.price is not None:
-            m["price"] = self.price
+            m["price"] = int(self.price)
         return m
 
     @classmethod
@@ -123,7 +123,7 @@ class Reward:
     def from_db_map(item: dict):
         release_id = int(abs(item['release-id']))
         release = int(release_id // REWARDS_PER_RELEASE) + 1
-        id_ = int(release_id % REWARDS_PER_RELEASE)
+        id_ = int(release_id)
         item['release'] = release
         item['id'] = id_
         price = item.get('price')
@@ -245,7 +245,7 @@ class RewardsService(ModelService):
             return result
 
         release = result.item['release-id'] // REWARDS_PER_RELEASE
-        id_ = result.item['release-id'] % REWARDS_PER_RELEASE
+        id_ = result.item['release-id']
         result.item['release'] = release
         result.item['id'] = id_
         return result
@@ -310,7 +310,7 @@ class RewardsService(ModelService):
         rewards = [RewardsService.get_random(probability.type, release, probability.rarity)
                    for probability in probabilities]
         LogsService.batch_create(logs=[
-            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
+            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name, rewards[reward_i].id), log='Won a reward',
                 data=rewards[reward_i].to_api_map(), append_timestamp=rewards[reward_i].type != RewardType.AVATAR)
             for reward_i in range(len(rewards))])
         return rewards

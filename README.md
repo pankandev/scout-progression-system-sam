@@ -23,7 +23,7 @@ you can use the script in ``scripts/create_table.py``, which analyses the SAM te
 and create the tables in the local database:
 
 ``
-pip install -r requirements scripts/
+pip install -r scripts/requirements.txt
 python scripts/create_table.py
 ``
 

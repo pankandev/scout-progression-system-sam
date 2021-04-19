@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 import boto3
 
 updates = {
@@ -34,10 +36,19 @@ updates = {
 }
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument('--sub', '-s', help='User sub of the beneficiary to reset', required=True)
+    args = parser.parse_args()
+    sub = args.sub
+
     db_client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
     beneficiaries_table = db_client.Table("beneficiaries")
 
     beneficiaries_table.update_item(
-        Item={
-            "code": "pankan"
-        })
+        Key={'user': sub},
+        UpdateExpression="SET " + ','.join([
+            f"#attr_{key}=:val_{key}" for key in updates.keys()
+        ]),
+        ExpressionAttributeNames={f"#attr_{key}": key for key in updates.keys()},
+        ExpressionAttributeValues={f":val_{key}": value for key, value in updates.items()},
+    )

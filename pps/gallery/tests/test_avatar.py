@@ -61,7 +61,7 @@ def test_update_avatar(ddb_stubber: Stubber):
                         'user': 'user-sub'
                     },
                 ],
-                'AttributesToGet': ['data', 'timestamp'],
+                'AttributesToGet': ['data', 'tag'],
             }
         }
     }
@@ -72,32 +72,56 @@ def test_update_avatar(ddb_stubber: Stubber):
                 {
                     'data': {
                         'M': {
+                            'category': {'S': 'AVATAR'},
+                            'release': {'N': str(0)},
+                            'id': {'N': str(1)},
+                            'rarity': {'S': 'COMMON'},
                             'description': {
-                                'M': {'description': {'M': {}}}
+                                'M': {
+                                    'description': {
+                                        'M': {'description': {'M': {}}}
+                                    }
+                                }
                             }
                         }
                     },
-                    'timestamp': {'N': str(1)}
+                    'tag': {'S': "REWARD::AVATAR::1"}
                 },
                 {
                     'data': {
                         'M': {
+                            'category': {'S': 'AVATAR'},
+                            'release': {'N': str(0)},
+                            'id': {'N': str(2)},
+                            'rarity': {'S': 'COMMON'},
                             'description': {
-                                'M': {'description': {'M': {}}}
+                                'M': {
+                                    'description': {
+                                        'M': {'description': {'M': {}}}
+                                    }
+                                }
                             }
                         }
                     },
-                    'timestamp': {'N': str(2)}
+                    'tag': {'S': "REWARD::AVATAR::2"}
                 },
                 {
                     'data': {
                         'M': {
+                            'category': {'S': 'AVATAR'},
+                            'release': {'N': str(0)},
+                            'id': {'N': str(4)},
+                            'rarity': {'S': 'COMMON'},
                             'description': {
-                                'M': {'description': {'M': {}}}
+                                'M': {
+                                    'description': {
+                                        'M': {'description': {'M': {}}}
+                                    }
+                                }
                             }
                         }
                     },
-                    'timestamp': {'N': str(4)}
+                    'tag': {'S': "REWARD::AVATAR::4"}
                 }
             ]
         }
@@ -106,13 +130,38 @@ def test_update_avatar(ddb_stubber: Stubber):
                              {},
                              {'ExpressionAttributeNames': {'#attr_avatar': 'avatar'},
                               'ExpressionAttributeValues': {
-                                  ':val_avatar': {'bottom': {'description': {}},
-                                                  'left_eye': {'description': {}},
-                                                  'mouth': {'description': {}},
-                                                  'right_eye': {'description': {}},
-                                                  'top': None,
-                                                  'neckerchief': None
-                                                  }},
+                                  ':val_avatar': {
+                                      'bottom': {
+                                          'category': 'AVATAR',
+                                          'description': {'description': {'description': {}}},
+                                          'id': 4,
+                                          'rarity': 'COMMON',
+                                          'release': 0
+                                      },
+                                      'left_eye': {
+                                          'category': 'AVATAR',
+                                          'description': {'description': {'description': {}}},
+                                          'id': 1,
+                                          'rarity': 'COMMON',
+                                          'release': 0
+                                      },
+                                      'mouth': {
+                                          'category': 'AVATAR',
+                                          'description': {'description': {'description': {}}},
+                                          'id': 2,
+                                          'rarity': 'COMMON',
+                                          'release': 0
+                                      },
+                                      'right_eye': {
+                                          'category': 'AVATAR',
+                                          'description': {'description': {'description': {}}},
+                                          'id': 1,
+                                          'rarity': 'COMMON',
+                                          'release': 0
+                                      },
+                                      'top': None,
+                                      'neckerchief': None
+                                  }},
                               'Key': {'user': 'user-sub'},
                               'ReturnValues': 'UPDATED_NEW',
                               'TableName': 'beneficiaries',

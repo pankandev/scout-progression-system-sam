@@ -154,5 +154,4 @@ class LogsService(ModelService):
             }
         )
         logs: List[dict] = response['Responses']['logs']
-        print(logs)
         return [Log.from_map(x) for x in logs]

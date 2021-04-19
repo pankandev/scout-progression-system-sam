@@ -213,7 +213,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'user': 'abcABC123',
-                            'tag': 'REWARD::ZONE::' + str(1577836800002),
+                            'tag': 'REWARD::ZONE::12345::' + str(1577836800002),
                             'timestamp': 1577836800002,
                             'log': 'Won a reward',
                             'data': {
@@ -230,7 +230,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                     'PutRequest': {
                         'Item': {
                             'user': 'abcABC123',
-                            'tag': 'REWARD::AVATAR',
+                            'tag': 'REWARD::AVATAR::12345',
                             'timestamp': 1577836800003,
                             'log': 'Won a reward',
                             'data': {
@@ -316,7 +316,7 @@ def test_get_random(ddb_stubber: Stubber):
     with patch('random.randint', lambda a, b: b):
         reward = RewardsService.get_random(RewardType.AVATAR, 1, RewardRarity.COMMON)
     assert reward.release == 2
-    assert reward.id == 12345
+    assert reward.id == 112345
     assert reward.type == RewardType.AVATAR
     assert reward.description == 'A description'
     ddb_stubber.assert_no_pending_responses()
