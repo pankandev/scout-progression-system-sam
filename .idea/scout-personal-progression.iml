@@ -5,6 +5,8 @@
       <sourceFolder url="file://$MODULE_DIR$/pps/core/python" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pps/core-layer/python" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.aws-sam" />
+      <excludeFolder url="file://$MODULE_DIR$/.pytest_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -49,16 +49,16 @@ def test_update_avatar(ddb_stubber: Stubber):
             'logs': {
                 'Keys': [
                     {
-                        'tag': {'S': 'user-sub::REWARD::AVATAR'},
-                        'timestamp': {'N': str(1)}
+                        'tag': 'REWARD::AVATAR::1',
+                        'user': 'user-sub'
                     },
                     {
-                        'tag': {'S': 'user-sub::REWARD::AVATAR'},
-                        'timestamp': {'N': str(2)}
+                        'tag': 'REWARD::AVATAR::2',
+                        'user': 'user-sub'
                     },
                     {
-                        'tag': {'S': 'user-sub::REWARD::AVATAR'},
-                        'timestamp': {'N': str(4)}
+                        'tag': 'REWARD::AVATAR::4',
+                        'user': 'user-sub'
                     },
                 ],
                 'AttributesToGet': ['data', 'timestamp'],

@@ -258,6 +258,7 @@ class RewardsService(ModelService):
         if duration is None:
             duration = timedelta(days=7)
         jwk_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'jwk.json')
+
         with open(jwk_path, 'r') as f:
             jwk = jwt.jwk_from_dict(json.load(f))
         encoder = jwt.JWT()
@@ -272,6 +273,7 @@ class RewardsService(ModelService):
             "boxes": [box.to_map_list() for box in boxes] if boxes is not None else [],
             "index": token_index
         }
+
         return encoder.encode(payload, jwk)
 
     @classmethod
@@ -308,8 +310,8 @@ class RewardsService(ModelService):
         rewards = [RewardsService.get_random(probability.type, release, probability.rarity)
                    for probability in probabilities]
         LogsService.batch_create(logs=[
-            Log(tag=join_key(authorizer.sub, LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
-                data=rewards[reward_i].to_api_map(), timestamp=now + reward_i)
+            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name), log='Won a reward',
+                data=rewards[reward_i].to_api_map(), append_timestamp=rewards[reward_i].type != RewardType.AVATAR)
             for reward_i in range(len(rewards))])
         return rewards
 

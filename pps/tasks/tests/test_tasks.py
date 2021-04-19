@@ -143,7 +143,7 @@ def test_get_user_task(ddb_stubber: Stubber):
 def test_get_active_task(ddb_stubber: Stubber):
     params = {
         'TableName': 'beneficiaries',
-        'Key': {'user': 'user-sub'},
+        'Key': {'user': 'u-sub'},
         'ProjectionExpression': 'target'
     }
     response = {
@@ -170,31 +170,34 @@ def test_get_active_task(ddb_stubber: Stubber):
         }
     }
     ddb_stubber.add_response('get_item', response, params)
+
+    timestamp = str(int(time.time()) * 1000 - 24 * 60 * 60 * 1000 - 1)
     ddb_stubber.add_response('query', {
         'Items': [
             {
-                'tag': {'S': 'user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'},
-                'timestamp': {'N': str(int(time.time()) * 1000 - 24 * 60 * 60 * 1000 - 1)},
+                'user': {'S': 'u-sub'},
+                'tag': {'S': 'PROGRESS::PUBERTY::CORPORALITY::2.3::' + str(timestamp)},
+                'timestamp': {'N': timestamp},
                 'log': {'S': 'A log!'},
             }
         ]
     }, {
-                                 'KeyConditionExpression': Key('tag').eq(
-                                     'user-sub::PROGRESS::PUBERTY::CORPORALITY::2.3'),
+                                 'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with(
+                                     'PROGRESS::PUBERTY::CORPORALITY::2.3::'),
                                  'Limit': 1,
                                  'ScanIndexForward': False,
                                  'TableName': 'logs'
                              })
     response = get_user_active_task(HTTPEvent({
         "pathParameters": {
-            "sub": 'user-sub',
+            "sub": 'u-sub',
             "stage": 'puberty',
             "area": 'sociability',
             "subline": "2.3"
         },
         "requestContext": {
             "authorizer": {
-                "claims": {"sub": 'user-sub'}
+                "claims": {"sub": 'u-sub'}
             }
         }
     }))
@@ -222,7 +225,7 @@ def test_get_active_task(ddb_stubber: Stubber):
     }).validate(response.body)
     decoded = jwt.JWT().decode(response.body['token'], do_verify=False)
     assert Schema({
-        'sub': 'user-sub',
+        'sub': 'u-sub',
         'iat': 1577836800,
         'exp': 1577836800 + 1 * 24 * 60 * 60,
         'objective': 'puberty::corporality::2.3'

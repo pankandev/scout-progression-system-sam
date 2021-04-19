@@ -179,7 +179,8 @@ def test_buy(ddb_stubber: Stubber):
 def test_get_my_rewards(ddb_stubber: Stubber):
     query_response = {
         'Items': [{
-            'tag': {'S': 'u-sub::REWARD::AVATAR'},
+            'user': {'S': 'u-sub'},
+            'tag': {'S': 'REWARD::AVATAR'},
             'timestamp': {'N': str(123456)},
             'log': {'S': 'A log'},
             'data': {'M': {'description': {'S': 'An item description'}}},
@@ -188,7 +189,7 @@ def test_get_my_rewards(ddb_stubber: Stubber):
 
     query_params = {
         'TableName': 'logs',
-        'KeyConditionExpression': Key('tag').eq('u-sub::REWARD::AVATAR'),
+        'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with('REWARD::AVATAR'),
         'ScanIndexForward': False
     }
     ddb_stubber.add_response('query', query_response, query_params)

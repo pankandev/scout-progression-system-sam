@@ -14,7 +14,7 @@ def clean_text(text: str, remove_spaces: bool = False, lower: bool = False):
 
 
 def join_key(*args):
-    return SPLITTER.join(map(str, args))
+    return SPLITTER.join(map(str, [arg for arg in args if arg is not None]))
 
 
 def split_key(key: str):

@@ -1,0 +1,6 @@
+{
+  "Parameters": {
+    "AWS_SAM_LOCAL": false,
+    "STAGE": "PROD"
+  }
+}

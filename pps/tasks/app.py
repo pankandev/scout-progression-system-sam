@@ -67,7 +67,7 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     result = TasksService.get_active_task(event.authorizer)
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active tasks")
-    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key("PROGRESS", result.item['objective']))
+    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key("PROGRESS", result.item['objective']).upper())
     result.item['eligible_for_progress_reward'] = last_task_log is None or int(
             time.time() * 1000
     ) - last_task_log.timestamp > 24 * 60 * 60 * 1000

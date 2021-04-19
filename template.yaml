@@ -5,9 +5,19 @@ Description: >
 
   Personal Progression System for the Guides and Scouts movement.
 
+Parameters:
+  EnvType:
+    Description: Environment type.
+    Default: test
+    Type: String
+    AllowedValues:
+      - prod
+      - test
+    ConstraintDescription: Must specify prod or test.
+
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 8
     Environment:
       Variables:
         WEB_APP_DOMAIN: !GetAtt CloudfrontDistribution.DomainName
@@ -358,18 +368,29 @@ Resources:
   LogsTable:
     Properties:
       AttributeDefinitions:
+        - AttributeName: user
+          AttributeType: S
         - AttributeName: tag
           AttributeType: S
         - AttributeName: timestamp
           AttributeType: N
       KeySchema:
-        - AttributeName: tag
+        - AttributeName: user
           KeyType: HASH
-        - AttributeName: timestamp
+        - AttributeName: tag
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+      LocalSecondaryIndex:
+        IndexName: ByTimestamp
+        KeySchema:
+          - AttributeName: user
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        Projection:
+          Projection
       TableName: logs
     Type: AWS::DynamoDB::Table
   DistrictsTable:

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from unittest.mock import patch
 
@@ -5,7 +6,7 @@ import pytest
 from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
 
-from core.aws.event import Authorizer
+from core.aws.event import Authorizer, HTTPEvent
 from core.utils.key import epoch
 from ..app import GroupsService, create_group, BeneficiariesService, join_group
 
@@ -40,14 +41,22 @@ def test_add(ddb_stubber):
         ddb_stubber.add_response('put_item', add_item_response, add_item_params)
         ben_code = GroupsService.generate_beneficiary_code("district", "group")
         GroupsService.generate_beneficiary_code = lambda x, y: ben_code
-        response = create_group("district", {
-            "name": "Group",
-            "code": "group"
-        }, Authorizer({
-            "claims": {
-                "sub": "abc123",
-                "name": "Name",
-                "family_name": "Family"
+        response = create_group(HTTPEvent({
+            "pathParameters": {
+                "district": "district"
+            },
+            "body": json.dumps({
+                "name": "Group",
+                "code": "group"
+            }),
+            "requestContext": {
+                "authorizer": {
+                    "claims": {
+                        "sub": "abc123",
+                        "name": "Name",
+                        "family_name": "Family"
+                    }
+                }
             }
         }))
     assert response.body["message"] == "OK"
@@ -123,18 +132,29 @@ def test_join(ddb_stubber: Stubber):
     ddb_stubber.add_response('get_item', group_response, group_params)
     ddb_stubber.add_response('put_item', beneficiary_response, beneficiary_params)
 
-    response = join_group("district", "group", beneficiary_code, Authorizer({
-        "claims": {
-            "sub": "u-sub",
-            "nickname": "Nick Name",
-            "name": "Name",
-            "family_name": "Family",
-            "cognito:username": "mail@mail.com",
-            "birthdate": birthdate,
-            "gender": "scouts",
-            "cognito:groups": ["Beneficiaries"]
+    response = join_group(HTTPEvent({
+        "pathParameters": {
+            "district": "district",
+            "group": "group"
+        },
+        "body": json.dumps({
+            "code": beneficiary_code
+        }),
+        "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "u-sub",
+                    "nickname": "Nick Name",
+                    "name": "Name",
+                    "family_name": "Family",
+                    "cognito:username": "mail@mail.com",
+                    "birthdate": birthdate,
+                    "gender": "scouts",
+                    "cognito:groups": ["Beneficiaries"]
+                }
+            }
         }
     }))
-    assert response.body["message"] == "OK"
+    assert response.status == 200
 
     ddb_stubber.assert_no_pending_responses()

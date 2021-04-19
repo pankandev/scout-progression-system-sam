@@ -2,8 +2,12 @@ import json
 import os
 from datetime import datetime, date
 from json import JSONDecodeError
+from typing import Union
 
 from core.exceptions.invalid import InvalidException
+from core.exceptions.unauthorized import UnauthorizedException
+from core.router.environment import ENVIRONMENT
+from jwt import jwt
 
 
 class Authorizer:
@@ -45,7 +49,7 @@ class Authorizer:
             raise ValueError()
         today = date.today()
         return today.year - self.birth_date.year - (
-                    (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+                (today.month, today.day) < (self.birth_date.month, self.birth_date.day))
 
     @property
     def stage(self):
@@ -74,7 +78,8 @@ class HTTPEvent:
         self.headers: dict = event.get("headers")
         self.context: dict = event.get("requestContext", {})
 
-        authorizer_data = self.context.get("authorizer")
+        authorizer_data = HTTPEvent.get_authorizer_claims_from_token(
+            self.headers.get("Authorization")) if ENVIRONMENT.is_local else self.context.get("authorizer")
         self.authorizer = Authorizer(authorizer_data) if authorizer_data else None
 
         params = event.get("pathParameters", {})
@@ -82,6 +87,17 @@ class HTTPEvent:
 
         query_params = event.get("queryStringParameters", {})
         self.queryParams: dict = {} if query_params is None else query_params
+
+    @staticmethod
+    def get_authorizer_claims_from_token(token: Union[str, None]):
+        if token is None:
+            return None
+        splitted = token.split(' ')
+        if len(splitted) != 2:
+            raise UnauthorizedException("Bad token")
+        if splitted[0] != "Bearer":
+            raise UnauthorizedException("Bad token")
+        return {"claims": jwt.JWT().decode(splitted[1], do_verify=False)}
 
     @property
     def url(self) -> str:

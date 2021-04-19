@@ -21,10 +21,6 @@ class GroupsService(ModelService):
         "ByBeneficiaryCode": ("code", "beneficiary-code")
     }
 
-    @property
-    def exceptions(self) -> Any:
-        return self.get_interface().client.exceptions
-
     @staticmethod
     def generate_beneficiary_code(district: str, group_code: str):
         h = hashlib.sha1(join_key(district, group_code).encode()).hexdigest()

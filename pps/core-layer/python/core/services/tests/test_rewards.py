@@ -132,7 +132,6 @@ def test_claim_reward(ddb_stubber: Stubber):
 
     ddb_stubber.add_response('update_item', update_response, update_params)
 
-
     for reward in static_rewards.rewards + box_rewards[0].rewards:
         if reward.type == RewardType.POINTS:
             continue
@@ -177,7 +176,8 @@ def test_claim_reward(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': 'abcABC123::REWARD::POINTS',
+                            'user': 'abcABC123',
+                            'tag': 'REWARD::POINTS::' + str(1577836800000),
                             'timestamp': 1577836800000,
                             'log': 'Won a reward',
                             'data': {
@@ -194,7 +194,8 @@ def test_claim_reward(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': 'abcABC123::REWARD::POINTS',
+                            'user': 'abcABC123',
+                            'tag': 'REWARD::POINTS::' + str(1577836800001),
                             'timestamp': 1577836800001,
                             'log': 'Won a reward',
                             'data': {
@@ -211,7 +212,8 @@ def test_claim_reward(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': 'abcABC123::REWARD::ZONE',
+                            'user': 'abcABC123',
+                            'tag': 'REWARD::ZONE::' + str(1577836800002),
                             'timestamp': 1577836800002,
                             'log': 'Won a reward',
                             'data': {
@@ -227,7 +229,8 @@ def test_claim_reward(ddb_stubber: Stubber):
                 {
                     'PutRequest': {
                         'Item': {
-                            'tag': 'abcABC123::REWARD::AVATAR',
+                            'user': 'abcABC123',
+                            'tag': 'REWARD::AVATAR',
                             'timestamp': 1577836800003,
                             'log': 'Won a reward',
                             'data': {
@@ -242,7 +245,6 @@ def test_claim_reward(ddb_stubber: Stubber):
                 }
             ]}
     }
-
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)

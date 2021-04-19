@@ -185,10 +185,8 @@ class BeneficiariesService(ModelService):
         try:
             interface.create(authorizer.sub, beneficiary.to_db_dict(),
                              raise_if_exists_partition=True)
-            return True
-        except botocore.exceptions.ClientError as e:
-            print(str(e))
-            return False
+        except cls.exceptions().ConditionalCheckFailedException:
+            raise InvalidException("Already joined a group")
 
     @classmethod
     def buy_item(cls, authorizer: Authorizer, area: str, item_category: str, item_release: int, item_id: int,
@@ -289,9 +287,11 @@ class BeneficiariesService(ModelService):
             'set_base_tasks': True,
         }
         try:
+            print(updates)
             return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
                                     conditions=Attr('set_base_tasks').eq(False))
         except interface.client.exceptions.ConditionalCheckFailedException:
+            print("error")
             raise InvalidException('Beneficiary already initialized')
 
     @classmethod
@@ -320,14 +320,14 @@ class BeneficiariesService(ModelService):
             'bottom': item_schema,
             'neckerchief': item_schema
         }).validate(avatar)
-        timestamps = [timestamp for timestamp in set(avatar.values()) if timestamp is not None]
-        if len(timestamps) > 0:
-            try:
-                logs = LogsService.batch_get(
-                    [LogKey(tag=join_key(user_sub, 'REWARD::AVATAR'), timestamp=timestamp) for timestamp in timestamps],
-                    attributes=['data', 'timestamp'])
-            except interface.client.exceptions.ResourceNotFoundException:
-                raise NotFoundException("Avatar part not found")
+        parts_ids = [part_id for part_id in set(avatar.values()) if part_id is not None]
+        if len(parts_ids) > 0:
+            logs = LogsService.batch_get(
+                [LogKey(sub=user_sub, tag=join_key('REWARD', 'AVATAR', part_id)) for part_id in
+                 parts_ids],
+                attributes=['data', 'timestamp'])
+            if len(logs) != len(parts_ids):
+                raise NotFoundException("An avatar part was not found")
         else:
             logs = []
 

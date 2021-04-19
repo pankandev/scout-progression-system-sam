@@ -2,15 +2,12 @@ import abc
 import enum
 from typing import List, Dict, Any, Tuple, Union
 
+import boto3
 from boto3 import dynamodb
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.table import TableResource
-
-import boto3
-
 from .results import QueryResult, GetResult
 from .types import DynamoDBKey, DynamoDBTypes
-from ..exceptions.invalid import InvalidException
 
 _valid_select_options = ['ALL_ATTRIBUTES', 'ALL_PROJECTED_ATTRIBUTES', 'SPECIFIC_ATTRIBUTES', 'COUNT']
 

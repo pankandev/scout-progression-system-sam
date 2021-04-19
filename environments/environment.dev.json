@@ -1,0 +1,6 @@
+{
+  "*": {
+    "AWS_SAM_LOCAL": true,
+    "STAGE": "DEV"
+  }
+}

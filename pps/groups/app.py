@@ -1,7 +1,9 @@
 import json
 import os
 
-from schema import SchemaError
+from core.exceptions.invalid import InvalidException
+from core.router.router import Router
+from schema import SchemaError, Schema
 
 from core import db, HTTPEvent
 from core.auth import CognitoService
@@ -28,81 +30,72 @@ def process_group(item: dict, event: HTTPEvent):
         pass
 
 
-def create_group(district: str, item: dict, authorizer: Authorizer):
-    code = item.get('code')
+def create_group(event: HTTPEvent):
+    district = event.params["district"]
+    item = event.json
+    Schema({
+        'code': str,
+        'name': str
+    }).validate(item)
+    code = item['code']
     try:
-        if code is None:
-            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "No code given for new group")
         del item['code']
-        GroupsService.create(district, code, item, authorizer.sub, authorizer.full_name)
-    except GroupsService.exceptions.ConditionalCheckFailedException:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT,
-                                           f"Group in district {district} with code {code} already exists")
+        GroupsService.create(district, code, item, event.authorizer.sub, event.authorizer.full_name)
+    except GroupsService.exceptions().ConditionalCheckFailedException:
+        raise InvalidException(f"Group in district {district} with code {code} already exists")
     except SchemaError as e:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Item content is invalid: \"{e.code}\"")
+        raise InvalidException(f"Item content is invalid: \"{e.code}\"")
     return JSONResponse({"message": "OK"})
 
 
-def join_group(district: str, group: str, code: str, authorizer: Authorizer):
-    if not authorizer.is_beneficiary:
-        UsersCognito.add_to_group(authorizer.username, "Beneficiaries")
+def join_group(event: HTTPEvent):
+    district = event.params["district"]
+    group = event.params["group"]
+    code = event.json["code"]
+    if not event.authorizer.is_beneficiary:
+        UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
     if group_item["beneficiary_code"] != code:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
-    if BeneficiariesService.create(district, group, authorizer):
-        return JSONResponse({"message": "OK"})
-    return JSONResponse.generate_error(HTTPError.ALREADY_IN_USE, "You have already joined this group")
+    BeneficiariesService.create(district, group, event.authorizer)
+    return JSONResponse({"message": "OK"})
 
 
-def get_handler(event: HTTPEvent):
+def list_groups(event: HTTPEvent):
     district_code = event.params["district"]
-    code = event.params.get("group")
-
-    if code is None:
-        # get all groups from district
-        response = GroupsService.query(district_code)
-        for item in response.items:
-            process_group(item, event)
-    else:
-        # get one group
-        response = GroupsService.get(district_code, code,
-                                     attributes=["district", "code", "name", "beneficiary_code", "scouters_code",
-                                                 "scouters"])
-        if response.item is None:
-            return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
-        if event.authorizer.sub not in response.item['scouters'].keys():
-            del response.item['scouters']
-            del response.item['beneficiary_code']
-            del response.item['scouters_code']
-        process_group(response.item, event)
+    response = GroupsService.query(district_code)
+    for item in response.items:
+        process_group(item, event)
     return JSONResponse(response.as_dict())
 
 
-def post_handler(event: HTTPEvent):
+def get_group(event: HTTPEvent):
     district_code = event.params["district"]
-    code = event.params.get("group")
+    code = event.params["group"]
+    response = GroupsService.get(district_code, code,
+                                 attributes=["district", "code", "name", "beneficiary_code", "scouters_code",
+                                             "scouters"])
+    if response.item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
+    if event.authorizer.sub not in response.item['scouters'].keys():
+        del response.item['scouters']
+        del response.item['beneficiary_code']
+        del response.item['scouters_code']
+    process_group(response.item, event)
+    return JSONResponse(response.as_dict())
 
-    if event.resource == "/api/districts/{district}/groups/{group}/beneficiaries/join":
-        # join group
-        return join_group(district_code, code, json.loads(event.body)["code"], event.authorizer)
-    elif district_code is not None:
-        # create group
-        if District.get({"code": district_code}).item is None:
-            return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"District '{district_code}' was not found")
-        return create_group(district_code, json.loads(event.body), event.authorizer)
-    else:
-        # unknown resource
-        return JSONResponse.generate_error(HTTPError.UNKNOWN_ERROR, f"Bad resource")
+
+router = Router()
+router.get("/api/districts/{district}/groups/", list_groups)
+router.get("/api/districts/{district}/groups/{group}/", get_group)
+
+router.post("/api/districts/{district}/groups/", create_group)
+router.post("/api/districts/{district}/groups/{group}/beneficiaries/join", join_group)
 
 
 def handler(event, _) -> dict:
     event = HTTPEvent(event)
-    if event.method == "GET":
-        result = get_handler(event)
-    elif event.method == "POST":
-        result = post_handler(event)
-    else:
-        result = JSONResponse.generate_error(HTTPError.NOT_IMPLEMENTED, f"Method {event.method} is not valid")
+    result = router.route(event)
     return result.as_dict()
