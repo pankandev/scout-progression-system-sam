@@ -895,6 +895,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: scout-spirit-gallery
+      AccessControl: PublicRead
   S3BucketWebAppPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -908,6 +909,24 @@ Resources:
               - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
+  S3BucketGalleryUploadPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3BucketGallery
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+            Resource:
+              !Sub
+              - arn:aws:s3:::${BucketName}/${Username}/*
+              - {
+                BucketName: !Ref S3BucketGallery,
+                Username: "${aws:username}"
+              }
+            Principal:
+              AWS: !GetAttr UsersAuthenticatedRole.Arn
 
 
 Outputs:
