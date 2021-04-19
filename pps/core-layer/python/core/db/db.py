@@ -3,7 +3,7 @@ import boto3
 __all__ = ['db']
 
 from .model import create_model, AbstractModel
-from ..router.environment import ENVIRONMENT
+from core.router.environment import ENVIRONMENT
 
 
 class Database:
