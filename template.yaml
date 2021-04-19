@@ -909,25 +909,52 @@ Resources:
               - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
-  S3BucketGalleryUploadPolicy:
-    Type: AWS::S3::BucketPolicy
+  S3BucketGalleryReadPolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      Bucket: !Ref S3BucketGallery
+      PolicyName: GalleryReadPolicy
+      Roles:
+        - !Ref UsersAuthenticatedRole
+        - !Ref UsersUnauthenticatedRole
       PolicyDocument:
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
-              - 's3:GetObject'
+              - "s3:GetObject"
+              - "s3:ListObjects"
+              - "s3:PutObject"
             Resource:
-              !Sub
-              - arn:aws:s3:::${BucketName}/${Username}/*
-              - {
-                BucketName: !Ref S3BucketGallery,
-                Username: "${aws:username}"
-              }
-            Principal:
-              AWS: !GetAttr UsersAuthenticatedRole.Arn
-
+              - !Sub
+                - arn:aws:s3:::${BucketName}/${UserId}/public/*
+                - BucketName: !Ref S3BucketGallery,
+                  UserId: "${aws:userid}"
+  S3BucketGalleryUpdatePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: GalleryUpdatePolicy
+      Roles:
+        - !Ref UsersAuthenticatedRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+              - "s3:DeleteObject"
+            Resource:
+              - !Sub
+                - arn:aws:s3:::${BucketName}/${UserId}/public/world/*.json
+                - BucketName: !Ref S3BucketGallery,
+                  UserId: "${aws:userid}"
+              - !Sub
+                - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.png
+                - BucketName: !Ref S3BucketGallery,
+                  UserId: "${aws:userid}"
+              - !Sub
+                - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.jpg
+                - BucketName: !Ref S3BucketGallery,
+                  UserId: "${aws:userid}"
 
 Outputs:
   AppAPI:
