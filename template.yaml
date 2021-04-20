@@ -887,7 +887,7 @@ Resources:
   S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
+      AccessControl: Private
       BucketName: scout-spirit-webpage
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -895,7 +895,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: scout-spirit-gallery
-      AccessControl: PublicRead
+      AccessControl: Private
   S3BucketWebAppPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
