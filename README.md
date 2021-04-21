@@ -37,3 +37,13 @@ sam local start-api --debug --env-vars environments/environment.dev.json --docke
 
 This will run the API Gateway and all the Lambda Functions will be run through the ``pps``
 Docker network to communicate with the database.
+
+## Scripts
+
+This repository contains some scripts to help with development
+
+* ``create_table.py``: Create all the tables defined in the template.yaml.
+* ``create_fake_data.py``: Create fake data in the database to test with
+* ``reset_beneficiary.py -s <user-id>``: Reset a beneficiary data (this will not delete
+the beneficiary logs) on the database
+* ``reset_logs.py``: Re-create the ``logs`` table on the database
