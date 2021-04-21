@@ -859,12 +859,10 @@ Resources:
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
   S3BucketGalleryReadPolicy:
-    Type: AWS::IAM::Policy
+    Type: AWS::IAM::BucketPolicy
     Properties:
-      PolicyName: GalleryReadPolicy
       Bucket: !Ref S3BucketGallery
       PolicyDocument:
-        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
