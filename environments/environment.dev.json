@@ -1,6 +1,7 @@
 {
-  "*": {
+  "Parameters": {
     "AWS_SAM_LOCAL": true,
-    "STAGE": "DEV"
+    "STAGE": "DEV",
+    "USER_POOL_ID": "us-west-2_vbPmGbURK"
   }
 }

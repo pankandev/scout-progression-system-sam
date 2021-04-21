@@ -19,7 +19,7 @@ class District(db.Model):
 
 
 class UsersCognito(CognitoService):
-    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
+    __user_pool_id__ = os.environ["USER_POOL_ID"]
 
 
 def process_group(item: dict, event: HTTPEvent):
@@ -52,6 +52,7 @@ def join_group(event: HTTPEvent):
     district = event.params["district"]
     group = event.params["group"]
     code = event.json["code"]
+    print(os.environ["USER_POOL_ID"])
     if not event.authorizer.is_beneficiary:
         UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item

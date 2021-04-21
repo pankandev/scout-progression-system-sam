@@ -923,12 +923,10 @@ Resources:
             Action:
               - "s3:GetObject"
               - "s3:ListObjects"
-              - "s3:PutObject"
             Resource:
               - !Sub
-                - arn:aws:s3:::${BucketName}/${UserId}/public/*
+                - arn:aws:s3:::${BucketName}/public/*/*
                 - BucketName: !Ref S3BucketGallery
-                  UserId: "${aws:userid}"
   S3BucketGalleryUpdatePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -944,15 +942,15 @@ Resources:
               - "s3:DeleteObject"
             Resource:
               - !Sub
-                - arn:aws:s3:::${BucketName}/${UserId}/public/world/*.json
+                - arn:aws:s3:::${BucketName}/public/${UserId}/world/*.json
                 - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
               - !Sub
-                - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.png
+                - arn:aws:s3:::${BucketName}/public/${UserId}/images/*.png
                 - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
               - !Sub
-                - arn:aws:s3:::${BucketName}/${UserId}/public/images/*.jpg
+                - arn:aws:s3:::${BucketName}/public/${UserId}/images/*.jpg
                 - BucketName: !Ref S3BucketGallery
                   UserId: "${aws:userid}"
 

@@ -32,7 +32,7 @@ and execute the following command:
 
 ````sh
 sam build
-sam local start-api --env-vars environments/environment.dev.json --docker-network pps --debug
+sam local start-api --debug --env-vars environments/environment.dev.json --docker-network pps
 ````
 
 This will run the API Gateway and all the Lambda Functions will be run through the ``pps``
