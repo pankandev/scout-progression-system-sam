@@ -42,89 +42,6 @@ Resources:
         Authorizers:
           UsersAuthorizer:
             UserPoolArn: !GetAtt UsersPool.Arn
-      Models:
-        ScouterSignUp:
-          type: object
-          required:
-            - email
-            - password
-            - name
-            - family_name
-          properties:
-            email:
-              type: string
-            password:
-              type: string
-            name:
-              type: string
-            middle_name:
-              type: string
-            family_name:
-              type: string
-        BeneficiarySignUp:
-          type: object
-          required:
-            - email
-            - password
-            - name
-            - family_name
-            - birthdate
-            - gender
-          properties:
-            email:
-              type: string
-            password:
-              type: string
-            name:
-              type: string
-            middle_name:
-              type: string
-            family_name:
-              type: string
-            birth_date:
-              type: string
-            unit:
-              type: string
-        Code:
-          type: object
-          required:
-            - code
-          properties:
-            code:
-              type: string
-        Login:
-          type: object
-          required:
-            - email
-            - password
-          properties:
-            email:
-              type: string
-            password:
-              type: string
-        RefreshToken:
-          type: object
-          required:
-            - token
-          properties:
-            token:
-              type: string
-        NewGroup:
-          type: object
-          required:
-            - name
-          properties:
-            name:
-              type: string
-        StartObjective:
-          type: object
-          required:
-            - tasks
-          properties:
-            stage:
-              type: string
-            tasks:
-              type: list
   PPSAPIValidator:
     Type: AWS::ApiGateway::RequestValidator
     Properties:
@@ -469,9 +386,6 @@ Resources:
             Path: /api/districts/{district}/groups/
             Method: post
             RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: NewGroup
-              Required: true
         ListGroups:
           Type: Api
           Properties:
@@ -490,9 +404,6 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/join/
             Method: post
             RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: Code
-              Required: true
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -532,9 +443,6 @@ Resources:
             RestApiId: !Ref PPSAPI
             Auth:
               Authorizer: NONE
-            RequestModel:
-              Model: ScouterSignUp
-              Required: true
   UsersFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -559,9 +467,6 @@ Resources:
               Authorizer: NONE
             Method: post
             RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: Code
-              Required: true
         LoginUser:
           Type: Api
           Properties:
@@ -570,9 +475,6 @@ Resources:
               Authorizer: NONE
             Method: post
             RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: Login
-              Required: true
         RefreshToken:
           Type: Api
           Properties:
@@ -581,9 +483,6 @@ Resources:
               Authorizer: NONE
             Method: post
             RestApiId: !Ref PPSAPI
-            RequestModel:
-              Model: RefreshToken
-              Required: true
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -629,9 +528,6 @@ Resources:
             RestApiId: !Ref PPSAPI
             Auth:
               Authorizer: NONE
-            RequestModel:
-              Model: BeneficiarySignUp
-              Required: true
   GalleryFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -884,14 +780,12 @@ Resources:
           - Id: s3-website
             DomainName: !GetAtt S3BucketWebApp.DomainName
             S3OriginConfig:
-              OriginAccessIdentity:
-                Fn::Sub: 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: s3-gallery
             DomainName: !GetAtt S3BucketGallery.DomainName
             OriginPath: /public
             S3OriginConfig:
-              OriginAccessIdentity:
-                Fn::Sub: 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: pps-api
             DomainName: !Sub "https://${PPSAPI}.execute-api.${AWS::Region}.amazonaws.com"
             OriginPath: /Prod/api
