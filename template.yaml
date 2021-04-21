@@ -764,6 +764,8 @@ Resources:
           CookiesConfig:
             CookieBehavior: none
           EnableAcceptEncodingGzip: false
+          QueryStringsConfig:
+            QueryStringBehavior: all
   CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
