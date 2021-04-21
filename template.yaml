@@ -854,19 +854,20 @@ Resources:
         Comment: 'Serverless website OA'
   ApiCachePolicy:
     Type: AWS::CloudFront::CachePolicy
-    CachePolicyConfig:
-      Name: "Scout Spirit API Cache Policy"
-      MinTTL: 3600
-      MaxTTL: 31536000
-      DefaultTTL: 86400
-      ParametersInCacheKeyAndForwardedToOrigin:
-        HeadersConfig:
-          HeaderBehavior: whitelist
-          Headers:
-            - Authorization
-        CookiesConfig:
-          CookieBehavior: none
-        EnableAcceptEncodingGzip: false
+    Properties:
+      CachePolicyConfig:
+        Name: "Scout Spirit API Cache Policy"
+        MinTTL: 3600
+        MaxTTL: 31536000
+        DefaultTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingGzip: false
   CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
