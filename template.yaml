@@ -858,7 +858,7 @@ Resources:
               - !Sub "arn:aws:s3:::${S3BucketWebApp}/*"
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
-  S3BucketGalleryReadPolicy:
+  S3BucketGalleryReadBucketPolicy:
     Type: AWS::IAM::BucketPolicy
     Properties:
       Bucket: !Ref S3BucketGallery
