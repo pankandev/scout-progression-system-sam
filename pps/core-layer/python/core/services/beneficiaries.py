@@ -330,7 +330,6 @@ class BeneficiariesService(ModelService):
             logs = []
 
         avatar_parts = {int(split_key(log.tag)[-1]): Reward.from_api_map(log.data).to_api_map() for log in logs}
-        print(avatar_parts)
         new_avatar = {
             'left_eye': avatar_parts.get(avatar.get('left_eye')),
             'right_eye': avatar_parts.get(avatar.get('right_eye')),

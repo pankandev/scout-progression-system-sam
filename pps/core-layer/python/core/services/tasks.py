@@ -232,7 +232,6 @@ class TasksService(ModelService):
         from core.services.beneficiaries import BeneficiariesService
         cls._add_objectives_as_completed(authorizer, objectives)
         BeneficiariesService.mark_as_initialized(authorizer=authorizer)
-        print(f"{time.time()} rewarding")
         return RewardsFactory.get_reward_token_by_reason(authorizer=authorizer, reason=RewardReason.INITIALIZE)
 
     @classmethod

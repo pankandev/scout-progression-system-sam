@@ -52,7 +52,7 @@ def join_group(event: HTTPEvent):
     district = event.params["district"]
     group = event.params["group"]
     code = event.json["code"]
-    print(os.environ["USER_POOL_ID"])
+
     if not event.authorizer.is_beneficiary:
         UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item

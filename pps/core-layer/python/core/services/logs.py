@@ -93,7 +93,6 @@ class LogsService(ModelService):
 
     @classmethod
     def query_tag(cls, user: str, tag: str, limit: int = None) -> List[Log]:
-        print(user, tag)
         return [Log.from_map(x) for x in cls.get_interface().query(user, sort_key=(Operator.BEGINS_WITH, tag),
                                                                    limit=limit, scan_forward=False).items]
 
