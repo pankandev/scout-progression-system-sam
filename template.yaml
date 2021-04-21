@@ -944,15 +944,15 @@ Resources:
               - !Sub
                 - arn:aws:s3:::${BucketName}/public/${UserId}/world/*.json
                 - BucketName: !Ref S3BucketGallery
-                  UserId: "${aws:userid}"
+                  UserId: "${cognito-identity.amazonaws.com:sub}"
               - !Sub
                 - arn:aws:s3:::${BucketName}/public/${UserId}/images/*.png
                 - BucketName: !Ref S3BucketGallery
-                  UserId: "${aws:userid}"
+                  UserId: "${cognito-identity.amazonaws.com:sub}"
               - !Sub
                 - arn:aws:s3:::${BucketName}/public/${UserId}/images/*.jpg
                 - BucketName: !Ref S3BucketGallery
-                  UserId: "${aws:userid}"
+                  UserId: "${cognito-identity.amazonaws.com:sub}"
 
 Outputs:
   AppAPI:
