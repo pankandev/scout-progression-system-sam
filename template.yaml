@@ -793,8 +793,6 @@ Resources:
               OriginSSLProtocols:
                 - TLSv1.2
               OriginProtocolPolicy: https-only
-
-        # To connect the CDN to the origins you need to specify behaviours
         DefaultCacheBehavior:
           TargetOriginId: s3-website
           Compress: true
@@ -862,20 +860,17 @@ Resources:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: GalleryReadPolicy
-      Roles:
-        - !Ref UsersAuthenticatedRole
-        - !Ref UsersUnauthenticatedRole
+      Bucket: !Ref S3BucketGallery
       PolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
               - "s3:GetObject"
-              - "s3:ListObjects"
             Resource:
-              - !Sub
-                - arn:aws:s3:::${BucketName}/public/*/*
-                - BucketName: !Ref S3BucketGallery
+              - !Sub "arn:aws:s3:::${S3BucketGallery}/public/*/*"
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOriginAccessIdentity}"
   S3BucketGalleryUpdatePolicy:
     Type: AWS::IAM::Policy
     Properties:
