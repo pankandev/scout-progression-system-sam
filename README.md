@@ -14,7 +14,7 @@ This repository contains the code for a Scout Spirit Personal Progression System
 
 To test locally you need to run the database with Docker Compose:
 
-````sh
+````
 docker-compose up
 ````
 
@@ -30,13 +30,13 @@ python scripts/create_table.py
 Now to run the API Gateway, while the Docker is running, use another terminal
 and execute the following command:
 
-````sh
+````
 sam build
 sam local start-api --debug --env-vars environments/environment.dev.json --docker-network pps
 ````
 
-This will run the API Gateway and all the Lambda Functions will be run through the ``pps``
-Docker network to communicate with the database.
+This will run the API Gateway and all the Lambda Functions will be run on a Docker container
+connected to the ``pps`` Docker network to communicate with the database.
 
 ## Scripts
 

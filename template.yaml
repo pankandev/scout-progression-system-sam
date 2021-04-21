@@ -848,19 +848,33 @@ Resources:
     Properties:
       Name: Scout Spirit
   CloudFrontOriginAccessIdentity:
-    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: 'Serverless website OA'
+  ApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    CachePolicyConfig:
+      Name: "Scout Spirit API Cache Policy"
+      MinTTL: 3600
+      MaxTTL: 31536000
+      DefaultTTL: 86400
+      ParametersInCacheKeyAndForwardedToOrigin:
+        HeadersConfig:
+          HeaderBehavior: whitelist
+          Headers:
+            - Authorization
+        CookiesConfig:
+          CookieBehavior: none
+        EnableAcceptEncodingGzip: false
   CloudfrontDistribution:
-    Type: "AWS::CloudFront::Distribution"
+    Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Comment: "Cloudfront distribution for serverless website"
         DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
-        # List of origins that Cloudfront will connect to
         CustomErrorResponses:
           - ErrorCode: 404
             ResponseCode: 200
@@ -869,21 +883,61 @@ Resources:
           - Id: s3-website
             DomainName: !GetAtt S3BucketWebApp.DomainName
             S3OriginConfig:
-              # Restricting Bucket access through an origin access identity
               OriginAccessIdentity:
                 Fn::Sub: 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+          - Id: s3-gallery
+            DomainName: !GetAtt S3BucketGallery.DomainName
+            OriginPath: /public
+            S3OriginConfig:
+              OriginAccessIdentity:
+                Fn::Sub: 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+          - Id: pps-api
+            DomainName: !Sub "https://${PPSAPI}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: /Prod/api
+            CustomOriginConfig:
+              OriginSSLProtocols:
+                - TLSv1.2
+              OriginProtocolPolicy: https-only
+
         # To connect the CDN to the origins you need to specify behaviours
         DefaultCacheBehavior:
-          # Compress resources automatically ( gzip )
-          Compress: 'true'
+          TargetOriginId: s3-website
+          Compress: true
           AllowedMethods:
             - GET
             - HEAD
             - OPTIONS
           ForwardedValues:
             QueryString: false
-          TargetOriginId: s3-website
           ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - TargetOriginId: pps-api
+            PathPattern: "/api/*"
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - POST
+              - PUT
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: !Ref ApiCachePolicy
+          - TargetOriginId: s3-gallery
+            Compress: true
+            PathPattern: "/uploads/*"
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: !Ref ApiCachePolicy
   S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
