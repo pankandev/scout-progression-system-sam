@@ -19,7 +19,7 @@ class District(db.Model):
 
 
 class UsersCognito(CognitoService):
-    __user_pool_id__ = os.environ["USER_POOL_ID"]
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 def process_group(item: dict, event: HTTPEvent):
