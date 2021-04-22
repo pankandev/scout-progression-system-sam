@@ -747,15 +747,15 @@ Resources:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: 'Serverless website OA'
+        Comment: 'Scout Spirit web app'
   ApiCachePolicy:
     Type: AWS::CloudFront::CachePolicy
     Properties:
       CachePolicyConfig:
         Name: ScoutSpiritAPICachePolicy
-        MinTTL: 3600
-        MaxTTL: 31536000
-        DefaultTTL: 86400
+        MinTTL: 0
+        MaxTTL: 0
+        DefaultTTL: 0
         ParametersInCacheKeyAndForwardedToOrigin:
           HeadersConfig:
             HeaderBehavior: whitelist
@@ -835,7 +835,6 @@ Resources:
               - HEAD
               - OPTIONS
             ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: !Ref ApiCachePolicy
   S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
