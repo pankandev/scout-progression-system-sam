@@ -783,7 +783,7 @@ Resources:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: s3-gallery
             DomainName: !GetAtt S3BucketGallery.DomainName
-            OriginPath: /public
+            OriginPath: /
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: pps-api
