@@ -753,21 +753,17 @@ Resources:
     Properties:
       CachePolicyConfig:
         Name: ScoutSpiritAPICachePolicy
-        MinTTL: 3600
-        MaxTTL: 31536000
-        DefaultTTL: 86400
+        MinTTL: 0
+        MaxTTL: 0
+        DefaultTTL: 0
         ParametersInCacheKeyAndForwardedToOrigin:
           HeadersConfig:
-            HeaderBehavior: whitelist
-            Headers:
-              - Authorization
+            HeaderBehavior: none
           CookiesConfig:
             CookieBehavior: none
           EnableAcceptEncodingGzip: false
           QueryStringsConfig:
-            QueryStringBehavior: whitelist
-            QueryStrings:
-              - limit
+            QueryStringBehavior: none
   CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
