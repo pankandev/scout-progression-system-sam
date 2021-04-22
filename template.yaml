@@ -831,6 +831,8 @@ Resources:
               - HEAD
               - OPTIONS
             ViewerProtocolPolicy: redirect-to-https
+            ForwardedValues:
+              QueryString: false
   S3BucketWebApp:
     Type: AWS::S3::Bucket
     Properties:
