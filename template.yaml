@@ -791,7 +791,7 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: pps-api
-            DomainName: !Sub "https://ejmedudt1i.execute-api.${AWS::Region}.amazonaws.com"
+            DomainName: !Sub "ejmedudt1i.execute-api.${AWS::Region}.amazonaws.com"
             OriginPath: /Prod/api
             CustomOriginConfig:
               OriginSSLProtocols:
