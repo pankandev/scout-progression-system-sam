@@ -801,8 +801,8 @@ Resources:
           TargetOriginId: s3-website
           Compress: true
           AllowedMethods:
-            - GET
             - HEAD
+            - GET
             - OPTIONS
           ForwardedValues:
             QueryString: false
@@ -811,12 +811,13 @@ Resources:
           - TargetOriginId: pps-api
             PathPattern: "/api/*"
             AllowedMethods:
-              - GET
               - HEAD
-              - OPTIONS
-              - POST
-              - PUT
               - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
             CachedMethods:
               - GET
               - HEAD
@@ -826,8 +827,8 @@ Resources:
             Compress: true
             PathPattern: "/uploads/*"
             AllowedMethods:
-              - GET
               - HEAD
+              - GET
               - OPTIONS
             CachedMethods:
               - GET
