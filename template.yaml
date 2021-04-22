@@ -818,7 +818,7 @@ Resources:
               - GET
               - HEAD
             ViewerProtocolPolicy: redirect-to-https
-            CachePolicyId: !Ref ApiCachePolicy
+            CachePolicyId: !Ref PPSApiCachePolicy
           - TargetOriginId: s3-gallery
             Compress: true
             PathPattern: "/uploads/*"
