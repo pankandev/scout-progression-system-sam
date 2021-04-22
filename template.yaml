@@ -752,7 +752,7 @@ Resources:
     Type: AWS::CloudFront::CachePolicy
     Properties:
       CachePolicyConfig:
-        Name: "Scout Spirit API Cache Policy"
+        Name: ScoutSpiritAPICachePolicy
         MinTTL: 3600
         MaxTTL: 31536000
         DefaultTTL: 86400
@@ -765,7 +765,9 @@ Resources:
             CookieBehavior: none
           EnableAcceptEncodingGzip: false
           QueryStringsConfig:
-            QueryStringBehavior: all
+            QueryStringBehavior: whitelist
+            QueryStrings:
+              - limit
   CloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
