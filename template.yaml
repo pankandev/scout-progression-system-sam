@@ -820,7 +820,7 @@ Resources:
             CachePolicyId: !Ref PPSApiCachePolicy
           - TargetOriginId: s3-gallery
             Compress: true
-            PathPattern: "/uploads/*"
+            PathPattern: "/public/*"
             AllowedMethods:
               - HEAD
               - GET
