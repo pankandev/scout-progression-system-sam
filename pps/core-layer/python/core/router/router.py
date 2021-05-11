@@ -1,4 +1,4 @@
-from schema import SchemaError
+from schema import SchemaError, Schema
 
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
@@ -16,11 +16,18 @@ class Router:
     def standardize_resource(resource: str):
         return '/'.join(filter(lambda x: x != '', resource.split('/')))
 
-    def _add_route_method(self, method: str, resource: str, fun):
+    def _add_route_method(self, method: str, resource: str, fun, schema: Schema = None):
         if self.routes.get(method) is None:
             self.routes[method] = {}
         resource = self.standardize_resource(resource)
-        self.routes[method][resource] = fun
+        self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema)
+
+    @staticmethod
+    def _validate_and_run(fun, evt: HTTPEvent, schema: Schema = None):
+        if schema is not None:
+            print(evt.json)
+            schema.validate(evt.json)
+        return fun(evt)
 
     def route(self, event: HTTPEvent) -> JSONResponse:
         resources = self.routes.get(event.method)
@@ -41,19 +48,19 @@ class Router:
         except UnauthorizedException as e:
             return JSONResponse.generate_error(HTTPError.UNAUTHORIZED, e.message)
         except SchemaError as e:
-            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Bad schema: {e.errors}")
+            return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Bad schema: {e}")
 
-    def post(self, resource: str, fun):
-        self._add_route_method("POST", resource, fun)
+    def post(self, resource: str, fun, schema: Schema = None):
+        self._add_route_method("POST", resource, fun, schema=schema)
 
-    def get(self, resource: str, fun):
-        self._add_route_method("GET", resource, fun)
+    def get(self, resource: str, fun, schema: Schema = None):
+        self._add_route_method("GET", resource, fun, schema=schema)
 
-    def delete(self, resource: str, fun):
-        self._add_route_method("DELETE", resource, fun)
+    def delete(self, resource: str, fun, schema: Schema = None):
+        self._add_route_method("DELETE", resource, fun, schema=schema)
 
-    def patch(self, resource: str, fun):
-        self._add_route_method("PATCH", resource, fun)
+    def patch(self, resource: str, fun, schema: Schema = None):
+        self._add_route_method("PATCH", resource, fun, schema=schema)
 
-    def put(self, resource: str, fun):
-        self._add_route_method("PUT", resource, fun)
+    def put(self, resource: str, fun, schema: Schema = None):
+        self._add_route_method("PUT", resource, fun, schema=schema)

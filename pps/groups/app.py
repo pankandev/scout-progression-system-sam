@@ -33,10 +33,6 @@ def process_group(item: dict, event: HTTPEvent):
 def create_group(event: HTTPEvent):
     district = event.params["district"]
     item = event.json
-    Schema({
-        'code': str,
-        'name': str
-    }).validate(item)
     code = item['code']
     try:
         del item['code']
@@ -92,7 +88,10 @@ router = Router()
 router.get("/api/districts/{district}/groups/", list_groups)
 router.get("/api/districts/{district}/groups/{group}/", get_group)
 
-router.post("/api/districts/{district}/groups/", create_group)
+router.post("/api/districts/{district}/groups/", create_group, schema=Schema({
+    'code': str,
+    'name': str
+}))
 router.post("/api/districts/{district}/groups/{group}/beneficiaries/join", join_group)
 
 

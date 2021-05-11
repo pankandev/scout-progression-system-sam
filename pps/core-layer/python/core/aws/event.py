@@ -32,8 +32,8 @@ class Authorizer:
         self.nickname: str = claims.get("nickname")
         self.unit: str = claims.get("gender")
 
-        birth_date = claims.get("birthdate")
-        self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y") if birth_date is not None else None
+        birth_date = claims.get("birthdate", '01-01-2021')
+        self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y")
 
     @property
     def is_beneficiary(self):

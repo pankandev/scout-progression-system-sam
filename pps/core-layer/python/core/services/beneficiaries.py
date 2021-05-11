@@ -25,6 +25,7 @@ class Beneficiary:
     birthdate: datetime
     full_name: str
     nickname: str
+    profile_picture: str
     score: Dict[str, int]
     n_tasks: Dict[str, int]
     target: Union[Task, None]
@@ -36,7 +37,7 @@ class Beneficiary:
     def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
                  score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Union[Task, None],
                  bought_items: Dict[int, str], set_base_tasks: Union[bool, None], generated_token_last: int = -1,
-                 n_claimed_tokens: int = -1):
+                 n_claimed_tokens: int = -1, profile_picture: str = None):
         self.user_sub = user_sub
         self.district = district
         self.group = group
@@ -44,6 +45,7 @@ class Beneficiary:
         self.birthdate = birthdate
         self.full_name = full_name
         self.nickname = nickname
+        self.profile_picture = profile_picture
         self.score = {area: score.get(area, 0) for area in VALID_AREAS} if score is not None else None
         self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS} if n_tasks is not None else None
         self.target = target
@@ -62,6 +64,7 @@ class Beneficiary:
         user_sub = beneficiary.get("user")
 
         district_group = beneficiary.get("group")
+        print(district_group)
         district, group = district_group.split("::") if district_group is not None else (None, None)
 
         unit_user = beneficiary.get("unit-user")
@@ -88,16 +91,19 @@ class Beneficiary:
         generated_token_last = int(beneficiary.get("generated_token_last", -1))
         n_claimed_tokens = int(beneficiary.get("n_claimed_tokens", -1))
 
+        profile_picture = beneficiary.get('profile_picture')
+
         return Beneficiary(user_sub=user_sub, full_name=full_name, nickname=nickname, district=district, group=group,
                            unit=unit, score=score, n_tasks=n_tasks, birthdate=birthdate, target=target,
                            bought_items=bought_items, set_base_tasks=set_base_tasks, n_claimed_tokens=n_claimed_tokens,
-                           generated_token_last=generated_token_last)
+                           generated_token_last=generated_token_last, profile_picture=profile_picture)
 
     def to_db_dict(self):
         return {
             "user": self.user_sub,
             "group": join_key(self.district, self.group),
             "unit-user": join_key(self.unit, self.user_sub),
+            "profile_picture": self.profile_picture,
             "full-name": self.full_name,
             "nickname": self.nickname,
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
@@ -115,6 +121,7 @@ class Beneficiary:
         return {
             "district": self.district,
             "group": self.group,
+            "profile_picture": self.profile_picture,
             "unit": self.unit,
             "full-name": self.full_name,
             "nickname": self.nickname,
@@ -209,11 +216,14 @@ class BeneficiariesService(ModelService):
 
     @classmethod
     def update(cls, authorizer: Authorizer, group: str = None, name: str = None, nickname: str = None,
-               active_task=None, return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
+               profile_picture: str = None, active_task=None,
+               return_values: UpdateReturnValues = UpdateReturnValues.UPDATED_NEW):
         interface = cls.get_interface()
         updates = {key: value for key, value in [
-            ('group', group), ('full-name', name), ('nickname', nickname), ('target', active_task)
+            ('group', group), ('full-name', name), ('nickname', nickname), ('target', active_task),
+            ('profile_picture', profile_picture)
         ] if value is not None}
+        print(updates)
 
         condition_equals = {}
         if active_task is not None:
@@ -237,12 +247,8 @@ class BeneficiariesService(ModelService):
     @classmethod
     def add_token_index(cls, authorizer: Authorizer) -> int:
         interface = cls.get_interface()
-        return interface \
-            .update(
-            authorizer.sub,
-            add_to={'generated_token_last': 1},
-            return_values=UpdateReturnValues.UPDATED_NEW
-        )['Attributes']['generated_token_last']
+        return interface.update(authorizer.sub, add_to={'generated_token_last': 1},
+                                return_values=UpdateReturnValues.UPDATED_NEW)['Attributes']['generated_token_last']
 
     @classmethod
     def clear_active_task(cls, authorizer: Authorizer,
@@ -340,7 +346,3 @@ class BeneficiariesService(ModelService):
         }
         interface.update(user_sub, updates={'avatar': new_avatar})
         return new_avatar
-
-    @staticmethod
-    def clean_reward_log(tag: str):
-        pass

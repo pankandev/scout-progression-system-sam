@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import boto3
 
 updates = {
+    "group": "pankan::scout-spirit",
     "avatar": {
         "bottom": None,
         "left_eye": None,

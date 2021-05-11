@@ -88,12 +88,13 @@ class LogsService(ModelService):
     }
 
     @classmethod
-    def query(cls, user_sub: str, tag: str, limit: int = 25) -> List[Log]:
+    def query(cls, user_sub: str, tag: str = None, limit: int = 25) -> List[Log]:
         return cls.query_tag(user_sub, tag, limit=limit)
 
     @classmethod
-    def query_tag(cls, user: str, tag: str, limit: int = None) -> List[Log]:
-        return [Log.from_map(x) for x in cls.get_interface().query(user, sort_key=(Operator.BEGINS_WITH, tag),
+    def query_tag(cls, user: str, tag: str = None, limit: int = None, is_full=True) -> List[Log]:
+        return [Log.from_map(x) for x in cls.get_interface().query(user, sort_key=(
+            Operator.BEGINS_WITH, tag + (SPLITTER if not is_full else '')) if tag is not None else None,
                                                                    limit=limit, scan_forward=False).items]
 
     @staticmethod
@@ -130,8 +131,9 @@ class LogsService(ModelService):
         return log
 
     @classmethod
-    def get_last_log_with_tag(cls, sub: str, tag: str) -> Log:
-        logs = cls.get_interface().query(sub, (Operator.BEGINS_WITH, tag + SPLITTER), limit=1, scan_forward=False).items
+    def get_last_log_with_tag(cls, sub: str, tag: str, is_full=False) -> Log:
+        logs = cls.get_interface().query(sub, (Operator.BEGINS_WITH, tag + (SPLITTER if not is_full else '')), limit=1,
+                                         scan_forward=False).items
         if len(logs) > 0:
             return Log.from_map(logs[0])
         return None

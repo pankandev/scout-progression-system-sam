@@ -31,6 +31,20 @@ def query_logs(event: HTTPEvent):
     return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
 
 
+def query_user_logs(event: HTTPEvent):
+    user_sub = event.params['sub']
+
+    if not event.authorizer.is_scouter and event.authorizer.sub != user_sub:
+        raise ForbiddenException("Only an scouter and the same user can get these logs")
+
+    limit = event.queryParams.get('limit', 25)
+    if not isinstance(limit, int) or limit > 100:
+        raise InvalidException("Limit must be an integer and lower or equal than 100")
+
+    logs = LogsService.query(user_sub, limit=limit)
+    return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
+
+
 def create_log(event: HTTPEvent):
     user_sub: str = event.params['sub']
     tag: str = event.params['tag'].upper()
@@ -85,6 +99,7 @@ def create_log(event: HTTPEvent):
 
 router = Router()
 
+router.get("/api/users/{sub}/logs/", query_user_logs)
 router.get("/api/users/{sub}/logs/{tag}/", query_logs)
 router.post("/api/users/{sub}/logs/{tag}/", create_log)
 

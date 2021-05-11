@@ -140,6 +140,12 @@ Resources:
       GroupName: Beneficiaries
       Description: Beneficiaries group
       UserPoolId: !Ref UsersPool
+  UsersAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admins
+      Description: Administrators group
+      UserPoolId: !Ref UsersPool
   # User roles
   UsersAuthenticatedRole:
     Type: AWS::IAM::Role
@@ -520,6 +526,12 @@ Resources:
             Path: /api/beneficiaries/{sub}/
             Method: get
             RestApiId: !Ref PPSAPI
+        UpdateBeneficiary:
+          Type: Api
+          Properties:
+            Path: /api/beneficiaries/{sub}/
+            Method: put
+            RestApiId: !Ref PPSAPI
         SignupBeneficiary:
           Type: Api
           Properties:
@@ -732,6 +744,12 @@ Resources:
           Properties:
             Path: /api/users/{sub}/logs/{tag}/
             Method: post
+            RestApiId: !Ref PPSAPI
+        ListUserLogs:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/logs/
+            Method: get
             RestApiId: !Ref PPSAPI
         ListUserLogsWithTag:
           Type: Api

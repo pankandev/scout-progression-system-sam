@@ -310,8 +310,9 @@ class RewardsService(ModelService):
         rewards = [RewardsService.get_random(probability.type, release, probability.rarity)
                    for probability in probabilities]
         LogsService.batch_create(logs=[
-            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name, rewards[reward_i].id), log='Won a reward',
-                data=rewards[reward_i].to_api_map(), append_timestamp=rewards[reward_i].type != RewardType.AVATAR)
+            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name, rewards[reward_i].id),
+                log='Won a reward', data=rewards[reward_i].to_api_map(),
+                append_timestamp=rewards[reward_i].type != RewardType.AVATAR)
             for reward_i in range(len(rewards))])
         return rewards
 

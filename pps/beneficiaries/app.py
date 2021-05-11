@@ -1,6 +1,8 @@
 import json
 from datetime import datetime
 
+from schema import Schema, Optional
+
 from botocore.exceptions import ParamValidationError
 
 from core import HTTPEvent, JSONResponse
@@ -29,7 +31,7 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
 
 
 def get_beneficiary(event: HTTPEvent):
-    if event.authorizer.sub != event.params["sub"]:
+    if not event.authorizer.is_scouter and event.authorizer.sub != event.params["sub"]:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You can not access data from this beneficiary")
 
     result = BeneficiariesService.get(event.params["sub"])
@@ -37,6 +39,18 @@ def get_beneficiary(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
     return JSONResponse(result.to_api_dict())
+
+
+def update_beneficiary(event: HTTPEvent):
+    if event.authorizer.sub != event.params["sub"]:
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You can not access data from this beneficiary")
+
+    result = BeneficiariesService.update(event.authorizer, profile_picture=event.json.get('profile_picture'),
+                                         nickname=event.json.get('nickname'))
+    if result is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
+
+    return JSONResponse({"message": "Updated successfully"})
 
 
 def list_beneficiaries_group(event: HTTPEvent):
@@ -104,6 +118,11 @@ router.get("/api/districts/{district}/groups/{group}/beneficiaries/", list_benef
 router.get("/api/beneficiaries/{sub}/", get_beneficiary)
 
 router.post("/api/auth/beneficiaries-signup/", signup_beneficiary)
+
+router.put("/api/beneficiaries/{sub}/", update_beneficiary, schema=Schema({
+    Optional("nickname"): str,
+    Optional("profile_picture"): str
+}))
 
 
 def handler(event: dict, _) -> dict:
