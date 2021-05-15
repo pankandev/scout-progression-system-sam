@@ -1,8 +1,11 @@
 import hashlib
+import os
 import random
 
 from core import ModelService
+from core.auth import CognitoService
 from core.aws.event import Authorizer
+from core.exceptions.invalid import InvalidException
 from core.utils import join_key
 from core.utils.key import split_key
 from schema import Schema
@@ -10,6 +13,10 @@ from schema import Schema
 schema = Schema({
     'name': str,
 })
+
+
+class UsersCognito(CognitoService):
+    __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
 class GroupsService(ModelService):
@@ -76,8 +83,10 @@ class GroupsService(ModelService):
         return interface.get(district, code, attributes=["district", "code", "name"])
 
     @classmethod
-    def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str) -> bool:
+    def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str):
         interface = cls.get_interface()
+        if join_key(district, group) in authorizer.scout_groups:
+            raise InvalidException('Already joined this group')
         try:
             interface.update(district, {
                 'scouters.' + authorizer.sub: {
@@ -85,6 +94,6 @@ class GroupsService(ModelService):
                     'role': 'scouter'
                 }
             }, group, condition_equals={'scouters_code': code})
-            return True
         except cls.exceptions().ConditionalCheckFailedException:
-            return False
+            raise InvalidException('Wrong scouters code')
+        UsersCognito.add_to_scout_group(authorizer.username, district, group, authorizer.scout_groups)

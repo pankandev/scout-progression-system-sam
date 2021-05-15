@@ -1,11 +1,12 @@
 import os
 from abc import ABC
-from typing import Dict
+from typing import Dict, List
 
 import boto3
 
 from core import JSONResponse
 from core.aws.errors import HTTPError
+from core.utils import join_key
 
 
 class Token:
@@ -89,6 +90,20 @@ class CognitoService(ABC):
             UserPoolId=cls.__user_pool_id__,
             Username=username,
             GroupName=group
+        )
+
+    @classmethod
+    def add_to_scout_group(cls, username: str, district: str, group: str, current_groups: List[str]):
+        client = cls.get_client()
+        client.admin_update_user_attributes(
+            UserPoolId=cls.__user_pool_id__,
+            Username=username,
+            UserAttributes=[
+                {
+                    'Name': 'custom:groups',
+                    'Value': ','.join(current_groups + [join_key(district, group)])
+                },
+            ],
         )
 
     @classmethod

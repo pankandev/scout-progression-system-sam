@@ -80,8 +80,7 @@ def join_group_as_scouter(event: HTTPEvent):
 
     if not event.authorizer.is_beneficiary:
         UsersCognito.add_to_group(event.authorizer.username, "Scouters")
-    if not GroupsService.join_as_scouter(event.authorizer, district, group, code):
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong scouters code")
+    GroupsService.join_as_scouter(event.authorizer, district, group, code)
     return JSONResponse({"message": "OK"})
 
 
