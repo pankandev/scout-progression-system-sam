@@ -20,7 +20,6 @@ Globals:
     Timeout: 8
     Environment:
       Variables:
-        WEB_APP_DOMAIN: !GetAtt CloudfrontDistribution.DomainName
         WEB_APP_BUCKET: !Ref S3BucketWebApp
         GALLERY_BUCKET: !Ref S3BucketGallery
         COGNITO_CLIENT_ID: !Ref UsersClient
@@ -468,46 +467,6 @@ Resources:
             RestApiId: !Ref PPSAPI
             Auth:
               Authorizer: NONE
-  UsersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: pps/auth/
-      Handler: app.handler
-      Runtime: python3.8
-      Layers:
-        - !Ref PPSCore
-      Policies:
-        - Statement:
-            - Sid: LoginPolicy
-              Effect: Allow
-              Action:
-                - cognito-idp:AdminInitiateAuth
-              Resource: '*'
-      Events:
-        ConfirmUser:
-          Type: Api
-          Properties:
-            Path: /api/auth/confirm/
-            Auth:
-              Authorizer: NONE
-            Method: post
-            RestApiId: !Ref PPSAPI
-        LoginUser:
-          Type: Api
-          Properties:
-            Path: /api/auth/login/
-            Auth:
-              Authorizer: NONE
-            Method: post
-            RestApiId: !Ref PPSAPI
-        RefreshToken:
-          Type: Api
-          Properties:
-            Path: /api/auth/refresh/
-            Auth:
-              Authorizer: NONE
-            Method: post
-            RestApiId: !Ref PPSAPI
   BeneficiariesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -823,7 +782,7 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
           - Id: pps-api
-            DomainName: !Sub "v3fccilal7.execute-api.${AWS::Region}.amazonaws.com"
+            DomainName: !Sub "${PPSAPI}.execute-api.${AWS::Region}.amazonaws.com"
             OriginPath: /Prod
             CustomOriginConfig:
               OriginSSLProtocols:
