@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime, date
 from json import JSONDecodeError
-from typing import Union
+from typing import Union, List
 
 from core.exceptions.invalid import InvalidException
 from core.exceptions.unauthorized import UnauthorizedException
@@ -31,6 +31,7 @@ class Authorizer:
         self.family_name: str = claims.get("family_name")
         self.nickname: str = claims.get("nickname")
         self.unit: str = claims.get("gender")
+        self.scout_groups: List[str] = [g.strip() for g in claims.get("custom:groups", '').split(',')]
 
         birth_date = claims.get("birthdate", '01-01-2021')
         self.birth_date: datetime = datetime.strptime(birth_date, "%d-%m-%Y")

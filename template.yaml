@@ -396,7 +396,8 @@ Resources:
               Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
-              Resource: '*'
+                - cognit-idp:AdminUpdateUserAttributes
+              Resource: !GetAtt UsersPool.Arn
       Events:
         CreateGroup:
           Type: Api
@@ -445,7 +446,7 @@ Resources:
               Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
-              Resource: '*'
+              Resource: !GetAtt UsersPool.Arn
       Events:
         GetScouter:
           Type: Api
@@ -484,7 +485,6 @@ Resources:
               Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
-              Resource: '*'
       Events:
         ListBeneficiariesInUnit:
           Type: Api
