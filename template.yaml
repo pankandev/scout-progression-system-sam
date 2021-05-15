@@ -485,6 +485,7 @@ Resources:
               Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
+              Resource: !GetAtt UsersPool.Arn
       Events:
         ListBeneficiariesInUnit:
           Type: Api
