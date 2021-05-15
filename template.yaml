@@ -88,6 +88,9 @@ Resources:
         - Name: nickname
           AttributeDataType: String
           Required: false
+        - Name: custom:groups
+          AttributeDataType: String
+          Required: false
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -408,6 +411,12 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/beneficiaries/join/
+            Method: post
+            RestApiId: !Ref PPSAPI
+        JoinGroupAsScouter:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/scouters/join/
             Method: post
             RestApiId: !Ref PPSAPI
   ScoutersFunction:

@@ -1,12 +1,11 @@
 import hashlib
 import random
-from typing import Any
-
-from schema import Schema
 
 from core import ModelService
+from core.aws.event import Authorizer
 from core.utils import join_key
 from core.utils.key import split_key
+from schema import Schema
 
 schema = Schema({
     'name': str,
@@ -75,3 +74,17 @@ class GroupsService(ModelService):
 
         interface = cls.get_interface("ByBeneficiaryCode")
         return interface.get(district, code, attributes=["district", "code", "name"])
+
+    @classmethod
+    def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str) -> bool:
+        interface = cls.get_interface()
+        try:
+            interface.update(district, {
+                'scouters.' + authorizer.sub: {
+                    'name': authorizer.full_name,
+                    'role': 'scouter'
+                }
+            }, group, condition_equals={'scouters_code': code})
+            return True
+        except cls.exceptions().ConditionalCheckFailedException:
+            return False
