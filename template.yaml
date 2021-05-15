@@ -88,9 +88,10 @@ Resources:
         - Name: nickname
           AttributeDataType: String
           Required: false
-        - Name: custom:groups
+        - Name: groups
           AttributeDataType: String
           Required: false
+          Mutable: true
       Policies:
         PasswordPolicy:
           MinimumLength: 6
@@ -118,6 +119,15 @@ Resources:
         - gender
         - birthdate
         - nickname
+      ReadAttributes:
+        - email
+        - name
+        - middle_name
+        - family_name
+        - gender
+        - birthdate
+        - nickname
+        - groups
   UsersIdentityPool:
     Type: AWS::Cognito::IdentityPool
     Properties:
