@@ -88,6 +88,9 @@ Resources:
         - Name: nickname
           AttributeDataType: String
           Required: false
+        - Name: custom:groups
+          AttributeDataType: String
+          Required: false
         - Name: groups
           AttributeDataType: String
           Required: false
