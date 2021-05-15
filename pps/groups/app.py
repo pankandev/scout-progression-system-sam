@@ -22,14 +22,6 @@ class UsersCognito(CognitoService):
     __user_pool_id__ = os.environ.get("USER_POOL_ID", "TEST_POOL")
 
 
-def process_group(item: dict, event: HTTPEvent):
-    try:
-        item["district-url"] = event.concat_url("districts", item["district"])
-        item["url"] = event.concat_url("districts", item["district"], "groups", item["code"])
-    except Exception:
-        pass
-
-
 def create_group(event: HTTPEvent):
     district = event.params["district"]
     item = event.json
@@ -63,8 +55,6 @@ def join_group(event: HTTPEvent):
 def list_groups(event: HTTPEvent):
     district_code = event.params["district"]
     response = GroupsService.query(district_code)
-    for item in response.items:
-        process_group(item, event)
     return JSONResponse(response.as_dict())
 
 
@@ -80,8 +70,19 @@ def get_group(event: HTTPEvent):
         del response.item['scouters']
         del response.item['beneficiary_code']
         del response.item['scouters_code']
-    process_group(response.item, event)
     return JSONResponse(response.as_dict())
+
+
+def join_group_as_scouter(event: HTTPEvent):
+    district = event.params["district"]
+    group = event.params["group"]
+    code = event.json["code"]
+
+    if not event.authorizer.is_beneficiary:
+        UsersCognito.add_to_group(event.authorizer.username, "Scouters")
+    if not GroupsService.join_as_scouter(event.authorizer, district, group, code):
+        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong scouters code")
+    return JSONResponse({"message": "OK"})
 
 
 router = Router()
@@ -92,7 +93,12 @@ router.post("/api/districts/{district}/groups/", create_group, schema=Schema({
     'code': str,
     'name': str
 }))
-router.post("/api/districts/{district}/groups/{group}/beneficiaries/join", join_group)
+router.post("/api/districts/{district}/groups/{group}/beneficiaries/join", join_group, schema=Schema({
+    'code': str
+}))
+router.post("/api/districts/{district}/groups/{group}/scouters/join", join_group_as_scouter, schema=Schema({
+    'code': str
+}))
 
 
 def handler(event, _) -> dict:
