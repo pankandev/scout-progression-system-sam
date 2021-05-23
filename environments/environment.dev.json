@@ -2,6 +2,6 @@
   "Parameters": {
     "AWS_SAM_LOCAL": true,
     "STAGE": "DEV",
-    "USER_POOL_ID": "us-west-2_GikObR6zU"
+    "USER_POOL_ID": "us-west-2_hCEYOTuPN"
   }
 }
