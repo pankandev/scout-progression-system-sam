@@ -4,15 +4,14 @@ from typing import Dict, Any, List, Union
 
 from core import ModelService
 from core.db.model import Operator, BoolOperator
-from core.exceptions.invalid import InvalidException
 from core.utils import join_key
 from core.utils.key import SPLITTER, split_key
 
 
 class LogTag(Enum):
-    REWARD = 'REWARD',
+    REWARD = 'REWARD'
     PROGRESS = 'PROGRESS'
-    COMPLETE = 'COMPLETE'
+    COMPLETED = 'COMPLETED'
 
     @staticmethod
     def concat(parent_tag: str, *args):
@@ -23,7 +22,7 @@ class LogTag(Enum):
         for member in LogTag:
             if value == member.value:
                 return member
-        raise InvalidException(f"Unknown log tag: {value}")
+        return None
 
 
 class LogKey:

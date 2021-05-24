@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Dict, Tuple, List, Any, Union
 
 from .db import db
-from .model import Operator, UpdateReturnValues
+from .model import Operator, UpdateReturnValues, BoolOperator
 from .results import GetResult
 
 
@@ -52,7 +52,7 @@ class ModelIndex:
         return GetResult({'Item': add_result})
 
     def query(self, partition_key, sort_key: Union[List[Tuple[Operator, Any]], Tuple[Operator, Any], Any] = None,
-              limit=None, start_key=None, attributes=None, scan_forward: bool = None):
+              limit=None, start_key=None, attributes=None, scan_forward: bool = None, bool_op=BoolOperator.AND):
         if sort_key is None:
             sort_key = []
         if isinstance(sort_key, tuple):
@@ -63,7 +63,7 @@ class ModelIndex:
             raise ValueError("Sort key was given but model does not have a sort key")
         return self._model.query((self.partition, partition_key), [(self.sort, *s) for s in sort_key],
                                  limit=limit, start_key=start_key, attributes=attributes, index=self.index_name,
-                                 scan_forward=scan_forward)
+                                 scan_forward=scan_forward, bool_op=bool_op)
 
     def get(self, partition_key, sort_key=None, attributes: List[str] = None):
         key = self.generate_key(partition_key, sort_key)

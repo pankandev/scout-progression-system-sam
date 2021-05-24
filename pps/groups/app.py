@@ -96,11 +96,13 @@ def get_group_stats(event: HTTPEvent):
     complete_logs: Dict[str, Dict[str, str]] = {}
     for beneficiary in beneficiaries:
         sub = beneficiary.user_sub
-        logs += LogsService.query_tags(user=sub, tags=[LogTag.PROGRESS, LogTag.COMPLETE], is_full=False)
-        progress_logs[sub] = [log for log in logs if log.parent_tag == LogTag.PROGRESS]
-        complete_logs[sub] = [log for log in logs if log.parent_tag == LogTag.COMPLETE]
+        beneficiary_logs = LogsService.query_tags(user=sub, tags=[LogTag.PROGRESS.value, LogTag.COMPLETED.value],
+                                                  is_full=False)
+        logs += beneficiary_logs
+        progress_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.PROGRESS]
+        complete_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.COMPLETED]
     stats['log_count'] = {
-        str(tag): len([log for log in logs if log.parent_tag == tag]) for tag in LogTag
+        tag.value: len([log for log in logs if log.parent_tag == tag]) for tag in LogTag
     }
     stats['completed_objectives'] = {sub: [{
         'stage': log.tags[1],
@@ -117,7 +119,7 @@ def get_group_stats(event: HTTPEvent):
         'log': log.log if event.authorizer.sub not in response.item['scouters'].keys() else None
     } for log in logs] for sub, logs in progress_logs.items()}
 
-    return JSONResponse(response.as_dict())
+    return JSONResponse(stats)
 
 
 def join_group_as_scouter(event: HTTPEvent):

@@ -391,6 +391,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref LogsTable
         - Statement:
             - Sid: CognitoIDPAddUserToGroup
               Effect: Allow
