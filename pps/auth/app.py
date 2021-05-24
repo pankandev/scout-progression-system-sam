@@ -8,14 +8,6 @@ from core.services.groups import GroupsService
 from core.services.users import UsersCognito
 
 
-def process_group(item: dict, event: HTTPEvent):
-    try:
-        item["district-url"] = event.concat_url("districts", item["district"])
-        item["url"] = event.concat_url("districts", item["district"], "groups", item["code"])
-    except Exception:
-        pass
-
-
 def validate_beneficiary_code(event: HTTPEvent):
     code = json.loads(event.body)["code"]
     group = GroupsService.get_by_code(code)
@@ -23,7 +15,7 @@ def validate_beneficiary_code(event: HTTPEvent):
         return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Invalid code")
     return JSONResponse({
         "message": "Code is OK",
-        "group": process_group(group, event)
+        "group": group
     })
 
 

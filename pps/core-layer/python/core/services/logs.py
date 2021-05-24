@@ -3,14 +3,20 @@ from enum import Enum
 from typing import Dict, Any, List, Union
 
 from core import ModelService
-from core.db.model import Operator
+from core.db.model import Operator, BoolOperator
 from core.exceptions.invalid import InvalidException
 from core.utils import join_key
-from core.utils.key import SPLITTER
+from core.utils.key import SPLITTER, split_key
 
 
 class LogTag(Enum):
     REWARD = 'REWARD',
+    PROGRESS = 'PROGRESS'
+    COMPLETE = 'COMPLETE'
+
+    @staticmethod
+    def concat(parent_tag: str, *args):
+        return join_key(parent_tag, *args)
 
     @staticmethod
     def from_value(value: str):
@@ -46,6 +52,14 @@ class Log:
         self.log = log
         self.data = data
         self.append_timestamp = append_timestamp
+
+    @property
+    def parent_tag(self) -> LogTag:
+        return LogTag.from_value(self.tags[0])
+
+    @property
+    def tags(self) -> List[str]:
+        return split_key(self.tag)
 
     @staticmethod
     def from_map(log_map: Dict[str, Any], append_timestamp: bool = False):
@@ -96,6 +110,16 @@ class LogsService(ModelService):
         return [Log.from_map(x) for x in cls.get_interface().query(user, sort_key=(
             Operator.BEGINS_WITH, tag + (SPLITTER if not is_full else '')) if tag is not None else None,
                                                                    limit=limit, scan_forward=False).items]
+
+    @classmethod
+    def query_tags(cls, user: str, tags: List[str], limit: int = None, is_full=True) -> List[Log]:
+        return [Log.from_map(x) for x in cls.get_interface().query(
+            user,
+            sort_key=[(Operator.BEGINS_WITH, tag + (SPLITTER if not is_full else '')) for tag in tags],
+            limit=limit,
+            scan_forward=False,
+            bool_op=BoolOperator.OR
+        ).items]
 
     @staticmethod
     def _get_current_timestamp() -> int:

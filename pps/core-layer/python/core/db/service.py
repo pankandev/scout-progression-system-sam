@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, Tuple, List, Any
+from typing import Dict, Tuple, List, Any, Union
 
 from .db import db
 from .model import Operator, UpdateReturnValues
@@ -22,7 +22,7 @@ class ModelIndex:
 
     def generate_key(self, partition=None, sort=None, full=True):
         keys = dict()
-        if sort is not None and self.sort is None:
+        if self.sort is None and sort is not None:
             raise ValueError("Sort key was given but model does not have a sort key")
 
         if full:
@@ -51,10 +51,17 @@ class ModelIndex:
                                      raise_attribute_equals=raise_attribute_equals)
         return GetResult({'Item': add_result})
 
-    def query(self, partition_key, sort_key: Tuple[Operator, Any] = None, limit=None, start_key=None, attributes=None,
-              scan_forward: bool = None):
-        self.generate_key(partition_key, sort_key, False)
-        return self._model.query((self.partition, partition_key), None if sort_key is None else (self.sort, *sort_key),
+    def query(self, partition_key, sort_key: Union[List[Tuple[Operator, Any]], Tuple[Operator, Any], Any] = None,
+              limit=None, start_key=None, attributes=None, scan_forward: bool = None):
+        if sort_key is None:
+            sort_key = []
+        if isinstance(sort_key, tuple):
+            sort_key = [sort_key]
+        elif not isinstance(sort_key, list):
+            sort_key = [(Operator.EQ, sort_key)]
+        if len(sort_key) > 0 and self.sort is None:
+            raise ValueError("Sort key was given but model does not have a sort key")
+        return self._model.query((self.partition, partition_key), [(self.sort, *s) for s in sort_key],
                                  limit=limit, start_key=start_key, attributes=attributes, index=self.index_name,
                                  scan_forward=scan_forward)
 

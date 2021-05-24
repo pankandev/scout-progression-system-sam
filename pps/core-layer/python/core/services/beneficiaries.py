@@ -1,10 +1,7 @@
 from datetime import datetime, date
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Union
 
-import botocore
 from boto3.dynamodb.conditions import Attr
-from schema import Schema, Or
-
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
@@ -15,6 +12,7 @@ from core.services.rewards import RewardsService, Reward
 from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
+from schema import Schema, Or
 
 
 class Beneficiary:
@@ -158,17 +156,18 @@ class BeneficiariesService(ModelService):
             return VALID_STAGES[1]
 
     @classmethod
-    def query_unit(cls, district: str, group: str, unit: str):
+    def query_unit(cls, district: str, group: str, unit: str, attributes: List[str] = None):
         interface = cls.get_interface("ByGroup")
-        result = interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')))
+        result = interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')),
+                                 attributes=attributes)
         result.items = [Beneficiary.from_db_map(item) for item in result.items]
         return result
 
     @classmethod
-    def query_group(cls, district: str, group: str) -> List[Beneficiary]:
+    def query_group(cls, district: str, group: str, attributes: List[str] = None) -> List[Beneficiary]:
         interface = cls.get_interface("ByGroup")
         return [Beneficiary.from_db_map(item) for item in
-                interface.query(join_key(district, group)).items]
+                interface.query(join_key(district, group), attributes=attributes).items]
 
     @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):

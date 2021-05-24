@@ -44,6 +44,11 @@ class UpdateReturnValues(enum.Enum):
         raise ValueError(f"Unknown UpdateReturnValues: {value}")
 
 
+class BoolOperator(enum.Enum):
+    AND = 0
+    OR = 1
+
+
 class Operator(enum.Enum):
     EQ = 0
     BEGINS_WITH = 1
@@ -182,6 +187,7 @@ class AbstractModel(abc.ABC):
 
         if sort_key is None:
             sort_key = []
+        print('sort_key', sort_key)
         if isinstance(sort_key, tuple):
             sort_key = [sort_key]
 
@@ -202,7 +208,7 @@ class AbstractModel(abc.ABC):
                 elif len(key) == 4:
                     sort_name, sort_op, sort_value, sort_value_2 = key
                 else:
-                    raise Exception(f'Sort key operator have {len(key)} instead of 3 or 4')
+                    raise Exception(f'Sort key operator have {len(key)} parts instead of 3 or 4: {key}')
                 key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value, sort_value_2)
         if len(attr_names) == 0:
             attr_names = None

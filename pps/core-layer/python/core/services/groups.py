@@ -80,7 +80,7 @@ class GroupsService(ModelService):
         district = processed["district"]
 
         interface = cls.get_interface("ByBeneficiaryCode")
-        return interface.get(district, code, attributes=["district", "code", "name"])
+        return interface.get(district, code, attributes=["district", "code", "name", "scouters"])
 
     @classmethod
     def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str):

@@ -140,7 +140,7 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
     if completed_task is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active task found")
 
-    return JSONResponse(
+    response = JSONResponse(
         {
             'message': 'Completed task',
             'task': completed_task,
@@ -150,6 +150,9 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
             ),
         }
     )
+    LogsService.create(event.authorizer.sub, join_key('COMPLETED', completed_task['objective'].upper()),
+                       'Completed an objective!', {})
+    return response
 
 
 # DELETE /api/users/{sub}/tasks/active/complete/

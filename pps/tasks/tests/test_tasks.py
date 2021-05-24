@@ -481,11 +481,25 @@ def test_complete_task(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
     }
+    logs_params = {
+        'TableName': 'logs',
+        'ReturnValues': 'NONE',
+        'Item': {
+            'tag': 'COMPLETED::PUBERTY::CORPORALITY::2.1',
+            'log': 'Completed an objective!',
+            'data': {},
+            'timestamp': 1577836800000,
+            'user': 'user-sub'
+        }
+    }
+
+    logs_response = {}
 
     ddb_stubber.add_response('get_item', get_response, get_params)
     ddb_stubber.add_response('update_item', beneficiary_update_response, beneficiary_update_params)
     ddb_stubber.add_response('put_item', tasks_response, tasks_params)
     ddb_stubber.add_response('update_item', update_response, update_params)
+    ddb_stubber.add_response('put_item', logs_response, logs_params)
 
     response = complete_active_task(HTTPEvent({
         "pathParameters": {

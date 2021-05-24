@@ -6,9 +6,6 @@ from datetime import timedelta, datetime, timezone
 from typing import List, Union
 
 import jwt
-from jwt.utils import get_int_from_datetime
-from schema import Schema, SchemaError
-
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
@@ -16,9 +13,10 @@ from core.db.results import GetResult
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
 from core.services.objectives import ObjectivesService
-from core.services.rewards import RewardsService, RewardSet, RewardType, RewardRarity, RewardProbability, \
-    RewardsFactory, RewardReason
+from core.services.rewards import RewardsFactory, RewardReason
 from core.utils import join_key
+from jwt.utils import get_int_from_datetime
+from schema import Schema, SchemaError
 
 
 class ObjectiveKey:
