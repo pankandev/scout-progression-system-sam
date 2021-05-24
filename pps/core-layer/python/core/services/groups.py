@@ -85,8 +85,6 @@ class GroupsService(ModelService):
     @classmethod
     def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str):
         interface = cls.get_interface()
-        if join_key(district, group) in authorizer.scout_groups:
-            raise InvalidException('Already joined this group')
         try:
             interface.update(district, {
                 'scouters.' + authorizer.sub: {

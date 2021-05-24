@@ -12,7 +12,7 @@ from core.services.beneficiaries import BeneficiariesService
 from core.services.groups import GroupsService
 from core.services.logs import LogsService, Log, LogTag
 from core.utils.consts import VALID_UNITS
-from core.utils.key import split_key
+from core.utils.key import split_key, split_line
 from schema import SchemaError, Schema
 
 
@@ -96,25 +96,28 @@ def get_group_stats(event: HTTPEvent):
     complete_logs: Dict[str, Dict[str, str]] = {}
     for beneficiary in beneficiaries:
         sub = beneficiary.user_sub
-        beneficiary_logs = LogsService.query_tags(user=sub, tags=[LogTag.PROGRESS.value, LogTag.COMPLETED.value],
-                                                  is_full=False)
+        beneficiary_logs = LogsService.query_stats_tags(user=sub)
         logs += beneficiary_logs
         progress_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.PROGRESS]
         complete_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.COMPLETED]
+
     stats['log_count'] = {
-        tag.value: len([log for log in logs if log.parent_tag == tag]) for tag in LogTag
+        tag.short: len([log for log in logs if log.parent_tag == tag]) for tag in LogTag
     }
+
     stats['completed_objectives'] = {sub: [{
         'stage': log.tags[1],
         'area': log.tags[2],
-        'line': log.tags[3],
+        'line': split_line(log.tags[3])[0],
+        'subline': split_line(log.tags[3])[1],
         'timestamp': log.timestamp
     } for log in logs] for sub, logs in complete_logs.items()}
 
     stats['progress_logs'] = {sub: [{
         'stage': log.tags[1],
         'area': log.tags[2],
-        'line': log.tags[3],
+        'line': split_line(log.tags[3])[0],
+        'subline': split_line(log.tags[3])[1],
         'timestamp': log.timestamp,
         'log': log.log if event.authorizer.sub not in response.item['scouters'].keys() else None
     } for log in logs] for sub, logs in progress_logs.items()}

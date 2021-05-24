@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from typing import Tuple, Union
 
 SPLITTER = '::'
 
@@ -19,6 +20,16 @@ def join_key(*args):
 
 def split_key(key: str):
     return key.split(SPLITTER)
+
+
+def split_line(line: str) -> Tuple[int, Union[int, None]]:
+    splitted = line.split('.')
+    if len(splitted) == 2:
+        try:
+            return int(splitted[0]), int(splitted[1])
+        except ValueError:
+            return line, None
+    return line, None
 
 
 def epoch():

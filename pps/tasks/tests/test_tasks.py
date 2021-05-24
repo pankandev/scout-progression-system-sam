@@ -121,7 +121,16 @@ def test_get_user_task(ddb_stubber: Stubber):
             'user': 'user-sub'
         },
     }
-    response = {}
+    response = {
+        'Item': {
+            'completed': {'BOOL': False},
+            'created': {'N': str(123456)},
+            'objective': {'S': 'puberty::spirituality::2.3'},
+            'original-objective': {'S': 'Original objective'},
+            'personal-objective': {'S': 'Personal objective'},
+            'tasks': {'L': []}
+        }
+    }
     ddb_stubber.add_response('get_item', response, params)
     get_user_task(HTTPEvent({
         "pathParameters": {

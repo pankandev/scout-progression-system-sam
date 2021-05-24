@@ -12,6 +12,7 @@ from core.db.model import Operator, UpdateReturnValues
 from core.db.results import GetResult
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
 from core.services.objectives import ObjectivesService
 from core.services.rewards import RewardsFactory, RewardReason
 from core.utils import join_key
@@ -131,9 +132,12 @@ class TasksService(ModelService):
     __sort_key__ = "objective"
 
     @classmethod
-    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int):
+    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int) -> Task:
         interface = cls.get_interface()
-        return interface.get(authorizer.sub, join_key(stage, area, subline))
+        item = interface.get(authorizer.sub, join_key(stage, area, subline)).item
+        if item is None:
+            raise NotFoundException('Task not found')
+        return Task.from_db_dict(item)
 
     @classmethod
     def query(cls, authorizer: Authorizer, stage: str = None, area: str = None):
@@ -175,7 +179,7 @@ class TasksService(ModelService):
         beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
         target = beneficiary.target
         if target is None:
-            return None
+            raise NotFoundException('Task not found')
         target_dict = target.to_api_dict(authorizer=authorizer) if target is not None else None
         return GetResult.from_item(target_dict)
 

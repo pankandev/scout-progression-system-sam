@@ -188,7 +188,6 @@ class AbstractModel(abc.ABC):
 
         if sort_key is None:
             sort_key = []
-        print('sort_key', sort_key)
         if isinstance(sort_key, tuple):
             sort_key = [sort_key]
 

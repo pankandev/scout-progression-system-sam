@@ -199,18 +199,17 @@ def test_stats(ddb_stubber: Stubber):
 
     for u in ['user-sub-1', 'user-sub-2']:
         log_params = {
-            'KeyConditionExpression': Key('user').eq(u) & (
-                    Key('tag').begins_with('PROGRESS::') | Key('tag').begins_with('COMPLETED::')),
+            'KeyConditionExpression': Key('user').eq(u) & Key('tag').begins_with('STATS::'),
             'ScanIndexForward': False,
             'TableName': 'logs'
         }
         ddb_stubber.add_response('query', {
             'Items': [
-                {'tag': {'S': 'COMPLETED::puberty::corporality::1.1'}},
-                {'tag': {'S': 'COMPLETED::puberty::corporality::1.2'}},
-                {'tag': {'S': 'PROGRESS::puberty::corporality::1.3'}},
-                {'tag': {'S': 'COMPLETED::puberty::corporality::1.3'}},
-                {'tag': {'S': 'PROGRESS::puberty::corporality::1.3'}},
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.1'}},
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.2'}},
+                {'tag': {'S': 'STATS::PROGRESS::puberty::corporality::1.3'}},
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.3'}},
+                {'tag': {'S': 'STATS::PROGRESS::puberty::corporality::1.3'}},
             ]
         }, log_params)
 
@@ -243,9 +242,11 @@ def test_stats(ddb_stubber: Stubber):
     assert log_count['REWARD'] == 0
     assert log_count['COMPLETED'] == len(
         completed_objectives['user-sub-1'] + completed_objectives['user-sub-2']
-    ) == 3 * 2
+    )
+    assert log_count['COMPLETED'] == 3 * 2
     assert log_count['PROGRESS'] == len(
         progress_logs['user-sub-1'] + progress_logs['user-sub-2']
-    ) == 2 * 2
+    )
+    assert log_count['PROGRESS'] == 2 * 2
 
     ddb_stubber.assert_no_pending_responses()

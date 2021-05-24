@@ -10,18 +10,39 @@ from core.utils.key import SPLITTER, split_key
 
 class LogTag(Enum):
     REWARD = 'REWARD'
-    PROGRESS = 'PROGRESS'
-    COMPLETED = 'COMPLETED'
+    PROGRESS = join_key('STATS', 'PROGRESS')
+    COMPLETED = join_key('STATS', 'COMPLETED')
 
     @staticmethod
     def concat(parent_tag: str, *args):
         return join_key(parent_tag, *args)
+
+    @property
+    def short(self):
+        return split_key(self.value)[-1]
 
     @staticmethod
     def from_value(value: str):
         for member in LogTag:
             if value == member.value:
                 return member
+        return None
+
+    @staticmethod
+    def from_short(value: str):
+        for member in LogTag:
+            if value == member.short:
+                return member
+        return None
+
+    @staticmethod
+    def from_tag(tag: List[str]):
+        tag = join_key(*tag)
+        for member in LogTag:
+            value = member.value
+            if len(tag) >= len(value) and value == tag[:len(value)]:
+                return member
+            print(tag, value)
         return None
 
 
@@ -54,7 +75,7 @@ class Log:
 
     @property
     def parent_tag(self) -> LogTag:
-        return LogTag.from_value(self.tags[0])
+        return LogTag.from_tag(self.tags)
 
     @property
     def tags(self) -> List[str]:
@@ -111,14 +132,8 @@ class LogsService(ModelService):
                                                                    limit=limit, scan_forward=False).items]
 
     @classmethod
-    def query_tags(cls, user: str, tags: List[str], limit: int = None, is_full=True) -> List[Log]:
-        return [Log.from_map(x) for x in cls.get_interface().query(
-            user,
-            sort_key=[(Operator.BEGINS_WITH, tag + (SPLITTER if not is_full else '')) for tag in tags],
-            limit=limit,
-            scan_forward=False,
-            bool_op=BoolOperator.OR
-        ).items]
+    def query_stats_tags(cls, user: str, limit: int = None) -> List[Log]:
+        return cls.query_tag(user, 'STATS', limit=limit, is_full=False)
 
     @staticmethod
     def _get_current_timestamp() -> int:
