@@ -7,7 +7,7 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
-from core.services.logs import LogsService
+from core.services.logs import LogsService, LogTag
 from core.services.rewards import RewardsFactory, RewardReason
 from core.services.tasks import TasksService, ObjectiveKey, Task
 from core.utils import join_key
@@ -63,11 +63,12 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
     result = TasksService.get_active_task(event.authorizer)
-    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key("PROGRESS", result.item['objective']).upper())
+    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key(LogTag.PROGRESS.value,
+                                                                        result.item['objective']).upper())
 
     d = Task.from_db_dict(result.item).to_api_dict(authorizer=event.authorizer)
     d['eligible_for_progress_reward'] = last_task_log is None or int(
-            time.time() * 1000
+        time.time() * 1000
     ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
 
     return JSONResponse(d)
@@ -148,7 +149,7 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
             ),
         }
     )
-    LogsService.create(event.authorizer.sub, join_key('COMPLETED', completed_task['objective'].upper()),
+    LogsService.create(event.authorizer.sub, LogTag.COMPLETED.join(completed_task['objective'].upper()),
                        'Completed an objective!', {})
     return response
 

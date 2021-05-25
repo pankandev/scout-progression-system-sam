@@ -24,27 +24,27 @@ def test_query(ddb_stubber: Stubber):
         'Items': [
             {
                 'user': {'S': 'u-sub'},
-                'tag': {'S': 'A-TAG'},
+                'tag': {'S': 'PROGRESS'},
                 'timestamp': {'N': str(123456)},
                 'log': {'S': 'A log!'}
             },
             {
                 'user': {'S': 'u-sub'},
-                'tag': {'S': 'A-TAG'},
+                'tag': {'S': 'PROGRESS'},
                 'timestamp': {'N': str(123457)},
                 'log': {'S': 'A log!'}
             }
         ]
     }, {
                                  'TableName': 'logs',
-                                 'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with('A-TAG'),
+                                 'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with('STATS::PROGRESS'),
                                  'Limit': 25,
                                  'ScanIndexForward': False
                              })
     response = query_logs(HTTPEvent({
         "pathParameters": {
             "sub": "u-sub",
-            "tag": "A-TAG"
+            "tag": "PROGRESS"
         },
         "requestContext": {
             "authorizer": {
@@ -59,13 +59,13 @@ def test_query(ddb_stubber: Stubber):
         'items': [
             {
                 'user': 'u-sub',
-                'tag': 'A-TAG',
+                'tag': 'PROGRESS',
                 'timestamp': 123456,
                 'log': 'A log!'
             },
             {
                 'user': 'u-sub',
-                'tag': 'A-TAG',
+                'tag': 'PROGRESS',
                 'timestamp': 123457,
                 'log': 'A log!'
             }
@@ -83,7 +83,7 @@ def test_create(ddb_stubber: Stubber):
         'Items': [
             {
                 'user': {'S': 'u-sub'},
-                'tag': {'S': 'STATS::PROGRESS::PUBERTY::CORPORALITY::1::' + str(1577836800000 - 24 * 60 * 60 * 1000 - 1)},
+                'tag': {'S': 'STATS::PROGRESS::PUBERTY::CORPORALITY::1.1::' + str(1577836800000 - 24 * 60 * 60 * 1000 - 1)},
                 'timestamp': {'N': str(1577836800000 - 24 * 60 * 60 * 1000 - 1)},
                 'log': {'S': 'A log!'}
             }
@@ -92,7 +92,7 @@ def test_create(ddb_stubber: Stubber):
         'ScanIndexForward': False,
         'Limit': 1,
         'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with(
-            'STATS::PROGRESS::PUBERTY::CORPORALITY::1::')
+            'STATS::PROGRESS::PUBERTY::CORPORALITY::1.1::')
         })
     ddb_stubber.add_response('update_item', {
         'Attributes': {'generated_token_last': {'S': '0'}}
@@ -106,7 +106,7 @@ def test_create(ddb_stubber: Stubber):
     ddb_stubber.add_response('put_item', {}, {
         'Item': {
             'user': 'u-sub',
-            'tag': 'STATS::PROGRESS::PUBERTY::CORPORALITY::1::1577836800000',
+            'tag': 'STATS::PROGRESS::PUBERTY::CORPORALITY::1.1::1577836800000',
             'timestamp': 1577836800000,
             'log': 'A log!',
             'data': {'key': 1234}
@@ -129,13 +129,13 @@ def test_create(ddb_stubber: Stubber):
         "body": json.dumps({
             "log": "A log!",
             "data": {'key': 1234},
-            "token": Task.generate_objective_token('puberty::corporality::1', Authorizer(authorizer_map))
+            "token": Task.generate_objective_token('puberty::corporality::1.1', Authorizer(authorizer_map))
         })
     }))
     assert response.status == 200
     Schema({
         'item': {
-            'tag': 'STATS::PROGRESS::PUBERTY::CORPORALITY::1::' + str(1577836800000),
+            'tag': 'PROGRESS::PUBERTY::CORPORALITY::1.1::' + str(1577836800000),
             'timestamp': 1577836800000,
             'log': 'A log!',
             'data': {'key': 1234},

@@ -18,7 +18,7 @@ USER_VALID_TAGS = [LogTag.PROGRESS]
 
 def query_logs(event: HTTPEvent):
     user_sub = event.params['sub']
-    tag = event.params['tag']
+    tag = LogTag.normalize(split_key(event.params['tag'])).upper()
 
     if not event.authorizer.is_scouter and event.authorizer.sub != user_sub:
         raise ForbiddenException("Only an scouter and the same user can get these logs")
@@ -27,8 +27,8 @@ def query_logs(event: HTTPEvent):
     if not isinstance(limit, int) or limit > 100:
         raise InvalidException("Limit must be an integer and lower or equal than 100")
 
-    logs = LogsService.query(user_sub, tag.upper(), limit=limit)
-    return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
+    logs = LogsService.query(user_sub, tag, limit=limit)
+    return JSONResponse(body=QueryResult.from_list([log.to_api_map() for log in logs]).as_dict())
 
 
 def query_user_logs(event: HTTPEvent):
@@ -73,7 +73,7 @@ def create_log(event: HTTPEvent):
         if body.get('token') is None:
             raise InvalidException(f"To post a PROGRESS log you must provide the task token")
         objective = TasksService.get_task_token_objective(body['token'], authorizer=event.authorizer)
-        tag = join_key(LogTag.PROGRESS.value, objective)
+        tag = join_key(LogTag.PROGRESS.value, objective).upper()
 
     response_body = {}
     if parent_tag == LogTag.PROGRESS:
@@ -84,7 +84,7 @@ def create_log(event: HTTPEvent):
                                                                                reason=RewardReason.PROGRESS_LOG)
 
     log = LogsService.create(user_sub, tag, log_text=log, data=body.get('data'), append_timestamp_to_tag=True)
-    response_body['item'] = log.to_map()
+    response_body['item'] = log.to_api_map()
 
     return JSONResponse(body=response_body)
 

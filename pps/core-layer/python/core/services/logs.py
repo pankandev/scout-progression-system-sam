@@ -3,7 +3,8 @@ from enum import Enum
 from typing import Dict, Any, List, Union
 
 from core import ModelService
-from core.db.model import Operator, BoolOperator
+from core.db.model import Operator
+from core.exceptions.invalid import InvalidException
 from core.utils import join_key
 from core.utils.key import SPLITTER, split_key
 
@@ -16,6 +17,9 @@ class LogTag(Enum):
     @staticmethod
     def concat(parent_tag: str, *args):
         return join_key(parent_tag, *args)
+
+    def join(self, body: str):
+        return join_key(self.value, body)
 
     @property
     def short(self):
@@ -36,14 +40,31 @@ class LogTag(Enum):
         return None
 
     @staticmethod
-    def from_tag(tag: List[str]):
+    def from_tag(tag: List[str], short=False):
         tag = join_key(*tag)
         for member in LogTag:
-            value = member.value
+            value = member.short if short else member.value
             if len(tag) >= len(value) and value == tag[:len(value)]:
                 return member
-            print(tag, value)
         return None
+
+    @staticmethod
+    def normalize(tag: List[str], short=False):
+        parent_tag_full = LogTag.from_tag(tag, short=False)
+        parent_tag = LogTag.from_tag(tag, short=True) if parent_tag_full is None else parent_tag_full
+        if parent_tag is None:
+            raise InvalidException(f'Tag {join_key(*tag)} does not exist')
+        source_is_short = parent_tag_full is None
+        print(parent_tag, tag, source_is_short)
+        tag_body = tag[1 if source_is_short else len(split_key(parent_tag.value)):]
+        if not short:
+            return join_key(parent_tag.value, *tag_body)
+        else:
+            return join_key(parent_tag.short, *tag_body)
+
+    @staticmethod
+    def shorten(tag: List[str]):
+        return LogTag.normalize(tag, short=True)
 
 
 class LogKey:
@@ -75,7 +96,9 @@ class Log:
 
     @property
     def parent_tag(self) -> LogTag:
-        return LogTag.from_tag(self.tags)
+        tag = self.tags
+        parent_tag_full = LogTag.from_tag(tag, short=False)
+        return LogTag.from_tag(tag, short=True) if parent_tag_full is None else parent_tag_full
 
     @property
     def tags(self) -> List[str]:
@@ -87,10 +110,11 @@ class Log:
         return Log(sub=log_map.get("user"), tag=tag, timestamp=log_map.get("timestamp"), log=log_map.get("log"),
                    data=log_map.get("data"), append_timestamp=append_timestamp)
 
-    def to_map(self):
-        tag = self.tag.name if isinstance(self.tag, LogTag) else self.tag
+    def to_api_map(self):
+        tag: str = self.tag.name if isinstance(self.tag, LogTag) else self.tag
+        long_tag: str = tag if not self.append_timestamp else join_key(tag, self.timestamp)
         data = {
-            "tag": tag if not self.append_timestamp else join_key(tag, self.timestamp),
+            "tag": self.parent_tag.normalize(split_key(long_tag), short=True),
             "user": self.sub,
             "log": self.log,
             'timestamp': self.timestamp

@@ -7,6 +7,7 @@ from core.aws.errors import HTTPError
 from core.aws.response import JSONResponse
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
 from core.services.groups import GroupsService
@@ -49,9 +50,9 @@ def join_group(event: HTTPEvent):
         UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
+        raise NotFoundException("Group not found")
     if group_item["beneficiary_code"] != code:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
+        raise ForbiddenException("Wrong code")
     BeneficiariesService.create(district, group, event.authorizer)
     return JSONResponse({"message": "OK"})
 
@@ -106,20 +107,20 @@ def get_group_stats(event: HTTPEvent):
     }
 
     stats['completed_objectives'] = {sub: [{
-        'stage': log.tags[1],
-        'area': log.tags[2],
-        'line': split_line(log.tags[3])[0],
-        'subline': split_line(log.tags[3])[1],
+        'stage': log.tags[2],
+        'area': log.tags[3],
+        'line': split_line(log.tags[4])[0],
+        'subline': split_line(log.tags[4])[1],
         'timestamp': log.timestamp
     } for log in logs] for sub, logs in complete_logs.items()}
 
     stats['progress_logs'] = {sub: [{
-        'stage': log.tags[1],
-        'area': log.tags[2],
-        'line': split_line(log.tags[3])[0],
-        'subline': split_line(log.tags[3])[1],
+        'stage': log.tags[2],
+        'area': log.tags[3],
+        'line': split_line(log.tags[4])[0],
+        'subline': split_line(log.tags[4])[1],
         'timestamp': log.timestamp,
-        'log': log.log if event.authorizer.sub not in response.item['scouters'].keys() else None
+        'log': log.log if event.authorizer.sub in response.item['scouters'].keys() else None
     } for log in logs] for sub, logs in progress_logs.items()}
 
     return JSONResponse(stats)

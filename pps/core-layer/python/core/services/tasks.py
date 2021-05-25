@@ -177,9 +177,11 @@ class TasksService(ModelService):
     def get_active_task(cls, authorizer: Authorizer) -> Union[GetResult, None]:
         from core.services.beneficiaries import BeneficiariesService
         beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
+
         target = beneficiary.target
         if target is None:
             raise NotFoundException('Task not found')
+
         target_dict = target.to_api_dict(authorizer=authorizer) if target is not None else None
         return GetResult.from_item(target_dict)
 

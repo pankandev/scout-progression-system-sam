@@ -185,14 +185,14 @@ def test_get_active_task(ddb_stubber: Stubber):
         'Items': [
             {
                 'user': {'S': 'u-sub'},
-                'tag': {'S': 'PROGRESS::PUBERTY::CORPORALITY::2.3::' + str(timestamp)},
+                'tag': {'S': 'STATS::PROGRESS::PUBERTY::CORPORALITY::2.3::' + str(timestamp)},
                 'timestamp': {'N': timestamp},
                 'log': {'S': 'A log!'},
             }
         ]
     }, {
                                  'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with(
-                                     'PROGRESS::PUBERTY::CORPORALITY::2.3::'),
+                                     'STATS::PROGRESS::PUBERTY::CORPORALITY::2.3::'),
                                  'Limit': 1,
                                  'ScanIndexForward': False,
                                  'TableName': 'logs'
@@ -494,7 +494,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'TableName': 'logs',
         'ReturnValues': 'NONE',
         'Item': {
-            'tag': 'COMPLETED::PUBERTY::CORPORALITY::2.1',
+            'tag': 'STATS::COMPLETED::PUBERTY::CORPORALITY::2.1',
             'log': 'Completed an objective!',
             'data': {},
             'timestamp': 1577836800000,
@@ -543,6 +543,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'sub': 'user-sub',
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
+        'reason': 'COMPLETE_OBJECTIVE',
         'static': [
             {'type': 'NEEDS', 'rarity': 'RARE'},
             {'type': 'ZONE', 'rarity': 'RARE'},

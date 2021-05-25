@@ -47,7 +47,7 @@ def get_my_rewards(event: HTTPEvent):
     category_name: str = event.params.get('category')
     category = RewardType.from_value(category_name.upper())
     return JSONResponse({
-        'rewards': [log.to_map() for log in RewardsService.get_user_rewards(event.authorizer, category)]
+        'rewards': [log.to_api_map() for log in RewardsService.get_user_rewards(event.authorizer, category)]
     })
 
 
