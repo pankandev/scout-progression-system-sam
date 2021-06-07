@@ -42,7 +42,7 @@ def query_user_logs(event: HTTPEvent):
         raise InvalidException("Limit must be an integer and lower or equal than 100")
 
     logs = LogsService.query(user_sub, limit=limit)
-    return JSONResponse(body=QueryResult.from_list([log.to_map() for log in logs]).as_dict())
+    return JSONResponse(body=QueryResult.from_list([log.to_api_map() for log in logs]).as_dict())
 
 
 def create_log(event: HTTPEvent):

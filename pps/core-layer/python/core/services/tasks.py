@@ -16,6 +16,7 @@ from core.exceptions.notfound import NotFoundException
 from core.services.objectives import ObjectivesService
 from core.services.rewards import RewardsFactory, RewardReason
 from core.utils import join_key
+from core.utils.key import split_key
 from jwt.utils import get_int_from_datetime
 from schema import Schema, SchemaError
 
@@ -90,9 +91,13 @@ class Task:
 
     def to_api_dict(self, authorizer: Authorizer = None):
         data = {
-            'completed': False,
+            'completed': self.completed,
             'created': int(time.time()),
             'objective': self.objective_key,
+            'stage': split_key(self.objective_key)[0],
+            'area': split_key(self.objective_key)[1],
+            'line': int(split_key(self.objective_key)[2].split('.')[0]),
+            'subline': int(split_key(self.objective_key)[2].split('.')[1]),
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
             'tasks': [{

@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - "./docker/ddbv015:/home/dynamodblocal/data"
+      - "./docker/ddbv016:/home/dynamodblocal/data"
     working_dir: /home/dynamodblocal
     networks:
       - pps

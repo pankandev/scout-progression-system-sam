@@ -181,12 +181,14 @@ def test_stats(ddb_stubber: Stubber):
             }
         }
     }
+
     beneficiary_params = {
         'IndexName': 'ByGroup',
         'KeyConditionExpression': Key('group').eq('district::group'),
-        'ExpressionAttributeNames': {'#attr_user': 'user'},
-        'ProjectionExpression': '#attr_user',
-        'TableName': 'beneficiaries'}
+        'ExpressionAttributeNames': {'#attr_user': 'user', '#attr_unit_user': 'unit-user'},
+        'ProjectionExpression': '#attr_user, #attr_unit_user',
+        'TableName': 'beneficiaries'
+    }
     beneficiary_response = {
         "Items": [
             {"user": {"S": "user-sub-1"}},

@@ -214,6 +214,10 @@ def test_get_active_task(ddb_stubber: Stubber):
 
     assert response.status == 200
     Schema({
+        'area': 'corporality',
+        'stage': 'puberty',
+        'line': 2,
+        'subline': 3,
         'completed': False,
         'created': 1577836800,
         'objective': 'puberty::corporality::2.3',

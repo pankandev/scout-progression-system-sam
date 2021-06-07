@@ -1,22 +1,9 @@
 import json
 
 from botocore.exceptions import ParamValidationError
-
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
-from core.services.groups import GroupsService
 from core.services.users import UsersCognito
-
-
-def validate_beneficiary_code(event: HTTPEvent):
-    code = json.loads(event.body)["code"]
-    group = GroupsService.get_by_code(code)
-    if group is None:
-        return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, "Invalid code")
-    return JSONResponse({
-        "message": "Code is OK",
-        "group": group
-    })
 
 
 def confirm_user(event: HTTPEvent):

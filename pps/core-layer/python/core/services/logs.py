@@ -55,7 +55,7 @@ class LogTag(Enum):
         if parent_tag is None:
             raise InvalidException(f'Tag {join_key(*tag)} does not exist')
         source_is_short = parent_tag_full is None
-        print(parent_tag, tag, source_is_short)
+
         tag_body = tag[1 if source_is_short else len(split_key(parent_tag.value)):]
         if not short:
             return join_key(parent_tag.value, *tag_body)

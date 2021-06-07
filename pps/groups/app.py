@@ -13,7 +13,7 @@ from core.services.beneficiaries import BeneficiariesService
 from core.services.groups import GroupsService
 from core.services.logs import LogsService, Log, LogTag
 from core.utils.consts import VALID_UNITS
-from core.utils.key import split_key, split_line
+from core.utils.key import split_line
 from schema import SchemaError, Schema
 
 
@@ -90,13 +90,15 @@ def get_group_stats(event: HTTPEvent):
             unit = None
     stats = {}
     beneficiaries = BeneficiariesService \
-        .query_group(district_code, code, attributes=['user']) if unit is None else \
-        BeneficiariesService.query_unit(district_code, code, unit, attributes=['user'])
+        .query_group(district_code, code, attributes=['user', 'unit-user']) if unit is None else \
+        BeneficiariesService.query_unit(district_code, code, unit, attributes=['user', 'unit-user'])
     logs: List[Log] = []
     progress_logs: Dict[str, Dict[str, str]] = {}
     complete_logs: Dict[str, Dict[str, str]] = {}
+    units = {}
     for beneficiary in beneficiaries:
         sub = beneficiary.user_sub
+        units[sub] = beneficiary.unit
         beneficiary_logs = LogsService.query_stats_tags(user=sub)
         logs += beneficiary_logs
         progress_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.PROGRESS]
@@ -109,6 +111,7 @@ def get_group_stats(event: HTTPEvent):
     stats['completed_objectives'] = {sub: [{
         'stage': log.tags[2],
         'area': log.tags[3],
+        'unit': units[sub],
         'line': split_line(log.tags[4])[0],
         'subline': split_line(log.tags[4])[1],
         'timestamp': log.timestamp
@@ -117,6 +120,7 @@ def get_group_stats(event: HTTPEvent):
     stats['progress_logs'] = {sub: [{
         'stage': log.tags[2],
         'area': log.tags[3],
+        'unit': units[sub],
         'line': split_line(log.tags[4])[0],
         'subline': split_line(log.tags[4])[1],
         'timestamp': log.timestamp,
