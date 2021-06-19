@@ -64,7 +64,9 @@ def test_list_user_stage_tasks(ddb_stubber: Stubber):
                                      '#attr_tasks': 'tasks',
                                      '#attr_user': 'user'},
     }
-    response = {}
+    response = {
+        "Items": []
+    }
     ddb_stubber.add_response('query', response, params)
     list_user_stage_tasks(HTTPEvent({
         "pathParameters": {
@@ -96,7 +98,12 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
                                      '#attr_tasks': 'tasks',
                                      '#attr_user': 'user'},
     }
-    response = {}
+    response = {
+        'Items': [
+            {
+            }
+        ]
+    }
     ddb_stubber.add_response('query', response, params)
     list_user_area_tasks(HTTPEvent({
         "pathParameters": {

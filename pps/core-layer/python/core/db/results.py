@@ -20,6 +20,8 @@ def clean_value(value):
 def clean_item(item: dict):
     if item is None:
         return None
+    if type(item) is not dict:
+        return item
     return {
         key: clean_item(value) if type(value) is dict else clean_value(value) for key, value in item.items()
     }
@@ -28,8 +30,8 @@ def clean_item(item: dict):
 class QueryResult(Result):
 
     def __init__(self, result: dict):
-        uncleaned_items = result.get('Items')
-        self.items = [clean_item(item) for item in uncleaned_items] if uncleaned_items is not None else None
+        uncleaned_items = result.get('Items', [])
+        self.items = [clean_item(item) for item in uncleaned_items]
         self.count = result.get('Count')
         self.scanned_count = result.get('ScannedCount')
         self.last_evaluated_key = result.get('LastEvaluatedKey')

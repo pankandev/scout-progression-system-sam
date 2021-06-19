@@ -9,7 +9,7 @@ import jwt
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
-from core.db.results import GetResult
+from core.db.results import GetResult, QueryResult
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
@@ -149,9 +149,16 @@ class TasksService(ModelService):
         interface = cls.get_interface()
         args = [arg for arg in (stage, area) if arg is not None]
         sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
-        return interface.query(partition_key=authorizer.sub, sort_key=sort_key,
-                               attributes=['objective', 'original-objective', 'personal-objective', 'completed',
-                                           'tasks', 'user'])
+        return QueryResult.from_list(
+            [
+                Task.from_db_dict(item) for item in interface.query(
+                partition_key=authorizer.sub,
+                sort_key=sort_key,
+                attributes=['objective', 'original-objective',
+                            'personal-objective',
+                            'completed',
+                            'tasks', 'user']).items
+            ])
 
     """Active Task methods"""
 
