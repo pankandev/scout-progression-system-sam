@@ -7,9 +7,9 @@ from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
-from core.services.logs import LogsService
+from core.services.logs import LogsService, LogTag
 from core.services.rewards import RewardsFactory, RewardReason
-from core.services.tasks import TasksService, ObjectiveKey
+from core.services.tasks import TasksService, ObjectiveKey, Task
 from core.utils import join_key
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 
@@ -54,9 +54,7 @@ def get_user_task(event: HTTPEvent) -> JSONResponse:
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
     result = TasksService.get(event.authorizer, stage, area, subline)
-    if result.item is None:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Task not found")
-    return JSONResponse(result.as_dict())
+    return JSONResponse(result.to_api_dict())
 
 
 # GET  /api/users/{sub}/tasks/active/
@@ -65,14 +63,15 @@ def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
     result = TasksService.get_active_task(event.authorizer)
-    if result is None:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active tasks")
-    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key("PROGRESS", result.item['objective']).upper())
-    result.item['eligible_for_progress_reward'] = last_task_log is None or int(
-            time.time() * 1000
+    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key(LogTag.PROGRESS.value,
+                                                                        result.item['objective']).upper())
+
+    d = Task.from_db_dict(result.item).to_api_dict(authorizer=event.authorizer)
+    d['eligible_for_progress_reward'] = last_task_log is None or int(
+        time.time() * 1000
     ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
 
-    return JSONResponse(result.as_dict())
+    return JSONResponse(d)
 
 
 # POST /api/users/{sub}/tasks/{stage}/{area}/{subline}/
@@ -140,7 +139,7 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
     if completed_task is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active task found")
 
-    return JSONResponse(
+    response = JSONResponse(
         {
             'message': 'Completed task',
             'task': completed_task,
@@ -150,6 +149,9 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
             ),
         }
     )
+    LogsService.create(event.authorizer.sub, LogTag.COMPLETED.join(completed_task['objective'].upper()),
+                       'Completed an objective!', {})
+    return response
 
 
 # DELETE /api/users/{sub}/tasks/active/complete/

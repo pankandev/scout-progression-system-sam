@@ -3,12 +3,14 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+from boto3.dynamodb.conditions import Key
+
 from botocore.stub import Stubber, ANY
 from dateutil.relativedelta import relativedelta
 
 from core.aws.event import Authorizer, HTTPEvent
 from core.utils.key import epoch
-from ..app import GroupsService, create_group, BeneficiariesService, join_group
+from ..app import GroupsService, create_group, BeneficiariesService, join_group, get_group_stats
 
 
 @pytest.fixture(scope="function")
@@ -157,5 +159,96 @@ def test_join(ddb_stubber: Stubber):
         }
     }))
     assert response.status == 200
+
+    ddb_stubber.assert_no_pending_responses()
+
+
+def test_stats(ddb_stubber: Stubber):
+    group_params = {
+        'TableName': 'groups',
+        'Key': {
+            "district": "district",
+            "code": "group"
+        },
+        'ProjectionExpression': 'scouters'
+    }
+    group_response = {
+        "Item": {
+            "scouters": {
+                "M": {
+                    "scouter-sub": {'S': "1a2b3c"}
+                }
+            }
+        }
+    }
+
+    beneficiary_params = {
+        'IndexName': 'ByGroup',
+        'KeyConditionExpression': Key('group').eq('district::group'),
+        'ExpressionAttributeNames': {'#attr_user': 'user', '#attr_unit_user': 'unit-user'},
+        'ProjectionExpression': '#attr_user, #attr_unit_user',
+        'TableName': 'beneficiaries'
+    }
+    beneficiary_response = {
+        "Items": [
+            {"user": {"S": "user-sub-1"}},
+            {"user": {"S": "user-sub-2"}}
+        ]
+    }
+
+    ddb_stubber.add_response('get_item', group_response, group_params)
+    ddb_stubber.add_response('query', beneficiary_response, beneficiary_params)
+
+    for u in ['user-sub-1', 'user-sub-2']:
+        log_params = {
+            'KeyConditionExpression': Key('user').eq(u) & Key('tag').begins_with('STATS::'),
+            'ScanIndexForward': False,
+            'TableName': 'logs'
+        }
+        ddb_stubber.add_response('query', {
+            'Items': [
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.1'}},
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.2'}},
+                {'tag': {'S': 'STATS::PROGRESS::puberty::corporality::1.3'}},
+                {'tag': {'S': 'STATS::COMPLETED::puberty::corporality::1.3'}},
+                {'tag': {'S': 'STATS::PROGRESS::puberty::corporality::1.3'}},
+            ]
+        }, log_params)
+
+    response = get_group_stats(HTTPEvent({
+        "pathParameters": {
+            "district": "district",
+            "group": "group"
+        },
+        "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "u-sub",
+                    "nickname": "Nick Name",
+                    "name": "Name",
+                    "family_name": "Family",
+                    "cognito:username": "mail@mail.com",
+                    "birthdate": "01-01-2020",
+                    "gender": "scouts",
+                    "cognito:groups": ["Beneficiaries"]
+                }
+            }
+        }
+    }))
+    assert response.status == 200
+
+    log_count = response.body['log_count']
+    completed_objectives = response.body['completed_objectives']
+    progress_logs = response.body['progress_logs']
+
+    assert log_count['REWARD'] == 0
+    assert log_count['COMPLETED'] == len(
+        completed_objectives['user-sub-1'] + completed_objectives['user-sub-2']
+    )
+    assert log_count['COMPLETED'] == 3 * 2
+    assert log_count['PROGRESS'] == len(
+        progress_logs['user-sub-1'] + progress_logs['user-sub-2']
+    )
+    assert log_count['PROGRESS'] == 2 * 2
 
     ddb_stubber.assert_no_pending_responses()

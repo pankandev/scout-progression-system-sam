@@ -95,6 +95,9 @@ class CognitoService(ABC):
     @classmethod
     def add_to_scout_group(cls, username: str, district: str, group: str, current_groups: List[str]):
         client = cls.get_client()
+        new_group = join_key(district, group)
+        if new_group in current_groups:
+            return
         client.admin_update_user_attributes(
             UserPoolId=cls.__user_pool_id__,
             Username=username,

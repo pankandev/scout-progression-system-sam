@@ -10,7 +10,8 @@ from freezegun import freeze_time
 
 from core.aws.event import Authorizer
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity
+from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
+    RewardReason
 
 
 @pytest.fixture(scope="function")
@@ -52,13 +53,15 @@ def test_reward_token(ddb_stubber: Stubber):
         }
     }
     ddb_stubber.add_response('update_item', update_response, update_params)
-    token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
+    token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards,
+                                                 reason=RewardReason.PROGRESS_LOG)
     ddb_stubber.assert_no_pending_responses()
 
     decoded = jwt.JWT().decode(token, do_verify=False)
 
     schema.Schema({
         'sub': 'abcABC123',
+        'reason': 'PROGRESS_LOG',
         'index': 10,
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,

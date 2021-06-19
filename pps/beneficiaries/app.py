@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from core.db.results import QueryResult
 from schema import Schema, Optional
 
 from botocore.exceptions import ParamValidationError
@@ -38,7 +39,7 @@ def get_beneficiary(event: HTTPEvent):
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
-    return JSONResponse(result.to_api_dict())
+    return JSONResponse(result.to_api_dict(full=True))
 
 
 def update_beneficiary(event: HTTPEvent):
@@ -56,10 +57,8 @@ def update_beneficiary(event: HTTPEvent):
 def list_beneficiaries_group(event: HTTPEvent):
     district = event.params["district"]
     group = event.params["group"]
-    result = BeneficiariesService.query_group(district, group)
-    for obj in result.items:
-        process_beneficiary(obj, event)
-    return JSONResponse(result.as_dict())
+    beneficiaries = BeneficiariesService.query_group(district, group)
+    return JSONResponse(QueryResult.from_list([b.to_api_dict(full=False) for b in beneficiaries]))
 
 
 def list_beneficiaries_unit(event: HTTPEvent):

@@ -64,7 +64,9 @@ def test_list_user_stage_tasks(ddb_stubber: Stubber):
                                      '#attr_tasks': 'tasks',
                                      '#attr_user': 'user'},
     }
-    response = {}
+    response = {
+        "Items": []
+    }
     ddb_stubber.add_response('query', response, params)
     list_user_stage_tasks(HTTPEvent({
         "pathParameters": {
@@ -96,7 +98,12 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
                                      '#attr_tasks': 'tasks',
                                      '#attr_user': 'user'},
     }
-    response = {}
+    response = {
+        'Items': [
+            {
+            }
+        ]
+    }
     ddb_stubber.add_response('query', response, params)
     list_user_area_tasks(HTTPEvent({
         "pathParameters": {
@@ -121,7 +128,16 @@ def test_get_user_task(ddb_stubber: Stubber):
             'user': 'user-sub'
         },
     }
-    response = {}
+    response = {
+        'Item': {
+            'completed': {'BOOL': False},
+            'created': {'N': str(123456)},
+            'objective': {'S': 'puberty::spirituality::2.3'},
+            'original-objective': {'S': 'Original objective'},
+            'personal-objective': {'S': 'Personal objective'},
+            'tasks': {'L': []}
+        }
+    }
     ddb_stubber.add_response('get_item', response, params)
     get_user_task(HTTPEvent({
         "pathParameters": {
@@ -176,14 +192,14 @@ def test_get_active_task(ddb_stubber: Stubber):
         'Items': [
             {
                 'user': {'S': 'u-sub'},
-                'tag': {'S': 'PROGRESS::PUBERTY::CORPORALITY::2.3::' + str(timestamp)},
+                'tag': {'S': 'STATS::PROGRESS::PUBERTY::CORPORALITY::2.3::' + str(timestamp)},
                 'timestamp': {'N': timestamp},
                 'log': {'S': 'A log!'},
             }
         ]
     }, {
                                  'KeyConditionExpression': Key('user').eq('u-sub') & Key('tag').begins_with(
-                                     'PROGRESS::PUBERTY::CORPORALITY::2.3::'),
+                                     'STATS::PROGRESS::PUBERTY::CORPORALITY::2.3::'),
                                  'Limit': 1,
                                  'ScanIndexForward': False,
                                  'TableName': 'logs'
@@ -205,6 +221,10 @@ def test_get_active_task(ddb_stubber: Stubber):
 
     assert response.status == 200
     Schema({
+        'area': 'corporality',
+        'stage': 'puberty',
+        'line': 2,
+        'subline': 3,
         'completed': False,
         'created': 1577836800,
         'objective': 'puberty::corporality::2.3',
@@ -481,11 +501,25 @@ def test_complete_task(ddb_stubber: Stubber):
         'TableName': 'beneficiaries',
         'UpdateExpression': 'ADD #attr_generated_token_last :val_generated_token_last'
     }
+    logs_params = {
+        'TableName': 'logs',
+        'ReturnValues': 'NONE',
+        'Item': {
+            'tag': 'STATS::COMPLETED::PUBERTY::CORPORALITY::2.1',
+            'log': 'Completed an objective!',
+            'data': {},
+            'timestamp': 1577836800000,
+            'user': 'user-sub'
+        }
+    }
+
+    logs_response = {}
 
     ddb_stubber.add_response('get_item', get_response, get_params)
     ddb_stubber.add_response('update_item', beneficiary_update_response, beneficiary_update_params)
     ddb_stubber.add_response('put_item', tasks_response, tasks_params)
     ddb_stubber.add_response('update_item', update_response, update_params)
+    ddb_stubber.add_response('put_item', logs_response, logs_params)
 
     response = complete_active_task(HTTPEvent({
         "pathParameters": {
@@ -520,6 +554,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'sub': 'user-sub',
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
+        'reason': 'COMPLETE_OBJECTIVE',
         'static': [
             {'type': 'NEEDS', 'rarity': 'RARE'},
             {'type': 'ZONE', 'rarity': 'RARE'},

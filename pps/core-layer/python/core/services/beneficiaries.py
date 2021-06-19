@@ -1,10 +1,7 @@
 from datetime import datetime, date
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Union
 
-import botocore
 from boto3.dynamodb.conditions import Attr
-from schema import Schema, Or
-
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
@@ -15,6 +12,7 @@ from core.services.rewards import RewardsService, Reward
 from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 from core.utils.key import clean_text, date_to_text, join_key, split_key
+from schema import Schema, Or
 
 
 class Beneficiary:
@@ -64,7 +62,6 @@ class Beneficiary:
         user_sub = beneficiary.get("user")
 
         district_group = beneficiary.get("group")
-        print(district_group)
         district, group = district_group.split("::") if district_group is not None else (None, None)
 
         unit_user = beneficiary.get("unit-user")
@@ -117,8 +114,9 @@ class Beneficiary:
             "n_claimed_tokens": self.n_claimed_tokens
         }
 
-    def to_api_dict(self):
+    def to_api_dict(self, full=True):
         return {
+            "id": self.user_sub,
             "district": self.district,
             "group": self.group,
             "profile_picture": self.profile_picture,
@@ -126,8 +124,23 @@ class Beneficiary:
             "full-name": self.full_name,
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
+            "birthdate": self.birthdate.strftime("%d-%m-%Y"),
+            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "target": self.target.to_api_dict() if self.target is not None else None,
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "last_claimed_token": self.n_claimed_tokens,
             "set_base_tasks": self.set_base_tasks,
+        } if full else {
+            "id": self.user_sub,
+            "district": self.district,
+            "group": self.group,
+            "profile_picture": self.profile_picture,
+            "unit": self.unit,
+            "full-name": self.full_name,
+            "nickname": self.nickname,
+            "stage": BeneficiariesService.calculate_stage(self.birthdate),
+            "birthdate": self.birthdate.strftime("%d-%m-%Y"),
+            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
         }
 
 
@@ -158,17 +171,18 @@ class BeneficiariesService(ModelService):
             return VALID_STAGES[1]
 
     @classmethod
-    def query_unit(cls, district: str, group: str, unit: str):
+    def query_unit(cls, district: str, group: str, unit: str, attributes: List[str] = None):
         interface = cls.get_interface("ByGroup")
-        result = interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')))
+        result = interface.query(join_key(district, group), (Operator.BEGINS_WITH, join_key(unit, '')),
+                                 attributes=attributes)
         result.items = [Beneficiary.from_db_map(item) for item in result.items]
         return result
 
     @classmethod
-    def query_group(cls, district: str, group: str) -> List[Beneficiary]:
+    def query_group(cls, district: str, group: str, attributes: List[str] = None) -> List[Beneficiary]:
         interface = cls.get_interface("ByGroup")
         return [Beneficiary.from_db_map(item) for item in
-                interface.query(join_key(district, group)).items]
+                interface.query(join_key(district, group), attributes=attributes).items]
 
     @classmethod
     def create(cls, district: str, group: str, authorizer: Authorizer):
@@ -223,7 +237,6 @@ class BeneficiariesService(ModelService):
             ('group', group), ('full-name', name), ('nickname', nickname), ('target', active_task),
             ('profile_picture', profile_picture)
         ] if value is not None}
-        print(updates)
 
         condition_equals = {}
         if active_task is not None:

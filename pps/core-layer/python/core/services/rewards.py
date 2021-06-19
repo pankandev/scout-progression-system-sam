@@ -252,7 +252,8 @@ class RewardsService(ModelService):
 
     @classmethod
     def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
-                              boxes: List[RewardSet] = None, duration: timedelta = None) -> str:
+                              boxes: List[RewardSet] = None, duration: timedelta = None,
+                              reason: Enum = None) -> str:
         from core.services.beneficiaries import BeneficiariesService
 
         if duration is None:
@@ -271,7 +272,8 @@ class RewardsService(ModelService):
             "exp": get_int_from_datetime(now + duration),
             "static": static.to_map_list() if static is not None else [],
             "boxes": [box.to_map_list() for box in boxes] if boxes is not None else [],
-            "index": token_index
+            "index": token_index,
+            "reason": None if reason is None else reason.value
         }
 
         return encoder.encode(payload, jwk)
@@ -448,5 +450,5 @@ class RewardsFactory:
     def get_reward_token_by_reason(authorizer: Authorizer, reason: RewardReason):
         rewards = REWARDS_BY_REASON[reason]
         token = RewardsService.generate_reward_token(authorizer=authorizer, static=rewards['static'],
-                                                     boxes=rewards['boxes'])
+                                                     boxes=rewards['boxes'], reason=reason)
         return token

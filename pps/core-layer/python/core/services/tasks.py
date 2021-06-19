@@ -6,19 +6,19 @@ from datetime import timedelta, datetime, timezone
 from typing import List, Union
 
 import jwt
-from jwt.utils import get_int_from_datetime
-from schema import Schema, SchemaError
-
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator, UpdateReturnValues
-from core.db.results import GetResult
+from core.db.results import GetResult, QueryResult
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
 from core.services.objectives import ObjectivesService
-from core.services.rewards import RewardsService, RewardSet, RewardType, RewardRarity, RewardProbability, \
-    RewardsFactory, RewardReason
+from core.services.rewards import RewardsFactory, RewardReason
 from core.utils import join_key
+from core.utils.key import split_key
+from jwt.utils import get_int_from_datetime
+from schema import Schema, SchemaError
 
 
 class ObjectiveKey:
@@ -91,9 +91,13 @@ class Task:
 
     def to_api_dict(self, authorizer: Authorizer = None):
         data = {
-            'completed': False,
+            'completed': self.completed,
             'created': int(time.time()),
             'objective': self.objective_key,
+            'stage': split_key(self.objective_key)[0],
+            'area': split_key(self.objective_key)[1],
+            'line': int(split_key(self.objective_key)[2].split('.')[0]),
+            'subline': int(split_key(self.objective_key)[2].split('.')[1]),
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
             'tasks': [{
@@ -133,18 +137,28 @@ class TasksService(ModelService):
     __sort_key__ = "objective"
 
     @classmethod
-    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int):
+    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int) -> Task:
         interface = cls.get_interface()
-        return interface.get(authorizer.sub, join_key(stage, area, subline))
+        item = interface.get(authorizer.sub, join_key(stage, area, subline)).item
+        if item is None:
+            raise NotFoundException('Task not found')
+        return Task.from_db_dict(item)
 
     @classmethod
     def query(cls, authorizer: Authorizer, stage: str = None, area: str = None):
         interface = cls.get_interface()
         args = [arg for arg in (stage, area) if arg is not None]
         sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
-        return interface.query(partition_key=authorizer.sub, sort_key=sort_key,
-                               attributes=['objective', 'original-objective', 'personal-objective', 'completed',
-                                           'tasks', 'user'])
+        return QueryResult.from_list(
+            [
+                Task.from_db_dict(item) for item in interface.query(
+                partition_key=authorizer.sub,
+                sort_key=sort_key,
+                attributes=['objective', 'original-objective',
+                            'personal-objective',
+                            'completed',
+                            'tasks', 'user']).items
+            ])
 
     """Active Task methods"""
 
@@ -175,9 +189,11 @@ class TasksService(ModelService):
     def get_active_task(cls, authorizer: Authorizer) -> Union[GetResult, None]:
         from core.services.beneficiaries import BeneficiariesService
         beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
+
         target = beneficiary.target
         if target is None:
-            return None
+            raise NotFoundException('Task not found')
+
         target_dict = target.to_api_dict(authorizer=authorizer) if target is not None else None
         return GetResult.from_item(target_dict)
 

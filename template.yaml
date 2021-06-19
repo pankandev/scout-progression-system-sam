@@ -391,6 +391,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName:
               !Ref BeneficiariesTable
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref LogsTable
         - Statement:
             - Sid: CognitoIDPAddUserToGroup
               Effect: Allow
@@ -415,6 +418,12 @@ Resources:
           Type: Api
           Properties:
             Path: /api/districts/{district}/groups/{group}/
+            Method: get
+            RestApiId: !Ref PPSAPI
+        GetGroupStats:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/stats/
             Method: get
             RestApiId: !Ref PPSAPI
         JoinGroup:
@@ -519,55 +528,6 @@ Resources:
             RestApiId: !Ref PPSAPI
             Auth:
               Authorizer: NONE
-  GalleryFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: pps/gallery/
-      Handler: app.handler
-      Runtime: python3.8
-      Layers:
-        - !Ref PPSCore
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref BeneficiariesTable
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref LogsTable
-        - S3CrudPolicy:
-            BucketName:
-              !Ref S3BucketGallery
-      Events:
-        GetGalleryPictures:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/
-            Method: get
-            RestApiId: !Ref PPSAPI
-        AddPictureToGallery:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/{index}/
-            Method: post
-            RestApiId: !Ref PPSAPI
-        ReplaceGalleryPicture:
-          Type: Api
-          Properties:
-            Path: /api/districts/{district}/groups/{group}/beneficiaries/{unit}/{sub}/gallery/{index}/
-            Method: put
-            RestApiId: !Ref PPSAPI
-        GetAvatar:
-          Type: Api
-          Properties:
-            Path: /api/beneficiaries/{sub}/avatar/
-            Method: get
-            RestApiId: !Ref PPSAPI
-        UpdateAvatar:
-          Type: Api
-          Properties:
-            Path: /api/beneficiaries/{sub}/avatar/
-            Method: put
-            RestApiId: !Ref PPSAPI
   RewardsFunction:
     Type: AWS::Serverless::Function
     Properties:

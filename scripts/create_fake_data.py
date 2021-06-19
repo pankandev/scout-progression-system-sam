@@ -253,7 +253,8 @@ if __name__ == "__main__":
 
     districts_table.put_item(
         Item={
-            "code": "pankan"
+            "code": "pankan",
+            "name": "Pankan District"
         })
     group_table.put_item(
         Item={

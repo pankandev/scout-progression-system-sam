@@ -1,17 +1,20 @@
-import json
 import os
-
-from core.exceptions.invalid import InvalidException
-from core.router.router import Router
-from schema import SchemaError, Schema
+from typing import List, Dict
 
 from core import db, HTTPEvent
 from core.auth import CognitoService
 from core.aws.errors import HTTPError
-from core.aws.event import Authorizer
 from core.aws.response import JSONResponse
+from core.exceptions.forbidden import ForbiddenException
+from core.exceptions.invalid import InvalidException
+from core.exceptions.notfound import NotFoundException
+from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
 from core.services.groups import GroupsService
+from core.services.logs import LogsService, Log, LogTag
+from core.utils.consts import VALID_UNITS
+from core.utils.key import split_line
+from schema import SchemaError, Schema
 
 
 class District(db.Model):
@@ -42,12 +45,14 @@ def join_group(event: HTTPEvent):
     code = event.json["code"]
 
     if not event.authorizer.is_beneficiary:
+        if event.authorizer.is_scouter:
+            raise ForbiddenException('Scouters accounts can\'t be migrated to beneficiaries accounts yet')
         UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
-        return JSONResponse.generate_error(HTTPError.NOT_FOUND, "Group not found")
+        raise NotFoundException("Group not found")
     if group_item["beneficiary_code"] != code:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "Wrong code")
+        raise ForbiddenException("Wrong code")
     BeneficiariesService.create(district, group, event.authorizer)
     return JSONResponse({"message": "OK"})
 
@@ -67,10 +72,62 @@ def get_group(event: HTTPEvent):
     if response.item is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
     if event.authorizer.sub not in response.item['scouters'].keys():
-        del response.item['scouters']
         del response.item['beneficiary_code']
         del response.item['scouters_code']
     return JSONResponse(response.as_dict())
+
+
+def get_group_stats(event: HTTPEvent):
+    district_code = event.params["district"]
+    code = event.params["group"]
+    response = GroupsService.get(district_code, code, attributes=["scouters"])
+    if response.item is None:
+        return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Group '{code}' was not found")
+    unit: str = event.queryParams.get('unit')
+    if unit is not None:
+        unit = str(unit).lower()
+        if unit not in VALID_UNITS:
+            unit = None
+    stats = {}
+    beneficiaries = BeneficiariesService \
+        .query_group(district_code, code, attributes=['user', 'unit-user']) if unit is None else \
+        BeneficiariesService.query_unit(district_code, code, unit, attributes=['user', 'unit-user'])
+    logs: List[Log] = []
+    progress_logs: Dict[str, Dict[str, str]] = {}
+    complete_logs: Dict[str, Dict[str, str]] = {}
+    units = {}
+    for beneficiary in beneficiaries:
+        sub = beneficiary.user_sub
+        units[sub] = beneficiary.unit
+        beneficiary_logs = LogsService.query_stats_tags(user=sub)
+        logs += beneficiary_logs
+        progress_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.PROGRESS]
+        complete_logs[sub] = [log for log in beneficiary_logs if log.parent_tag == LogTag.COMPLETED]
+
+    stats['log_count'] = {
+        tag.short: len([log for log in logs if log.parent_tag == tag]) for tag in LogTag
+    }
+
+    stats['completed_objectives'] = {sub: [{
+        'stage': log.tags[2],
+        'area': log.tags[3],
+        'unit': units[sub],
+        'line': split_line(log.tags[4])[0],
+        'subline': split_line(log.tags[4])[1],
+        'timestamp': log.timestamp
+    } for log in logs] for sub, logs in complete_logs.items()}
+
+    stats['progress_logs'] = {sub: [{
+        'stage': log.tags[2],
+        'area': log.tags[3],
+        'unit': units[sub],
+        'line': split_line(log.tags[4])[0],
+        'subline': split_line(log.tags[4])[1],
+        'timestamp': log.timestamp,
+        'log': log.log if event.authorizer.sub in response.item['scouters'].keys() else None
+    } for log in logs] for sub, logs in progress_logs.items()}
+
+    return JSONResponse(stats)
 
 
 def join_group_as_scouter(event: HTTPEvent):
@@ -78,7 +135,9 @@ def join_group_as_scouter(event: HTTPEvent):
     group = event.params["group"]
     code = event.json["code"]
 
-    if not event.authorizer.is_beneficiary:
+    if not event.authorizer.is_scouter:
+        if event.authorizer.is_beneficiary:
+            raise ForbiddenException('Beneficiaries accounts can\'t be migrated to scouters accounts yet')
         UsersCognito.add_to_group(event.authorizer.username, "Scouters")
     GroupsService.join_as_scouter(event.authorizer, district, group, code)
     return JSONResponse({"message": "OK"})
@@ -87,6 +146,7 @@ def join_group_as_scouter(event: HTTPEvent):
 router = Router()
 router.get("/api/districts/{district}/groups/", list_groups)
 router.get("/api/districts/{district}/groups/{group}/", get_group)
+router.get("/api/districts/{district}/groups/{group}/stats/", get_group_stats)
 
 router.post("/api/districts/{district}/groups/", create_group, schema=Schema({
     'code': str,

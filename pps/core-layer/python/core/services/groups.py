@@ -23,9 +23,7 @@ class GroupsService(ModelService):
     __table_name__ = "groups"
     __partition_key__ = "district"
     __sort_key__ = "code"
-    __indices__ = {
-        "ByBeneficiaryCode": ("code", "beneficiary-code")
-    }
+    __indices__ = {}
 
     @staticmethod
     def generate_beneficiary_code(district: str, group_code: str):
@@ -75,18 +73,8 @@ class GroupsService(ModelService):
         return interface.query(district, attributes=["district", "name", "code"])
 
     @classmethod
-    def get_by_code(cls, code: str):
-        processed = GroupsService.process_beneficiary_code(code)
-        district = processed["district"]
-
-        interface = cls.get_interface("ByBeneficiaryCode")
-        return interface.get(district, code, attributes=["district", "code", "name"])
-
-    @classmethod
     def join_as_scouter(cls, authorizer: Authorizer, district: str, group: str, code: str):
         interface = cls.get_interface()
-        if join_key(district, group) in authorizer.scout_groups:
-            raise InvalidException('Already joined this group')
         try:
             interface.update(district, {
                 'scouters.' + authorizer.sub: {

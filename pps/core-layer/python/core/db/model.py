@@ -44,6 +44,11 @@ class UpdateReturnValues(enum.Enum):
         raise ValueError(f"Unknown UpdateReturnValues: {value}")
 
 
+class BoolOperator(enum.Enum):
+    AND = 0
+    OR = 1
+
+
 class Operator(enum.Enum):
     EQ = 0
     BEGINS_WITH = 1
@@ -174,7 +179,8 @@ class AbstractModel(abc.ABC):
               start_key: DynamoDBKey = None,
               attributes: List[str] = None,
               index: str = None,
-              scan_forward: bool = None
+              scan_forward: bool = None,
+              bool_op=BoolOperator.AND
               ) -> QueryResult:
         """
         List items from a database
@@ -195,6 +201,7 @@ class AbstractModel(abc.ABC):
         key_conditions = Operator.to_expression(hash_name, Operator.EQ, hash_value)
 
         if len(sort_key) > 0:
+            sort_conditions = None
             for key in sort_key:
                 if len(key) == 3:
                     sort_name, sort_op, sort_value = key
@@ -202,8 +209,17 @@ class AbstractModel(abc.ABC):
                 elif len(key) == 4:
                     sort_name, sort_op, sort_value, sort_value_2 = key
                 else:
-                    raise Exception(f'Sort key operator have {len(key)} instead of 3 or 4')
-                key_conditions = key_conditions & Operator.to_expression(sort_name, sort_op, sort_value, sort_value_2)
+                    raise Exception(f'Sort key operator have {len(key)} parts instead of 3 or 4: {key}')
+                op = Operator.to_expression(sort_name, sort_op, sort_value, sort_value_2)
+                if sort_conditions is None:
+                    sort_conditions = op
+                elif bool_op == BoolOperator.OR:
+                    sort_conditions = sort_conditions | op
+                elif bool_op == BoolOperator.AND:
+                    sort_conditions = sort_conditions & op
+                else:
+                    raise ValueError(f"Unknown boolean operator: {bool_op}")
+            key_conditions = key_conditions & sort_conditions
         if len(attr_names) == 0:
             attr_names = None
 
