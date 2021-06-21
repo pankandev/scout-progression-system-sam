@@ -711,11 +711,15 @@ Resources:
       CachePolicyConfig:
         Name: ScoutSpiritAPICachePolicy
         MinTTL: 0
-        MaxTTL: 0
+        MaxTTL: 1
         DefaultTTL: 0
         ParametersInCacheKeyAndForwardedToOrigin:
           HeadersConfig:
-            HeaderBehavior: none
+            HeaderBehavior: whitelist
+            Headers:
+              Items:
+                - Authorization
+              Quantity: 1
           CookiesConfig:
             CookieBehavior: none
           EnableAcceptEncodingGzip: false
