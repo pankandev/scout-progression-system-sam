@@ -18,7 +18,7 @@ script:
   - sam validate
 deploy:
   provider: script
-  script: sam deploy --no-confirm-changeset --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=prod
+  script: sam build && sam deploy --no-confirm-changeset --capabilities CAPABILITY_NAMED_IAM --parameter-overrides EnvType=prod
   skip_cleanup: true
   on:
     branch: master

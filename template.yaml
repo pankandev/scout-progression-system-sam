@@ -717,9 +717,7 @@ Resources:
           HeadersConfig:
             HeaderBehavior: whitelist
             Headers:
-              Items:
-                - Authorization
-              Quantity: 1
+              - Authorization
           CookiesConfig:
             CookieBehavior: none
           EnableAcceptEncodingGzip: false
