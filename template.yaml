@@ -438,6 +438,12 @@ Resources:
             Path: /api/districts/{district}/groups/{group}/scouters/join/
             Method: post
             RestApiId: !Ref PPSAPI
+        InitGroup:
+          Type: Api
+          Properties:
+            Path: /api/districts/{district}/groups/{group}/init/
+            Method: post
+            RestApiId: !Ref PPSAPI
   ScoutersFunction:
     Type: AWS::Serverless::Function
     Properties:

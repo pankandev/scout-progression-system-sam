@@ -85,3 +85,15 @@ class GroupsService(ModelService):
         except cls.exceptions().ConditionalCheckFailedException:
             raise InvalidException('Wrong scouters code')
         UsersCognito.add_to_scout_group(authorizer.username, district, group, authorizer.scout_groups)
+
+    @classmethod
+    def init(cls, district: str, group: str, creator_email: str, full_name: str):
+        UsersCognito.add_to_scout_group(creator_email, district, group, [])
+
+        interface = cls.get_interface()
+        interface.update(district, {
+            'scouters.' + creator_email: {
+                'name': full_name,
+                'role': 'creator'
+            }
+        }, group)
