@@ -26,6 +26,8 @@ class UsersCognito(CognitoService):
 
 
 def create_group(event: HTTPEvent):
+    if not event.authorizer.is_admin:
+        raise ForbiddenException("Only an admin can access this endpoint")
     district = event.params["district"]
     item = event.json
     code = item['code']
@@ -46,7 +48,7 @@ def join_group(event: HTTPEvent):
 
     if not event.authorizer.is_beneficiary:
         if event.authorizer.is_scouter:
-            raise ForbiddenException('Scouters accounts can\'t be migrated to beneficiaries accounts yet')
+            raise ForbiddenException('Scouters accounts can\'t be migrated to a beneficiary account')
         UsersCognito.add_to_group(event.authorizer.username, "Beneficiaries")
     group_item = GroupsService.get(district, group, ["beneficiary_code"]).item
     if group_item is None:
@@ -54,7 +56,7 @@ def join_group(event: HTTPEvent):
     if group_item["beneficiary_code"] != code:
         raise ForbiddenException("Wrong code")
     BeneficiariesService.create(district, group, event.authorizer)
-    return JSONResponse({"message": "OK"})
+    return JSONResponse({"message": f"Joined group \"{group}\""})
 
 
 def list_groups(event: HTTPEvent):

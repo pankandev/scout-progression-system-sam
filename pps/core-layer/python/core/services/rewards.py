@@ -198,7 +198,7 @@ class RewardsService(ModelService):
     def query(cls, category: RewardType, release: int):
         index = cls.get_interface()
         result = index.query(category.name, (Operator.LESS_THAN, int((release + 1) * REWARDS_PER_RELEASE)),
-                             attributes=['category', 'description', 'release-id', 'price'])
+                             attributes=['category', 'description', 'release-id', 'price', 'rarity'])
         for item in result.items:
             release = int(item['release-id'] // REWARDS_PER_RELEASE)
             id_ = int(item['release-id'] % REWARDS_PER_RELEASE)

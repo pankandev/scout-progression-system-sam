@@ -45,6 +45,10 @@ class Authorizer:
         return "Scouters" in self.groups
 
     @property
+    def is_admin(self):
+        return "Admin" in self.groups
+
+    @property
     def age(self):
         if self.birth_date is None:
             raise ValueError()
