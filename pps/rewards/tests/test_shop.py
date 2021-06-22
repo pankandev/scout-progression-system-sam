@@ -49,7 +49,17 @@ def test_create(ddb_stubber):
             'rarity': 'RARE',
             'description': 'An item description',
             'price': 10
-        })
+        }),
+        "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "abc123",
+                    "name": "Name",
+                    "family_name": "Family",
+                    "cognito:groups": ["Admins"]
+                }
+            }
+        }
     })
     with patch('time.time', lambda: now):
         response = create_item(event)
@@ -83,12 +93,13 @@ def test_query(ddb_stubber):
     params = {
         'KeyConditionExpression': Key('category').eq('AVATAR') & Key('release-id').lt(400000),
         'TableName': 'rewards',
-        'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price',
+        'ProjectionExpression': '#attr_category, #attr_description, #attr_release_id, #attr_price, #attr_rarity',
         'ExpressionAttributeNames': {
             '#attr_category': 'category',
             '#attr_description': 'description',
             '#attr_release_id': 'release-id',
-            '#attr_price': 'price'
+            '#attr_price': 'price',
+            '#attr_rarity': 'rarity'
         },
     }
 

@@ -56,7 +56,8 @@ def test_add(ddb_stubber):
                     "claims": {
                         "sub": "abc123",
                         "name": "Name",
-                        "family_name": "Family"
+                        "family_name": "Family",
+                        "cognito:groups": ["Admins"]
                     }
                 }
             }

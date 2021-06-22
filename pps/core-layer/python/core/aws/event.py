@@ -46,7 +46,7 @@ class Authorizer:
 
     @property
     def is_admin(self):
-        return "Admin" in self.groups
+        return "Admins" in self.groups
 
     @property
     def age(self):

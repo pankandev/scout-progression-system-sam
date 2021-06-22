@@ -53,7 +53,7 @@ def get_my_rewards(event: HTTPEvent):
 
 def create_item(event: HTTPEvent):
     category = event.params['category']
-    if event.authorizer.is_admin:
+    if not event.authorizer.is_admin:
         raise ForbiddenException("This endpoint can only be accessed by an administrator")
 
     try:
