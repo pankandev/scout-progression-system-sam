@@ -65,6 +65,18 @@ def list_groups(event: HTTPEvent):
     return JSONResponse(response.as_dict())
 
 
+def set_group_creator(event: HTTPEvent):
+    district_code = event.params["district"]
+    code = event.params["group"]
+
+    if event.authorizer.is_admin:
+        raise ForbiddenException("Only an admin can access this endpoint")
+
+    response = GroupsService.init(district_code, code, event.body["creator"]["email"],
+                                  event.body["creator"]["full_name"])
+    return JSONResponse(response.as_dict())
+
+
 def get_group(event: HTTPEvent):
     district_code = event.params["district"]
     code = event.params["group"]
@@ -159,6 +171,12 @@ router.post("/api/districts/{district}/groups/{group}/beneficiaries/join", join_
 }))
 router.post("/api/districts/{district}/groups/{group}/scouters/join", join_group_as_scouter, schema=Schema({
     'code': str
+}))
+router.post("/api/districts/{district}/groups/{group}/init/", set_group_creator, schema=Schema({
+    'creator': {
+        'email': str,
+        'full_name': str
+    }
 }))
 
 
