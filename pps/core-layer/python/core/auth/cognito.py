@@ -6,6 +6,7 @@ import boto3
 
 from core import JSONResponse
 from core.aws.errors import HTTPError
+from core.exceptions.invalid import InvalidException
 from core.utils import join_key
 
 
@@ -38,6 +39,19 @@ class User:
             'attributes': self.attributes
         }
 
+    @property
+    def sub(self):
+        sub = self.attributes.get('sub')
+        if sub is None:
+            raise InvalidException('Can\'t get user ID')
+        return sub
+
+    @property
+    def full_name(self):
+        name = self.attributes.get('name', '')
+        last_name = self.attributes.get('last_name', '')
+        return f"{name} {last_name}"
+
 
 class CognitoService(ABC):
     __user_pool_id__: str
@@ -52,6 +66,19 @@ class CognitoService(ABC):
         if cls._client is None:
             cls._client = boto3.client('cognito-idp', region_name='us-west-2')
         return cls._client
+
+    @classmethod
+    def get_user_by_email(cls, creator_email: str):
+        client = cls.get_client()
+        user_dict = client.admin_get_user(
+            UserPoolId=cls.__user_pool_id__,
+            Username=creator_email
+        )
+        username = user_dict["Username"]
+        attributes = dict()
+        for attr in user_dict["UserAttributes"]:
+            attributes[attr["Name"]] = attr["Value"]
+        return User(username, attributes)
 
     @classmethod
     def get_user(cls, access_token: str):

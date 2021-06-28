@@ -87,13 +87,14 @@ class GroupsService(ModelService):
         UsersCognito.add_to_scout_group(authorizer.username, district, group, authorizer.scout_groups)
 
     @classmethod
-    def init(cls, district: str, group: str, creator_email: str, full_name: str):
+    def init(cls, district: str, group: str, creator_email: str):
         UsersCognito.add_to_scout_group(creator_email, district, group, [])
+        user = UsersCognito.get_user_by_email(creator_email)
 
         interface = cls.get_interface()
         interface.update(district, {
-            'scouters.' + creator_email: {
-                'name': full_name,
+            'scouters.' + user.sub: {
+                'name': user.full_name,
                 'role': 'creator'
             }
         }, group)
