@@ -1,17 +1,16 @@
-import json
 from unittest.mock import patch
 
-import jwt
 import pytest
+
+import jwt
 import schema
 from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
-from freezegun import freeze_time
-
 from core.aws.event import Authorizer
 from core.services.logs import LogsService
-from core.services.rewards import RewardsService, RewardSet, Reward, RewardType, RewardProbability, RewardRarity, \
+from core.services.rewards import RewardsService, RewardSet, RewardType, RewardProbability, RewardRarity, \
     RewardReason
+from freezegun import freeze_time
 
 
 @pytest.fixture(scope="function")

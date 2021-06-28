@@ -5,6 +5,30 @@ import os
 from core.exceptions.notfound import NotFoundException
 
 
+class ScoreConfiguration:
+    base_score: int
+    boost_factor: int
+    _instance = None
+
+    def __init__(self, base_score: int, boost_factor: int):
+        self.base_score = base_score
+        self.boost_factor = boost_factor
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is not None:
+            return cls._instance
+        this_path = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(this_path, '../common/score.json'), encoding='utf-8') as f:
+            conf = json.load(f)
+        cls._instance = ScoreConfiguration.from_json(conf)
+        return cls._instance
+
+    @staticmethod
+    def from_json(d: dict):
+        return ScoreConfiguration(d["base-score"], d["boost-factor"])
+
+
 class ObjectivesService:
     @staticmethod
     def get_stage_objectives(stage):
@@ -12,13 +36,6 @@ class ObjectivesService:
         with open(os.path.join(this_path, '../common/objectives', f'{stage}.json'), encoding='utf-8') as f:
             objectives = json.load(f)
         return objectives
-
-    @staticmethod
-    def get_score_configuration():
-        this_path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(this_path, '../common/', f'score.json'), encoding='utf-8') as f:
-            conf = json.load(f)
-        return conf
 
     @classmethod
     def get(cls, stage: str, area: str, line: int, sub_line: int):
@@ -49,9 +66,9 @@ class ObjectivesService:
             else:
                 other_n_tasks += n_tasks[area]
 
-        conf = cls.get_score_configuration()
-        boost_factor = conf["boost-factor"]
-        base_score = conf["base-score"]
+        conf = ScoreConfiguration.instance()
+        boost_factor = conf.boost_factor
+        base_score = conf.base_score
 
         if this_n_tasks == 0:
             this_n_tasks = 0.5

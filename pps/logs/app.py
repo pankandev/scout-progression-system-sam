@@ -1,8 +1,6 @@
 import json
 from datetime import datetime, timezone
 
-from schema import Schema, SchemaError, Optional
-
 from core import HTTPEvent, JSONResponse
 from core.db.results import QueryResult
 from core.exceptions.forbidden import ForbiddenException
@@ -12,6 +10,7 @@ from core.services.logs import LogsService, LogTag
 from core.services.rewards import RewardsFactory, RewardReason
 from core.services.tasks import TasksService
 from core.utils.key import split_key, join_key
+from schema import Schema, Optional
 
 USER_VALID_TAGS = [LogTag.PROGRESS]
 

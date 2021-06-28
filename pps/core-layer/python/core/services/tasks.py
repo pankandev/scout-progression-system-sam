@@ -3,7 +3,7 @@ import math
 import os
 import time
 from datetime import timedelta, datetime, timezone
-from typing import List, Union
+from typing import List, Union, Optional
 
 import jwt
 from core import ModelService
@@ -13,7 +13,7 @@ from core.db.results import GetResult, QueryResult
 from core.exceptions.forbidden import ForbiddenException
 from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
-from core.services.objectives import ObjectivesService
+from core.services.objectives import ObjectivesService, ScoreConfiguration
 from core.services.rewards import RewardsFactory, RewardReason
 from core.utils import join_key
 from core.utils.key import split_key
@@ -60,27 +60,34 @@ class Task:
     objective_key: str
     original_objective: str
     personal_objective: str
+    score: int
     tasks: List[Subtask]
 
     def __init__(self, created: int, completed: str, objective_key: str, original_objective: str,
-                 personal_objective: str, tasks: List[Subtask]):
+                 personal_objective: str, tasks: List[Subtask], score: Optional[int] = None):
         self.created = created
         self.completed = completed
         self.objective_key = objective_key
         self.original_objective = original_objective
         self.personal_objective = personal_objective
         self.tasks = tasks
+        self.score = score if score is not None else ScoreConfiguration.instance().base_score
 
     @staticmethod
     def from_db_dict(d: dict):
-        return Task(d.get("created"), d.get("completed"), d.get("objective"), d.get("original-objective"),
-                    d.get("personal-objective"), [Subtask.from_dict(c) for c in d.get("tasks", [])])
+        return Task(d.get("created"),
+                    d.get("completed"),
+                    d.get("objective"),
+                    d.get("original-objective"),
+                    d.get("personal-objective"), [Subtask.from_dict(c) for c in d.get("tasks", [])],
+                    d.get('score'))
 
     def to_db_dict(self):
         return {
             'completed': False,
             'created': self.created,
             'objective': self.objective_key,
+            'score': self.score,
             'original-objective': self.original_objective,
             'personal-objective': self.personal_objective,
             'tasks': [{
@@ -96,6 +103,7 @@ class Task:
             'objective': self.objective_key,
             'stage': split_key(self.objective_key)[0],
             'area': split_key(self.objective_key)[1],
+            'score': self.score,
             'line': int(split_key(self.objective_key)[2].split('.')[0]),
             'subline': int(split_key(self.objective_key)[2].split('.')[1]),
             'original-objective': self.original_objective,
@@ -151,13 +159,11 @@ class TasksService(ModelService):
         sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
         return QueryResult.from_list(
             [
-                Task.from_db_dict(item) for item in interface.query(
-                partition_key=authorizer.sub,
-                sort_key=sort_key,
-                attributes=['objective', 'original-objective',
-                            'personal-objective',
-                            'completed',
-                            'tasks', 'user']).items
+                Task.from_db_dict(item) for item in interface.query(partition_key=authorizer.sub, sort_key=sort_key,
+                                                                    attributes=['objective', 'original-objective',
+                                                                                'personal-objective',
+                                                                                'completed',
+                                                                                'tasks', 'user']).items
             ])
 
     """Active Task methods"""

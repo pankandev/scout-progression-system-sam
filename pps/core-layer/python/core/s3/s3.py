@@ -1,9 +1,6 @@
 import json
-import os
 
 import boto3
-
-from core.aws.event import Authorizer
 
 
 class Bucket:

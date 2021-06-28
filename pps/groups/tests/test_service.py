@@ -3,13 +3,12 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+
 from boto3.dynamodb.conditions import Key
-
 from botocore.stub import Stubber, ANY
-from dateutil.relativedelta import relativedelta
-
-from core.aws.event import Authorizer, HTTPEvent
+from core.aws.event import HTTPEvent
 from core.utils.key import epoch
+from dateutil.relativedelta import relativedelta
 from ..app import GroupsService, create_group, BeneficiariesService, join_group, get_group_stats
 
 

@@ -1,7 +1,8 @@
-from typing import TypeVar, AnyStr, Set, List, Dict
+from typing import TypeVar, Set, List, Dict
 
 DynamoDBTypes = TypeVar('DynamoDBTypes',
-                        AnyStr,
+                        str,
+                        bytes,
                         int,
                         float,
                         bool,

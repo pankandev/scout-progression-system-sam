@@ -8,6 +8,7 @@ from core.db.model import Operator, UpdateReturnValues
 from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, LogKey
+from core.services.objectives import ScoreConfiguration
 from core.services.rewards import RewardsService, Reward
 from core.services.tasks import Task
 from core.utils.consts import VALID_STAGES, VALID_AREAS
@@ -82,7 +83,7 @@ class Beneficiary:
         target = beneficiary.get("target")
         target = Task.from_db_dict(target) if target is not None else None
 
-        bought_items = beneficiary.get("bought_items")
+        bought_items = beneficiary.get("bought_items", {})
         set_base_tasks = beneficiary.get("set_base_tasks", False)
 
         generated_token_last = int(beneficiary.get("generated_token_last", -1))
@@ -151,9 +152,9 @@ class BeneficiariesService(ModelService):
     __indices__ = {"ByGroup": ("group", "unit-user")}
 
     @staticmethod
-    def generate_code(date: datetime, nick: str):
+    def generate_code(d_date: datetime, nick: str):
         nick = clean_text(nick, remove_spaces=True, lower=True)
-        s_date = date_to_text(date).replace('-', '')
+        s_date = date_to_text(d_date).replace('-', '')
         return join_key(nick, s_date).replace('::', '')
 
     @classmethod
@@ -277,7 +278,7 @@ class BeneficiariesService(ModelService):
 
             if beneficiary.target is None:
                 return None
-            score = 80
+            score = ScoreConfiguration.instance().base_score
             area = split_key(beneficiary.target.objective_key)[1]
             add_to = {
                 f'score.{area}': score,

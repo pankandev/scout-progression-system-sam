@@ -1,5 +1,5 @@
 import pytest
-from botocore.stub import Stubber, ANY
+from botocore.stub import Stubber
 
 from .. import CognitoService
 
