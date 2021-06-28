@@ -71,7 +71,7 @@ class Task:
         self.original_objective = original_objective
         self.personal_objective = personal_objective
         self.tasks = tasks
-        self.score = score if score is not None else ScoreConfiguration.instance().base_score
+        self.score = int(score) if score is not None else ScoreConfiguration.instance().base_score
 
     @staticmethod
     def from_db_dict(d: dict):
