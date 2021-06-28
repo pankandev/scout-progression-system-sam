@@ -125,6 +125,7 @@ class Beneficiary:
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
+            "bought_items": self.bought_items,
             "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "target": self.target.to_api_dict() if self.target is not None else None,
             "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
