@@ -399,7 +399,7 @@ Resources:
               Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
-                - cognit-idp:AdminUpdateUserAttributes
+                - cognito-idp:AdminUpdateUserAttributes
               Resource: !GetAtt UsersPool.Arn
       Events:
         CreateGroup:
