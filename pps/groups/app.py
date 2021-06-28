@@ -72,8 +72,11 @@ def set_group_creator(event: HTTPEvent):
     if not event.authorizer.is_admin:
         raise ForbiddenException("Only an admin can access this endpoint")
 
-    response = GroupsService.init(district_code, code, event.json["creator"])
-    return JSONResponse(response.as_dict())
+    user = GroupsService.init(district_code, code, event.json["creator"])
+    return JSONResponse({
+        "message": f"User {user.username} with name {user.full_name} has "
+                   f"been set as creator of the group {code} at district {district_code}"
+    })
 
 
 def get_group(event: HTTPEvent):

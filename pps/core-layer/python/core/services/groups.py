@@ -98,3 +98,4 @@ class GroupsService(ModelService):
                 'role': 'creator'
             }
         }, group)
+        return user

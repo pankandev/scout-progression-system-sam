@@ -9,7 +9,7 @@ from botocore.exceptions import ParamValidationError
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.router.router import Router
-from core.services.beneficiaries import BeneficiariesService, Beneficiary
+from core.services.beneficiaries import BeneficiariesService
 from core.services.users import UsersCognito
 from core.utils.consts import VALID_UNITS
 
@@ -58,7 +58,7 @@ def list_beneficiaries_group(event: HTTPEvent):
     district = event.params["district"]
     group = event.params["group"]
     beneficiaries = BeneficiariesService.query_group(district, group)
-    return JSONResponse(QueryResult.from_list([b.to_api_dict(full=False) for b in beneficiaries]))
+    return JSONResponse(QueryResult.from_list([b.to_api_dict(full=False) for b in beneficiaries]).as_dict())
 
 
 def list_beneficiaries_unit(event: HTTPEvent):
