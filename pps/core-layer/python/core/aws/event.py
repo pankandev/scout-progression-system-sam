@@ -14,7 +14,7 @@ class Authorizer:
     def __init__(self, authorizer: dict):
         claims = authorizer["claims"]
         self.sub: str = claims.get("sub")
-        self.groups: str = claims.get("cognito:groups", [])
+        self.groups: List[str] = claims.get("cognito:groups", [])
         self.email_verified: str = claims.get("email_verified")
         self.iss: str = claims.get("iss")
         self.aud: str = claims.get("aud")
