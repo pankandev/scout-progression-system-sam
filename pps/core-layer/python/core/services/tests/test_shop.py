@@ -1,10 +1,9 @@
-from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+
 from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
-
 from core.services.rewards import RewardsService, RewardRarity, RewardType
 
 

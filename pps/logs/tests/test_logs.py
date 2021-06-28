@@ -1,12 +1,10 @@
 import pytest
+
 from boto3.dynamodb.conditions import Key
 from botocore.stub import Stubber
-from freezegun import freeze_time
-from schema import Schema
-
 from core.aws.event import Authorizer
-from core.services.logs import LogsService
 from core.services.tasks import Task
+from freezegun import freeze_time
 from ..app import *
 
 

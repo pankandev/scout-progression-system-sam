@@ -1,17 +1,12 @@
-import random
-import hashlib
 import json
 import os
+import random
 import time
 from datetime import timedelta, timezone, datetime
 from enum import Enum
 from typing import List, Dict, Any
 
 import jwt
-from jwt.exceptions import JWTDecodeError
-from jwt.utils import get_int_from_datetime
-from schema import Schema
-
 from core import ModelService
 from core.aws.event import Authorizer
 from core.db.model import Operator
@@ -20,6 +15,8 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, Log, LogTag
 from core.utils import join_key
+from jwt.exceptions import JWTDecodeError
+from jwt.utils import get_int_from_datetime
 
 REWARDS_PER_RELEASE = 100000
 

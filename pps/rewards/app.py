@@ -1,5 +1,3 @@
-from schema import Schema, SchemaError
-
 from core import HTTPEvent, JSONResponse
 from core.aws.errors import HTTPError
 from core.exceptions.forbidden import ForbiddenException
@@ -7,7 +5,7 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.router.router import Router
 from core.services.beneficiaries import BeneficiariesService
-from core.services.rewards import RewardsService, RewardType, RewardRarity, Reward
+from core.services.rewards import RewardsService, RewardType, Reward
 from core.utils.consts import VALID_AREAS
 
 router = Router()

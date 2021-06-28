@@ -1,11 +1,11 @@
 import json
-from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.stub import Stubber
-
+from schema import Schema
 from ..app import *
 
 

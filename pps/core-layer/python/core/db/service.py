@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Dict, Tuple, List, Any, Union
 
 from .db import db
-from .model import Operator, UpdateReturnValues, BoolOperator
+from .model import Operator, UpdateReturnValues
 from .results import GetResult
 
 
