@@ -241,6 +241,7 @@ def test_get_active_task(ddb_stubber: Stubber):
             }
         ],
         'eligible_for_progress_reward': True,
+        'score': 80,
         'token': str
     }).validate(response.body)
     decoded = jwt.JWT().decode(response.body['token'], do_verify=False)
@@ -274,6 +275,7 @@ def test_start_task(ddb_stubber: Stubber):
                 'objective': 'puberty::corporality::2.3',
                 'original-objective': ObjectivesService.get('puberty', 'corporality', 2, 3),
                 'personal-objective': 'A new task',
+                'score': 80,
                 'tasks': [
                     {
                         'completed': False,
