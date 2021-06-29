@@ -19,7 +19,7 @@ def list_user_tasks(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer).as_dict())
+    return JSONResponse(TasksService.query(event.authorizer).as_dict(lambda t: t.to_api_dict()))
 
 
 # GET  /api/users/{sub}/tasks/{stage}/
@@ -28,7 +28,7 @@ def list_user_stage_tasks(event: HTTPEvent) -> JSONResponse:
     stage = event.params['stage']
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer, stage).as_dict())
+    return JSONResponse(TasksService.query(event.authorizer, stage).as_dict(lambda t: t.to_api_dict()))
 
 
 # GET  /api/users/{sub}/tasks/{stage}/{area}/
@@ -38,7 +38,7 @@ def list_user_area_tasks(event: HTTPEvent) -> JSONResponse:
     area = event.params['area']
     if event.authorizer.sub != sub and not event.authorizer.is_scouter:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer, stage, area).as_dict())
+    return JSONResponse(TasksService.query(event.authorizer, stage, area).as_dict(lambda t: t.to_api_dict()))
 
 
 # GET  /api/users/{sub}/tasks/{stage}/{area}/{subline}/

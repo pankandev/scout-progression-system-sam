@@ -37,9 +37,9 @@ class QueryResult(Result):
         self.last_evaluated_key = result.get('LastEvaluatedKey')
         self.consumed_capacity = ConsumedCapacity.from_dict(result.get('ConsumedCapacity'))
 
-    def as_dict(self):
+    def as_dict(self, transformer=None):
         return {
-            "items": self.items,
+            "items": [transformer(item) for item in self.items] if transformer is not None else self.items,
             "count": self.count,
             "last_key": self.last_evaluated_key
         }
