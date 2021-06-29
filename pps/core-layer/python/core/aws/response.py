@@ -35,6 +35,6 @@ class JSONResponse:
     @staticmethod
     def generate_error(code: HTTPError, message: str):
         return JSONResponse({
-            "error": str(code),
+            "error": code.name,
             "message": message
         }, ERROR_CODES.get(code, 200))
