@@ -99,10 +99,7 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
                                      '#attr_user': 'user'},
     }
     response = {
-        'Items': [
-            {
-            }
-        ]
+        'Items': []
     }
     ddb_stubber.add_response('query', response, params)
     list_user_area_tasks(HTTPEvent({
@@ -412,7 +409,10 @@ def test_complete_task(ddb_stubber: Stubber):
             'set_base_tasks': {'BOOL': False},
             'target': {
                 'M': {
+                    'original-objective': {'S': 'Original'},
+                    'personal-objective': {'S': 'Personal'},
                     'objective': {'S': 'puberty::corporality::2.1'},
+                    'score': {'N': str(0)}
                 }
             }
         }
@@ -486,7 +486,15 @@ def test_complete_task(ddb_stubber: Stubber):
     }
 
     tasks_response = {
-
+        'Attributes': {
+            'created': {'N': str(time.time())},
+            'objective': {'S': 'puberty::corporality::2.1'},
+            'original-objective': {'S': 'Original'},
+            'personal-objective': {'S': 'A new task'},
+            'tasks': {'L': [{'M': {'completed': {'BOOL': True}, 'description': {'S': 'Sub-task 1'}}},
+                      {'M': {'completed': {'BOOL': True}, 'description': {'S': 'Sub-task 2'}}}]},
+            'user': {'S': 'user-sub'},
+        }
     }
 
     update_response = {
