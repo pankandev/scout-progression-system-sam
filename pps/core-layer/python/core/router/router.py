@@ -1,3 +1,5 @@
+import traceback
+
 from schema import SchemaError, Schema
 
 from core import HTTPEvent, JSONResponse
@@ -50,6 +52,17 @@ class Router:
             return JSONResponse.generate_error(HTTPError.UNAUTHORIZED, e.message)
         except SchemaError as e:
             return JSONResponse.generate_error(HTTPError.INVALID_CONTENT, f"Bad schema: {e}")
+        except Exception as e:
+            body = {
+                "code": HTTPError.SERVER_ERROR.name,
+                "message": "An unknown error ocurred"
+            }
+            if event.authorizer.is_admin:
+                body["error"] = {
+                    "args": str(e.args),
+                    "traceback": [f.strip() for f in traceback.format_tb(e.__traceback__)]
+                }
+            return JSONResponse(body, 500)
 
     def post(self, resource: str, fun, schema: Schema = None, authorized=True):
         self._add_route_method("POST", resource, fun, schema=schema, authorized=authorized)
