@@ -114,7 +114,7 @@ router = Router()
 
 router.get("/api/districts/{district}/groups/{group}/beneficiaries/{unit}/", list_beneficiaries_unit)
 router.get("/api/districts/{district}/groups/{group}/beneficiaries/", list_beneficiaries_group)
-router.get("/api/beneficiaries/{sub}/", get_beneficiary)
+router.get("/api/beneficiaries/{sub}/", get_beneficiary, authorized=False)
 
 router.post("/api/auth/beneficiaries-signup/", signup_beneficiary)
 
