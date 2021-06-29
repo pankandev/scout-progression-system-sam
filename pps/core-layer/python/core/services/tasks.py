@@ -63,7 +63,7 @@ class Task:
     score: int
     tasks: List[Subtask]
 
-    def __init__(self, created: int, completed: str, objective_key: str, original_objective: str,
+    def __init__(self, created: Optional[int], completed: str, objective_key: str, original_objective: str,
                  personal_objective: str, tasks: List[Subtask], score: Optional[int] = None):
         self.created = created
         self.completed = completed
@@ -76,9 +76,9 @@ class Task:
     @staticmethod
     def from_db_dict(d: dict):
         return Task(d.get("created"),
-                    d.get("completed"),
-                    d.get("objective"),
-                    d.get("original-objective"),
+                    d.get("completed", False),
+                    d["objective"],
+                    d["original-objective"],
                     d.get("personal-objective"), [Subtask.from_dict(c) for c in d.get("tasks", [])],
                     d.get('score'))
 
