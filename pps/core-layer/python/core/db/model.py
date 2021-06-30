@@ -115,7 +115,7 @@ class AbstractModel(abc.ABC):
         for attr_idx in range(len(attributes)):
             exp = attributes[attr_idx]
             if exp in RESERVED_KEYWORDS or '-' in exp:
-                model_exp = f"#model_{exp}".replace('-', '_')
+                model_exp = f"#model_{AbstractModel.clean_for_exp(exp)}"
                 attr_expression[model_exp] = exp
                 exp = model_exp
             attributes[attr_idx] = exp
