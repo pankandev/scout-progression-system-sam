@@ -39,7 +39,7 @@ def test_list_user_tasks(ddb_stubber: Stubber):
     }
     response = {}
     ddb_stubber.add_response('query', response, params)
-    list_user_tasks(HTTPEvent({
+    response = fetch_user_tasks(HTTPEvent({
         "pathParameters": {"sub": 'user-sub'},
         "requestContext": {
             "authorizer": {
@@ -47,6 +47,7 @@ def test_list_user_tasks(ddb_stubber: Stubber):
             }
         }
     }))
+    assert response.status == 200
     ddb_stubber.assert_no_pending_responses()
 
 
@@ -68,7 +69,7 @@ def test_list_user_stage_tasks(ddb_stubber: Stubber):
         "Items": []
     }
     ddb_stubber.add_response('query', response, params)
-    list_user_stage_tasks(HTTPEvent({
+    response = fetch_user_tasks(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
             "stage": "puberty"
@@ -81,12 +82,13 @@ def test_list_user_stage_tasks(ddb_stubber: Stubber):
             }
         }
     }))
+    assert response.status == 200
     ddb_stubber.assert_no_pending_responses()
 
 
 def test_list_user_area_tasks(ddb_stubber: Stubber):
     params = {
-        'KeyConditionExpression': Key('user').eq('user-sub') & Key('objective').begins_with('puberty::an-area::'),
+        'KeyConditionExpression': Key('user').eq('user-sub') & Key('objective').begins_with('puberty::corporality::'),
         'TableName': 'tasks',
         'ProjectionExpression': '#attr_objective, #attr_original_objective, '
                                 '#attr_personal_objective, #attr_completed, '
@@ -102,11 +104,11 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
         'Items': []
     }
     ddb_stubber.add_response('query', response, params)
-    list_user_area_tasks(HTTPEvent({
+    response = fetch_user_tasks(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
             "stage": 'puberty',
-            "area": 'an-area'
+            "area": 'corporality'
         },
         "requestContext": {
             "authorizer": {
@@ -114,6 +116,7 @@ def test_list_user_area_tasks(ddb_stubber: Stubber):
             }
         }
     }))
+    assert response.status == 200
     ddb_stubber.assert_no_pending_responses()
 
 
@@ -136,7 +139,7 @@ def test_get_user_task(ddb_stubber: Stubber):
         }
     }
     ddb_stubber.add_response('get_item', response, params)
-    get_user_task(HTTPEvent({
+    response = fetch_user_tasks(HTTPEvent({
         "pathParameters": {
             "sub": 'user-sub',
             "stage": 'puberty',
@@ -149,6 +152,7 @@ def test_get_user_task(ddb_stubber: Stubber):
             }
         }
     }))
+    assert response.status == 200
     ddb_stubber.assert_no_pending_responses()
 
 
@@ -391,7 +395,8 @@ def test_complete_task(ddb_stubber: Stubber):
 
     get_params = {
         'Key': {'user': 'user-sub'},
-        'ProjectionExpression': 'target.objective',
+        'ProjectionExpression': 'target.objective, #model_target.original_objective',
+        'ExpressionAttributeNames': {'#model_target.original_objective': 'target.original-objective'},
         'TableName': 'beneficiaries'
     }
 
