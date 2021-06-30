@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 
 from core import ModelService
 from core.db.model import Operator
@@ -47,6 +47,11 @@ class LogTag(Enum):
             if len(tag) >= len(value) and value == tag[:len(value)]:
                 return member
         return None
+
+    @staticmethod
+    def get_parent_tag(tag: List[str]) -> Optional[Enum]:
+        parent_tag_full = LogTag.from_tag(tag, short=False)
+        return LogTag.from_tag(tag, short=True) if parent_tag_full is None else parent_tag_full
 
     @staticmethod
     def normalize(tag: List[str], short=False):

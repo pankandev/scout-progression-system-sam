@@ -127,7 +127,7 @@ class Beneficiary:
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
             "bought_items": self.bought_items,
-            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS},
             "target": self.target.to_api_dict() if self.target is not None else None,
             "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
             "last_claimed_token": self.n_claimed_tokens,
@@ -142,7 +142,8 @@ class Beneficiary:
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
-            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS},
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS}
         }
 
 
@@ -274,7 +275,7 @@ class BeneficiariesService(ModelService):
         updates = {'target': None}
         add_to = None
         if receive_score:
-            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective"])
+            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective", "target.original-objective"])
 
             if beneficiary.target is None:
                 return None
@@ -308,7 +309,8 @@ class BeneficiariesService(ModelService):
             'set_base_tasks': True,
         }
         try:
-            return interface.update(authorizer.sub, updates, return_values=UpdateReturnValues.UPDATED_NEW,
+            return interface.update(authorizer.sub, updates,
+                                    return_values=UpdateReturnValues.UPDATED_NEW,
                                     conditions=Attr('set_base_tasks').eq(False))
         except interface.client.exceptions.ConditionalCheckFailedException:
             raise InvalidException('Beneficiary already initialized')
