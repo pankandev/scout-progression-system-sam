@@ -63,6 +63,7 @@ class Router:
                     "args": str(e.args),
                     "traceback": [f.strip() for f in traceback.format_tb(e.__traceback__)]
                 }
+                print(body["error"])
             return JSONResponse(body, 500)
 
     def post(self, resource: str, fun, schema: Schema = None, authorized=True):
