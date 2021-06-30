@@ -34,10 +34,10 @@ def fetch_user_tasks(event: HTTPEvent) -> JSONResponse:
             subline = int(subline)
         except ValueError:
             return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Subline {line_key} not valid")
-        result = TasksService.get(sub, stage, area, line, subline)
+        result = TasksService.get(sub, stage, area, line, subline).to_api_dict()
     else:
         result = TasksService.query(sub, stage, area).as_dict(lambda t: t.to_api_dict())
-    return JSONResponse(result.to_api_dict())
+    return JSONResponse(result)
 
 
 # GET  /api/users/{sub}/tasks/active/
