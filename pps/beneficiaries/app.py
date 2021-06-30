@@ -14,30 +14,14 @@ from core.services.users import UsersCognito
 from core.utils.consts import VALID_UNITS
 
 
-def process_beneficiary(beneficiary: dict, event: HTTPEvent):
-    try:
-        district, group, unit = beneficiary["unit"].split("::")
-
-        beneficiary["url"] = event.concat_url('beneficiaries', beneficiary["user-sub"])
-        beneficiary["group"] = event.concat_url('districts', district, 'groups', group)
-        beneficiary["unit"] = event.concat_url('districts', district, 'groups', group, 'beneficiaries', unit)
-        beneficiary["stage"] = BeneficiariesService.calculate_stage(
-            datetime.strptime(beneficiary["birthdate"], "%d-%m-%Y")
-        )
-
-        del beneficiary["user-sub"]
-        del beneficiary["code"]
-    except Exception:
-        pass
-
-
 def get_beneficiary(event: HTTPEvent):
     result = BeneficiariesService.get(event.params["sub"])
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
     has_full_access = event.authorizer is not None and (
-                event.authorizer.is_scouter or event.authorizer.sub != event.params["sub"])
+            event.authorizer.is_scouter or event.authorizer.sub == event.params["sub"]
+    )
     return JSONResponse(result.to_api_dict(full=has_full_access))
 
 
