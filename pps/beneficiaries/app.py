@@ -36,9 +36,8 @@ def get_beneficiary(event: HTTPEvent):
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
-    has_full_access = event.authorizer is not None and \
-                      event.authorizer.is_scouter and \
-                      event.authorizer.sub != event.params["sub"]
+    has_full_access = event.authorizer is not None and (
+                event.authorizer.is_scouter or event.authorizer.sub != event.params["sub"])
     return JSONResponse(result.to_api_dict(full=has_full_access))
 
 
