@@ -45,8 +45,8 @@ class Beneficiary:
         self.full_name = full_name
         self.nickname = nickname
         self.profile_picture = profile_picture
-        self.score = {area: score.get(area, 0) for area in VALID_AREAS} if score is not None else None
-        self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS} if n_tasks is not None else None
+        self.score = {area: score.get(area, 0) for area in VALID_AREAS} if score is not None else {}
+        self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS} if n_tasks is not None else {}
         self.target = target
         self.bought_items = bought_items
         self.set_base_tasks = set_base_tasks
@@ -107,8 +107,8 @@ class Beneficiary:
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
             "target": self.target.to_db_dict() if self.target is not None else None,
             "completed": None,
-            "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
-            "n_tasks": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS} if self.score is not None else None,
+            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS} if self.n_tasks is not None else None,
             "set_base_tasks": self.set_base_tasks,
             "bought_items": {},
             "generated_token_last": self.generated_token_last,
@@ -127,9 +127,9 @@ class Beneficiary:
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
             "bought_items": self.bought_items,
-            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS},
+            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS} if self.n_tasks is not None else None,
             "target": self.target.to_api_dict() if self.target is not None else None,
-            "score": {area: self.score.get(area, 0) for area in VALID_AREAS},
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS} if self.score is not None else None,
             "last_claimed_token": self.n_claimed_tokens,
             "set_base_tasks": self.set_base_tasks,
         } if full else {
@@ -142,8 +142,8 @@ class Beneficiary:
             "nickname": self.nickname,
             "stage": BeneficiariesService.calculate_stage(self.birthdate),
             "birthdate": self.birthdate.strftime("%d-%m-%Y"),
-            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS},
-            "score": {area: self.score.get(area, 0) for area in VALID_AREAS}
+            "n_tasks": {area: self.n_tasks.get(area, 0) for area in VALID_AREAS} if self.n_tasks is not None else None,
+            "score": {area: self.score.get(area, 0) for area in VALID_AREAS} if self.score is not None else None,
         }
 
 
