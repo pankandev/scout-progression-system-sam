@@ -332,15 +332,6 @@ class BeneficiariesService(ModelService):
     def update_avatar(cls, user_sub: str, avatar: dict):
         interface = cls.get_interface()
 
-        item_schema = Or(int, None)
-        Schema({
-            'left_eye': item_schema,
-            'right_eye': item_schema,
-            'mouth': item_schema,
-            'top': item_schema,
-            'bottom': item_schema,
-            'neckerchief': item_schema
-        }).validate(avatar)
         parts_ids = [part_id for part_id in set(avatar.values()) if part_id is not None]
         if len(parts_ids) > 0:
             logs = LogsService.batch_get(
