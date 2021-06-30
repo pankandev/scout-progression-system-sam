@@ -275,7 +275,7 @@ class BeneficiariesService(ModelService):
         updates = {'target': None}
         add_to = None
         if receive_score:
-            beneficiary = BeneficiariesService.get(authorizer.sub, ["target.objective", "target.original-objective"])
+            beneficiary = BeneficiariesService.get(authorizer.sub, ["target"])
 
             if beneficiary.target is None:
                 return None
