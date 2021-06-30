@@ -395,8 +395,8 @@ def test_complete_task(ddb_stubber: Stubber):
 
     get_params = {
         'Key': {'user': 'user-sub'},
-        'ProjectionExpression': 'target.objective, #model_target.original_objective',
-        'ExpressionAttributeNames': {'#model_target.original_objective': 'target.original-objective'},
+        'ProjectionExpression': 'target.objective, #model_target_original_objective',
+        'ExpressionAttributeNames': {'#model_target_original_objective': 'target.original-objective'},
         'TableName': 'beneficiaries'
     }
 
