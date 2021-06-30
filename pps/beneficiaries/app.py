@@ -32,14 +32,14 @@ def process_beneficiary(beneficiary: dict, event: HTTPEvent):
 
 
 def get_beneficiary(event: HTTPEvent):
-    if not event.authorizer.is_scouter and event.authorizer.sub != event.params["sub"]:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You can not access data from this beneficiary")
-
     result = BeneficiariesService.get(event.params["sub"])
     if result is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "This user does not have a beneficiaries assigned")
 
-    return JSONResponse(result.to_api_dict(full=True))
+    has_full_access = event.authorizer is not None and \
+                      event.authorizer.is_scouter and \
+                      event.authorizer.sub != event.params["sub"]
+    return JSONResponse(result.to_api_dict(full=has_full_access))
 
 
 def update_beneficiary(event: HTTPEvent):

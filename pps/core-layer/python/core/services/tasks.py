@@ -145,21 +145,21 @@ class TasksService(ModelService):
     __sort_key__ = "objective"
 
     @classmethod
-    def get(cls, authorizer: Authorizer, stage: str, area: str, subline: int) -> Task:
+    def get(cls, sub: str, stage: str, area: str, line: int, subline: int) -> Task:
         interface = cls.get_interface()
-        item = interface.get(authorizer.sub, join_key(stage, area, subline)).item
+        item = interface.get(sub, join_key(stage, area, f"{line}.{subline}")).item
         if item is None:
             raise NotFoundException('Task not found')
         return Task.from_db_dict(item)
 
     @classmethod
-    def query(cls, authorizer: Authorizer, stage: str = None, area: str = None):
+    def query(cls, sub: str, stage: str = None, area: str = None):
         interface = cls.get_interface()
         args = [arg for arg in (stage, area) if arg is not None]
         sort_key = (Operator.BEGINS_WITH, join_key(*args, '')) if len(args) > 0 else None
         return QueryResult.from_list(
             [
-                Task.from_db_dict(item) for item in interface.query(partition_key=authorizer.sub, sort_key=sort_key,
+                Task.from_db_dict(item) for item in interface.query(partition_key=sub, sort_key=sort_key,
                                                                     attributes=['objective', 'original-objective',
                                                                                 'personal-objective',
                                                                                 'completed',

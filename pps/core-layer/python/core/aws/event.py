@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime, date
 from json import JSONDecodeError
-from typing import Union, List
+from typing import Union, List, Optional
 
 from core.exceptions.invalid import InvalidException
 from core.exceptions.unauthorized import UnauthorizedException
@@ -76,6 +76,8 @@ class Authorizer:
 
 
 class HTTPEvent:
+    authorizer: Optional[Authorizer]
+
     def __init__(self, event: dict):
         self.body = event.get("body")
         self.resource: str = event.get("resource")

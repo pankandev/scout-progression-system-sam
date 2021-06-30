@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Optional
 
 from schema import Schema, SchemaError
 
@@ -14,46 +14,29 @@ from core.utils import join_key
 from core.utils.consts import VALID_STAGES, VALID_AREAS
 
 
-# GET  /api/users/{sub}/tasks/
-def list_user_tasks(event: HTTPEvent) -> JSONResponse:
-    sub = event.params['sub']
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer).as_dict(lambda t: t.to_api_dict()))
-
-
-# GET  /api/users/{sub}/tasks/{stage}/
-def list_user_stage_tasks(event: HTTPEvent) -> JSONResponse:
-    sub = event.params['sub']
-    stage = event.params['stage']
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer, stage).as_dict(lambda t: t.to_api_dict()))
-
-
-# GET  /api/users/{sub}/tasks/{stage}/{area}/
-def list_user_area_tasks(event: HTTPEvent) -> JSONResponse:
-    sub = event.params['sub']
-    stage = event.params['stage']
-    area = event.params['area']
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    return JSONResponse(TasksService.query(event.authorizer, stage, area).as_dict(lambda t: t.to_api_dict()))
-
-
-# GET  /api/users/{sub}/tasks/{stage}/{area}/{subline}/
-def get_user_task(event: HTTPEvent) -> JSONResponse:
-    sub = event.params['sub']
-    stage = event.params['stage']
-    if stage not in VALID_STAGES:
+# GET  query user tasks
+def fetch_user_tasks(event: HTTPEvent) -> JSONResponse:
+    sub = event.params.get('sub')
+    stage = event.params.get('stage')
+    area = event.params.get('area')
+    if stage is not None and stage not in VALID_STAGES:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Stage {stage} not found")
-    area = event.params['area']
-    if area not in VALID_AREAS:
+    if area is not None and area not in VALID_AREAS:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Area {area} not found")
-    subline = event.params['subline']
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    result = TasksService.get(event.authorizer, stage, area, subline)
+    line_key: Optional[str] = event.params.get('subline')
+    if line_key is not None:
+        lines = line_key.split('.')
+        if len(lines) != 2:
+            return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Subline {line_key} not valid")
+        line, subline = lines
+        try:
+            line = int(line)
+            subline = int(subline)
+        except ValueError:
+            return JSONResponse.generate_error(HTTPError.NOT_FOUND, f"Subline {line_key} not valid")
+        result = TasksService.get(sub, stage, area, line, subline)
+    else:
+        result = TasksService.query(sub, stage, area).as_dict(lambda t: t.to_api_dict())
     return JSONResponse(result.to_api_dict())
 
 
@@ -172,7 +155,7 @@ def dismiss_active_task(event: HTTPEvent) -> JSONResponse:
 def initialize_tasks(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
 
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
+    if event.authorizer.sub != sub:
         return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
 
     body = event.json
@@ -207,10 +190,10 @@ def initialize_tasks(event: HTTPEvent) -> JSONResponse:
 
 router = Router()
 
-router.get("/api/users/{sub}/tasks/", list_user_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/", list_user_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/", list_user_area_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", get_user_task)
+router.get("/api/users/{sub}/tasks/", fetch_user_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/", fetch_user_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/", fetch_user_tasks)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", fetch_user_tasks)
 router.get("/api/users/{sub}/tasks/active/", get_user_active_task)
 
 router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
