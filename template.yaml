@@ -552,6 +552,12 @@ Resources:
             Path: /api/beneficiaries/{sub}/
             Method: get
             RestApiId: !Ref PPSAPI
+        GetBeneficiaryPublic:
+          Type: Api
+          Properties:
+            Path: /api/beneficiaries/{sub}/public
+            Method: get
+            RestApiId: !Ref PPSAPI
             Auth:
               Authorizer: NONE
         UpdateBeneficiary:
