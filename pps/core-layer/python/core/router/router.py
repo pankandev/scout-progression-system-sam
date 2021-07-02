@@ -23,17 +23,18 @@ class Router:
         if self.routes.get(method) is None:
             self.routes[method] = {}
         resource = self.standardize_resource(resource)
-        self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema, True)
+        self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema=schema, authorized=True)
         if not authorized:
             public_resource = path.join(resource, 'public')
-            self.routes[method][public_resource] = lambda evt: Router._validate_and_run(fun, evt, schema, False)
+            self.routes[method][public_resource] = lambda evt: Router._validate_and_run(fun, evt, schema=schema,
+                                                                                        authorized=False)
 
     @staticmethod
     def _validate_and_run(fun, evt: HTTPEvent, schema: Schema = None, authorized=True):
         if schema is not None:
             schema.validate(evt.json)
         if authorized and evt.authorizer is None:
-            raise UnauthorizedException('No token provided')
+            raise UnauthorizedException('You must be authenticated to access this resource')
         return fun(evt)
 
     def route(self, event: HTTPEvent) -> JSONResponse:
