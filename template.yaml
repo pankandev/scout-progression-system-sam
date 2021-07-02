@@ -786,12 +786,16 @@ Resources:
             Path: /api/users/{sub}/logs/public/
             Method: get
             RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
         ListUserLogsWithTagPublic:
           Type: Api
           Properties:
             Path: /api/users/{sub}/logs/{tag}/public/
             Method: get
             RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
   PinpointApp:
     Type: AWS::Pinpoint::App
     Properties:
