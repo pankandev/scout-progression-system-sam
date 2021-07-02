@@ -44,13 +44,15 @@ def fetch_user_tasks(event: HTTPEvent) -> JSONResponse:
 def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
     result = TasksService.get_active_task(sub)
-    last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key(LogTag.PROGRESS.value,
-                                                                        result.objective_key).upper())
-
-    d = result.to_api_dict(authorizer=event.authorizer)
-    d['eligible_for_progress_reward'] = last_task_log is None or int(
-        time.time() * 1000
-    ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
+    beneficiary_authorizer = event.authorizer if event.authorizer is not None and event.authorizer.sub == sub else None
+    d = result.to_api_dict(authorizer=beneficiary_authorizer)
+    if beneficiary_authorizer is not None:
+        # generate log reward claim token
+        last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key(LogTag.PROGRESS.value,
+                                                                            result.objective_key).upper())
+        d['eligible_for_progress_reward'] = last_task_log is None or int(
+            time.time() * 1000
+        ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
 
     return JSONResponse(d)
 
@@ -188,11 +190,11 @@ def initialize_tasks(event: HTTPEvent) -> JSONResponse:
 
 router = Router()
 
-router.get("/api/users/{sub}/tasks/", fetch_user_tasks, False)
-router.get("/api/users/{sub}/tasks/{stage}/", fetch_user_tasks, False)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/", fetch_user_tasks, False)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", fetch_user_tasks, False)
-router.get("/api/users/{sub}/tasks/active/", get_user_active_task, False)
+router.get("/api/users/{sub}/tasks/", fetch_user_tasks, authorized=False)
+router.get("/api/users/{sub}/tasks/{stage}/", fetch_user_tasks, authorized=False)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/", fetch_user_tasks, authorized=False)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", fetch_user_tasks, authorized=False)
+router.get("/api/users/{sub}/tasks/active/", get_user_active_task, authorized=False)
 
 router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
 router.post("/api/users/{sub}/tasks/active/complete/", complete_active_task)
