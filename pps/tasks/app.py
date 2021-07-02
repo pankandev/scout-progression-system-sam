@@ -43,13 +43,11 @@ def fetch_user_tasks(event: HTTPEvent) -> JSONResponse:
 # GET  /api/users/{sub}/tasks/active/
 def get_user_active_task(event: HTTPEvent) -> JSONResponse:
     sub = event.params['sub']
-    if event.authorizer.sub != sub and not event.authorizer.is_scouter:
-        return JSONResponse.generate_error(HTTPError.FORBIDDEN, "You have no access to this resource with this user")
-    result = TasksService.get_active_task(event.authorizer)
+    result = TasksService.get_active_task(sub)
     last_task_log = LogsService.get_last_log_with_tag(sub, tag=join_key(LogTag.PROGRESS.value,
-                                                                        result.item['objective']).upper())
+                                                                        result.objective_key).upper())
 
-    d = Task.from_db_dict(result.item).to_api_dict(authorizer=event.authorizer)
+    d = result.to_api_dict(authorizer=event.authorizer)
     d['eligible_for_progress_reward'] = last_task_log is None or int(
         time.time() * 1000
     ) - last_task_log.timestamp > 24 * 60 * 60 * 1000
@@ -190,11 +188,11 @@ def initialize_tasks(event: HTTPEvent) -> JSONResponse:
 
 router = Router()
 
-router.get("/api/users/{sub}/tasks/", fetch_user_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/", fetch_user_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/", fetch_user_tasks)
-router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", fetch_user_tasks)
-router.get("/api/users/{sub}/tasks/active/", get_user_active_task)
+router.get("/api/users/{sub}/tasks/", fetch_user_tasks, False)
+router.get("/api/users/{sub}/tasks/{stage}/", fetch_user_tasks, False)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/", fetch_user_tasks, False)
+router.get("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", fetch_user_tasks, False)
+router.get("/api/users/{sub}/tasks/active/", get_user_active_task, False)
 
 router.post("/api/users/{sub}/tasks/{stage}/{area}/{subline}/", start_task)
 router.post("/api/users/{sub}/tasks/active/complete/", complete_active_task)

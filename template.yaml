@@ -654,6 +654,38 @@ Resources:
             Path: /api/users/{sub}/tasks/initialize/
             Method: post
             RestApiId: !Ref PPSAPI
+        ListUserTasksPublic:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/public/
+            Method: get
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
+        ListUserStageTasksPublic:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/{stage}/public/
+            Method: get
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
+        ListUserAreaTasksPublic:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/{stage}/{area}/public/
+            Method: get
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
+        GetUserTaskPublic:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/{stage}/{area}/{subline}/public/
+            Method: get
+            RestApiId: !Ref PPSAPI
+            Auth:
+              Authorizer: NONE
         ListUserTasks:
           Type: Api
           Properties:
@@ -689,6 +721,12 @@ Resources:
           Properties:
             Path: /api/users/{sub}/tasks/active/
             Method: put
+            RestApiId: !Ref PPSAPI
+        GetActiveTaskPublic:
+          Type: Api
+          Properties:
+            Path: /api/users/{sub}/tasks/active/public/
+            Method: get
             RestApiId: !Ref PPSAPI
         GetActiveTask:
           Type: Api

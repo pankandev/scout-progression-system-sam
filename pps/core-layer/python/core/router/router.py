@@ -1,5 +1,6 @@
 import traceback
 
+from os import path
 from schema import SchemaError, Schema
 
 from core import HTTPEvent, JSONResponse
@@ -22,7 +23,10 @@ class Router:
         if self.routes.get(method) is None:
             self.routes[method] = {}
         resource = self.standardize_resource(resource)
-        self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema, authorized)
+        self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema, True)
+        if not authorized:
+            public_resource = path.join(resource, 'public')
+            self.routes[method][public_resource] = lambda evt: Router._validate_and_run(fun, evt, schema, False)
 
     @staticmethod
     def _validate_and_run(fun, evt: HTTPEvent, schema: Schema = None, authorized=True):
@@ -64,7 +68,6 @@ class Router:
             }
             if event.authorizer is not None and event.authorizer.is_admin:
                 body["error"] = error
-            print(error)
             return JSONResponse(body, 500)
 
     def post(self, resource: str, fun, schema: Schema = None, authorized=True):

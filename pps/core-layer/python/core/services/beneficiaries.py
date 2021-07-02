@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 
 from boto3.dynamodb.conditions import Attr
 from core import ModelService
@@ -34,7 +34,7 @@ class Beneficiary:
     n_claimed_tokens: int
 
     def __init__(self, user_sub: str, full_name: str, nickname: str, district: str, group: str, unit: str,
-                 score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Union[Task, None],
+                 score: Dict[str, int], n_tasks: Dict[str, int], birthdate: datetime, target: Optional[Task],
                  bought_items: Dict[int, str], set_base_tasks: Union[bool, None], generated_token_last: int = -1,
                  n_claimed_tokens: int = -1, profile_picture: str = None):
         self.user_sub = user_sub
@@ -47,7 +47,7 @@ class Beneficiary:
         self.profile_picture = profile_picture
         self.score = {area: score.get(area, 0) for area in VALID_AREAS} if score is not None else {}
         self.n_tasks = {area: n_tasks.get(area, 0) for area in VALID_AREAS} if n_tasks is not None else {}
-        self.target = target
+        self.target: Optional[Task] = target
         self.bought_items = bought_items
         self.set_base_tasks = set_base_tasks
         self.generated_token_last = generated_token_last
