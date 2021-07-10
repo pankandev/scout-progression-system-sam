@@ -23,6 +23,8 @@ class Router:
         if self.routes.get(method) is None:
             self.routes[method] = {}
         resource = self.standardize_resource(resource)
+        if type(schema) is dict:
+            schema = Schema(schema)
         self.routes[method][resource] = lambda evt: Router._validate_and_run(fun, evt, schema=schema, authorized=True)
         if not authorized:
             public_resource = path.join(resource, 'public')
