@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import random
 import time
@@ -15,6 +16,7 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, Log, LogTag
 from core.utils import join_key
+from core.utils.config import config
 from core.utils.consts import VALID_AREAS
 from jwt.exceptions import JWTDecodeError
 from jwt.utils import get_int_from_datetime
@@ -102,7 +104,7 @@ class Reward:
                 rarity=rarity,
                 id_=None,
                 description={
-                    'amount': 250 if rarity == RewardRarity.RARE else 100
+                    'amount': config.rare_score if rarity == RewardRarity.RARE else config.normal_score
                 }
             )
         elif category == RewardType.NEEDS:
@@ -327,11 +329,12 @@ class RewardsService(ModelService):
         for r in rewards:
             if r.type != RewardType.POINTS:
                 continue
+            total_score = r.description['amount']
             for a in areas:
-                scores[a] = scores.get(a, 0) + 1
+                scores[a] = scores.get(a, 0) + (total_score / len(areas))
 
         for key in scores:
-            scores[key] = round(scores[key] / len(areas))
+            scores[key] = math.ceil(scores[key])
 
         BeneficiariesService.add_score(authorizer.sub, scores)
         return rewards

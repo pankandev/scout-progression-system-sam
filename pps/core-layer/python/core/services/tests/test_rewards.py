@@ -186,7 +186,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                             'data': {
                                 'category': 'POINTS',
                                 'description': {
-                                    'amount': 100
+                                    'amount': 20
                                 },
                                 'rarity': 'COMMON',
                                 'release': 0
@@ -206,7 +206,7 @@ def test_claim_reward(ddb_stubber: Stubber):
                                 'rarity': 'COMMON',
                                 'release': 0,
                                 'description': {
-                                    'amount': 100
+                                    'amount': 20
                                 }
                             }
                         }
@@ -261,12 +261,12 @@ def test_claim_reward(ddb_stubber: Stubber):
             '#attr_score_spirituality': 'spirituality'
         },
         'ExpressionAttributeValues': {
-            ':val_score_affectivity': 0,
-            ':val_score_character': 0,
-            ':val_score_corporality': 0,
-            ':val_score_creativity': 0,
-            ':val_score_sociability': 0,
-            ':val_score_spirituality': 0
+            ':val_score_affectivity': 7,
+            ':val_score_character': 7,
+            ':val_score_corporality': 7,
+            ':val_score_creativity': 7,
+            ':val_score_sociability': 7,
+            ':val_score_spirituality': 7
         },
         'Key': {'user': 'abcABC123'},
         'ReturnValues': 'UPDATED_NEW',
@@ -293,7 +293,7 @@ def test_claim_reward(ddb_stubber: Stubber):
             'release': 0,
             'rarity': 'COMMON',
             'description': {
-                'amount': 100
+                'amount': 20
             }
         }).validate(api_map[0])
         schema.Schema({
@@ -301,7 +301,7 @@ def test_claim_reward(ddb_stubber: Stubber):
             'release': 0,
             'rarity': 'COMMON',
             'description': {
-                'amount': 100
+                'amount': 20
             }
         }).validate(api_map[1])
         schema.Schema({
