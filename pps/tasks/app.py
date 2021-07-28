@@ -1,6 +1,7 @@
 import time
 from typing import List, Optional
 
+from core.utils.key import split_key
 from schema import Schema, SchemaError
 
 from core import HTTPEvent, JSONResponse
@@ -122,12 +123,15 @@ def complete_active_task(event: HTTPEvent) -> JSONResponse:
     if completed_task is None:
         return JSONResponse.generate_error(HTTPError.NOT_FOUND, "No active task found")
 
+    area = split_key(completed_task['objective'])[1]
+
     response = JSONResponse(
         {
             'message': 'Completed task',
             'task': completed_task,
             'reward': RewardsFactory.get_reward_token_by_reason(
                 authorizer=event.authorizer,
+                area=area,
                 reason=RewardReason.COMPLETE_OBJECTIVE
             ),
         }

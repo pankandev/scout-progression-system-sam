@@ -53,7 +53,7 @@ def test_reward_token(ddb_stubber: Stubber):
     }
     ddb_stubber.add_response('update_item', update_response, update_params)
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards,
-                                                 reason=RewardReason.PROGRESS_LOG)
+                                                 reason=RewardReason.PROGRESS_LOG, area='corporality')
     ddb_stubber.assert_no_pending_responses()
 
     decoded = jwt.JWT().decode(token, do_verify=False)
@@ -64,6 +64,7 @@ def test_reward_token(ddb_stubber: Stubber):
         'index': 10,
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
+        'area': 'corporality',
         'static': [
             {
                 'type': 'POINTS',
@@ -248,6 +249,40 @@ def test_claim_reward(ddb_stubber: Stubber):
             ]}
     }
     ddb_stubber.add_response('batch_write_item', batch_response, batch_params)
+
+    ddb_stubber.add_response('update_item', {}, {
+        'ExpressionAttributeNames': {
+            '#attr_score': 'score',
+            '#attr_score_affectivity': 'affectivity',
+            '#attr_score_character': 'character',
+            '#attr_score_corporality': 'corporality',
+            '#attr_score_creativity': 'creativity',
+            '#attr_score_sociability': 'sociability',
+            '#attr_score_spirituality': 'spirituality'
+        },
+        'ExpressionAttributeValues': {
+            ':val_score_affectivity': 0,
+            ':val_score_character': 0,
+            ':val_score_corporality': 0,
+            ':val_score_creativity': 0,
+            ':val_score_sociability': 0,
+            ':val_score_spirituality': 0
+        },
+        'Key': {'user': 'abcABC123'},
+        'ReturnValues': 'UPDATED_NEW',
+        'TableName': 'beneficiaries',
+        'UpdateExpression': 'ADD #attr_score.#attr_score_corporality '
+                            ':val_score_corporality, '
+                            '#attr_score.#attr_score_creativity '
+                            ':val_score_creativity, #attr_score.#attr_score_character '
+                            ':val_score_character, '
+                            '#attr_score.#attr_score_affectivity '
+                            ':val_score_affectivity, '
+                            '#attr_score.#attr_score_sociability '
+                            ':val_score_sociability, '
+                            '#attr_score.#attr_score_spirituality '
+                            ':val_score_spirituality'
+    })
 
     token = RewardsService.generate_reward_token(authorizer, static=static_rewards, boxes=box_rewards)
     with patch('random.randint', lambda a, b: 0 if a < 0 else b):

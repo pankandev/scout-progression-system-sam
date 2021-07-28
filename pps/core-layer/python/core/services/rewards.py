@@ -4,7 +4,7 @@ import random
 import time
 from datetime import timedelta, timezone, datetime
 from enum import Enum
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import jwt
 from core import ModelService
@@ -15,6 +15,7 @@ from core.exceptions.invalid import InvalidException
 from core.exceptions.notfound import NotFoundException
 from core.services.logs import LogsService, Log, LogTag
 from core.utils import join_key
+from core.utils.consts import VALID_AREAS
 from jwt.exceptions import JWTDecodeError
 from jwt.utils import get_int_from_datetime
 
@@ -248,7 +249,7 @@ class RewardsService(ModelService):
         return result
 
     @classmethod
-    def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None,
+    def generate_reward_token(cls, authorizer: Authorizer, static: RewardSet = None, area: Optional[str] = None,
                               boxes: List[RewardSet] = None, duration: timedelta = None,
                               reason: Enum = None) -> str:
         from core.services.beneficiaries import BeneficiariesService
@@ -270,6 +271,7 @@ class RewardsService(ModelService):
             "static": static.to_map_list() if static is not None else [],
             "boxes": [box.to_map_list() for box in boxes] if boxes is not None else [],
             "index": token_index,
+            "area": area,
             "reason": None if reason is None else reason.value
         }
 
@@ -309,10 +311,29 @@ class RewardsService(ModelService):
         rewards = [RewardsService.get_random(probability.type, release, probability.rarity)
                    for probability in probabilities]
         LogsService.batch_create(logs=[
-            Log(sub=authorizer.sub, tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name, rewards[reward_i].id),
-                log='Won a reward', data=rewards[reward_i].to_api_map(),
-                append_timestamp=rewards[reward_i].type != RewardType.AVATAR)
+            Log(
+                sub=authorizer.sub,
+                tag=join_key(LogTag.REWARD.name, rewards[reward_i].type.name, rewards[reward_i].id),
+                log='Won a reward',
+                data=rewards[reward_i].to_api_map(),
+                append_timestamp=rewards[reward_i].type != RewardType.AVATAR
+            )
             for reward_i in range(len(rewards))])
+
+        area: Optional[str] = decoded.get('area')
+        areas: List[str] = VALID_AREAS if area is None else [area]
+
+        scores = {}
+        for r in rewards:
+            if r.type != RewardType.POINTS:
+                continue
+            for a in areas:
+                scores[a] = scores.get(a, 0) + 1
+
+        for key in scores:
+            scores[key] = round(scores[key] / len(areas))
+
+        BeneficiariesService.add_score(authorizer.sub, scores)
         return rewards
 
     @classmethod
@@ -444,8 +465,8 @@ REWARDS_BY_REASON = {
 
 class RewardsFactory:
     @staticmethod
-    def get_reward_token_by_reason(authorizer: Authorizer, reason: RewardReason):
+    def get_reward_token_by_reason(authorizer: Authorizer, area: Optional[str], reason: RewardReason):
         rewards = REWARDS_BY_REASON[reason]
         token = RewardsService.generate_reward_token(authorizer=authorizer, static=rewards['static'],
-                                                     boxes=rewards['boxes'], reason=reason)
+                                                     boxes=rewards['boxes'], reason=reason, area=area)
         return token

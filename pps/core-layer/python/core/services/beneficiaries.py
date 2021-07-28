@@ -354,3 +354,12 @@ class BeneficiariesService(ModelService):
         }
         interface.update(user_sub, updates={'avatar': new_avatar})
         return new_avatar
+
+    @classmethod
+    def add_score(cls, user_sub: str, scores: Dict[str, int]):
+        additions = {}
+        for k, v in scores.items():
+            additions[f'score.{k}'] = v
+
+        interface = cls.get_interface()
+        interface.update(user_sub, add_to=additions)

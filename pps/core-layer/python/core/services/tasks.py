@@ -252,7 +252,8 @@ class TasksService(ModelService):
         from core.services.beneficiaries import BeneficiariesService
         cls._add_objectives_as_completed(authorizer, objectives)
         BeneficiariesService.mark_as_initialized(authorizer=authorizer)
-        return RewardsFactory.get_reward_token_by_reason(authorizer=authorizer, reason=RewardReason.INITIALIZE)
+        return RewardsFactory.get_reward_token_by_reason(authorizer=authorizer, reason=RewardReason.INITIALIZE,
+                                                         area=None)
 
     @classmethod
     def _add_objectives_as_completed(cls, authorizer: Authorizer, objectives: List[ObjectiveKey]):

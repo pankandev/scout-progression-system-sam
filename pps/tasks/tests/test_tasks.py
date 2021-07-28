@@ -556,7 +556,8 @@ def test_complete_task(ddb_stubber: Stubber):
             'personal-objective': 'A new task',
             'created': Decimal(now),
             'objective': 'puberty::corporality::2.1',
-            'original-objective': 'Comprendo que los cambios que se estan produciendo en mi cuerpo influyen en mi manera de ser.',
+            'original-objective': 'Comprendo que los cambios que se estan '
+                                  'produciendo en mi cuerpo influyen en mi manera de ser.',
             'completed': True,
         },
         'reward': str
@@ -568,6 +569,7 @@ def test_complete_task(ddb_stubber: Stubber):
         'sub': 'user-sub',
         'iat': 1577836800,
         'exp': 1577836800 + 7 * 24 * 60 * 60,
+        'area': 'corporality',
         'reason': 'COMPLETE_OBJECTIVE',
         'static': [
             {'type': 'NEEDS', 'rarity': 'RARE'},
